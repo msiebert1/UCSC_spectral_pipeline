@@ -15,6 +15,28 @@ QUICKLOOK.py -i -c
 
 You can add the option -a if you want to identify the arcs of the night by yourself, instead of comparing them with the archival ones.
 
+-------------
+
+Installation of the pipeline.
+
+- Via anaconda, install astroconda. More info on https://astroconda.readthedocs.io/en/latest/
+- Make sure you include the iraf environment, https://astroconda.readthedocs.io/en/latest/installation.html
+- After that, just in case, check if you have pyraf, numpy, pyfits and pylab.
+- Create a new folder in your computer/laptop and copy there the 3 pipeline folders.
+- Add this new folder to your bash path
+- At the intruments.py file (inside the spectral_reduction folder), change the first line with the appropriate path (hopefully, we will hard code this)
+- Copy the disp.cl file (located in the extra_files folder) in your iraf folder (this was hopefully created when you installed astroconda). If you cannot find it, find me and we will locate it together.
+- At the login.cl file of your iraf implementation, add the line task disp='/Users/georgios_imac/iraf/disp.cl', with the appropriate path.
+- In my mac, I had some problems with the matplotlib backend. In order to solve it, locate your matplotlibrc file. This will normally live at your /anaconda2/envs/iraf27/lib/python2.7/site-packages/matplotlib/mpl-data folder. Open the file and locate the "backend : macosx" part and change it to "backend : TkAgg"
+
+------------
+
+The pipeline includes 3 folders with the relevant scripts, and this readme file:
+
+- Spectral_reduction. This includes the scripts + functions, used in the pipeline. There may be some left-over functions from other codes, or functions that are not called at all. In time, this will be corrected. Moreover, there is a folder called trunk, where the archival files, used in the pipeline are included.
+- Extra_files. This includes 2 plots with emission arc lines for KAST, for your convenience, and the disp.cl file, for which we will mention later on.
+- Test_data. This includes 4 files: b1063.fits and r1085.fits are blue and red exposures of SN 2018pj, a normal type Ia, and b1003.fits and r1003.fits, a set of blue and red arcs. When I run the pipeline for these exposures, I type QUICKLOOK.py -c, so cosmic removal, no interactive extraction and only comparison with the archival arcs, I get a nice merged spectrum at ~14.5 seconds. Keep in mind that in the non-interactive case, the spectrum is not correct: the automated iraf extraction algorithm picks the galaxy instead of the SN at the red part.
+
 -----------
 
 The pipeline will :
@@ -44,30 +66,4 @@ The pipeline produces:
 - A png file with the plot of the extracted, wavelength solved, flux calibrated and merged spectrum
 
 Keep in mind that the script copies at the working folder several files, but in the end, everything that is not needed is deleted.
-
-------------
-
-The pipeline includes 3 folders with the relevant scripts, and this readme file:
-
-- Spectral_reduction. This includes the scripts + functions, used in the pipeline. There may be some left-over functions from other codes, or functions that are not called at all. In time, this will be corrected. Moreover, there is a folder called trunk, where the archival files, used in the pipeline are included.
-- Extra_files. This includes 2 plots with emission arc lines for KAST, for your convenience, and the disp.cl file, for which we will mention later on.
-- Test_data. This includes 4 files: b1063.fits and r1085.fits are blue and red exposures of SN 2018pj, a normal type Ia, and b1003.fits and r1003.fits, a set of blue and red arcs. When I run the pipeline for these exposures, I type QUICKLOOK.py -c, so cosmic removal, no interactive extraction and only comparison with the archival arcs, I get a nice merged spectrum at ~14.5 seconds. Keep in mind that in the non-interactive case, the spectrum is not correct: the automated iraf extraction algorithm picks the galaxy instead of the SN at the red part.
-
--------------
-
-Installation of the pipeline.
-
-- Via anaconda, install astroconda. More info on https://astroconda.readthedocs.io/en/latest/
-- Make sure you include the iraf environment, https://astroconda.readthedocs.io/en/latest/installation.html
-- After that, just in case, check if you have pyraf, numpy, pyfits and pylab.
-- Create a new folder in your computer/laptop and copy there the 3 pipeline folders.
-- Add this new folder to your bash path
-- At the intruments.py file (inside the spectral_reduction folder), change the first line with the appropriate path (hopefully, we will hard code this)
-- Copy the disp.cl file (located in the extra_files folder) in your iraf folder (this was hopefully created when you installed astroconda). If you cannot find it, find me and we will locate it together.
-- At the login.cl file of your iraf implementation, add the line task disp='/Users/georgios_imac/iraf/disp.cl', with the appropriate path.
-- In my mac, I had some problems with the matplotlib backend. In order to solve it, locate your matplotlibrc file. This will normally live at your /anaconda2/envs/iraf27/lib/python2.7/site-packages/matplotlib/mpl-data folder. Open the file and locate the "backend : macosx" part and change it to "backend : TkAgg"
-
---------------
-
-We will upload the pipeline to github so that everyone can check it.
 
