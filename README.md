@@ -1,20 +1,18 @@
-#####################################################################
-
 This is the 0.1 version of a quicklook spectral reduction pipeline. For now, it works on KAST spectral images, the plan is to include every longslit spectral instrument.
 
-The pipeline is a python script called QUICKLOOL.py, utilising an implementation of IRAF called, not surprisingly, pyRAF. It is heavily influenced from Stefano Valenti's work on similar pipelines for NNT (EFOSC) and LCO (FLOYDS) pipelines. For a small description, type:
+The pipeline is a python script called QUICKLOOK.py, utilising an implementation of IRAF called, not surprisingly, pyRAF. It is heavily influenced from Stefano Valenti's work on similar pipelines for NNT (EFOSC) and LCO (FLOYDS) pipelines. For a small description, type:
 
-QUICKLOOL.py -h
+QUICKLOOK.py -h
 
 In order for the pipeline to work, collect in a folder the science files (for KAST, these are b****.fits and r****.fits for the blue and red arm, respectively), plus a set of arcs (for KAST, these are again on the form of b****.fits and r****.fits. It works for 2 arcsec slit arcs, which, if everything during the night went well, they are probably b1003.fits and r1003.fits)
 
 The recommended syntax is 
 
-QUICKLOOL.py -i -c
+QUICKLOOK.py -i -c
 
 You can add the option -a if you want to identify the arcs of the night by yourself, instead of comparing them with the archival ones.
 
-#####################################################################
+-----------
 
 The pipeline will :
 
@@ -34,7 +32,7 @@ The pipeline will :
 - The red sensitivity function is from BD262606, taken on 02/06/2018
 - The blue and red arm are merged to a single spectrum
 
-#####################################################################
+------------
 
 The pipeline produces:
 
@@ -44,7 +42,7 @@ The pipeline produces:
 
 Keep in mind that the script copies at the working folder several files, but in the end, everything that is not needed is deleted.
 
-#####################################################################
+------------
 
 The pipeline includes 3 folders with the relevant scripts, and this readme file:
 
@@ -52,7 +50,7 @@ The pipeline includes 3 folders with the relevant scripts, and this readme file:
 - Extra_files. This includes 2 plots with emission arc lines for KAST, for your convenience, and the disp.cl file, for which we will mention later on.
 - Test_data. This includes 4 files: b1063.fits and r1085.fits are blue and red exposures of SN 2018pj, a normal type Ia, and b1003.fits and r1003.fits, a set of blue and red arcs. When I run the pipeline for these exposures, I type QUICKLOOK.py -c, so cosmic removal, no interactive extraction and only comparison with the archival arcs, I get a nice merged spectrum at ~14.5 seconds. Keep in mind that in the non-interactive case, the spectrum is not correct: the automated iraf extraction algorithm picks the galaxy instead of the SN at the red part.
 
-#####################################################################
+-------------
 
 Installation of the pipeline.
 
@@ -66,7 +64,7 @@ Installation of the pipeline.
 - At the login.cl file of your iraf implementation, add the line task disp='/Users/georgios_imac/iraf/disp.cl', with the appropriate path.
 - In my mac, I had some problems with the matplotlib backend. In order to solve it, locate your matplotlibrc file. This will normally live at your /anaconda2/envs/iraf27/lib/python2.7/site-packages/matplotlib/mpl-data folder. Open the file and locate the "backend : macosx" part and change it to "backend : TkAgg"
 
-#####################################################################
+--------------
 
 We will upload the pipeline to github so that everyone can check it.
 
