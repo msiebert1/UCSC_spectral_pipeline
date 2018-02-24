@@ -39,14 +39,14 @@ copy the disp.cl file into ~/iraf and run mkiraf in that directory.
 
      ```disp='<your_iraf_directory>/disp.cl'```
 
-- in the folder $UCSC_SPECPIPE/test_data run:
-
-     ```QUICKLOOK.py -i -c```
-
-and follow the prompts.  If all goes well - and if you interactively 
+- in the folder $UCSC_SPECPIPE/test_data run the following command and
+follow the prompts.  If all goes well - and if you interactively 
 move the red aperture so that it's not centered on the galaxy - 
 you will get a SN spectrum of 2018pj!
 
+     ```QUICKLOOK.py -i -c```
+
+  
 ------------
 
 The pipeline includes 3 folders with the relevant scripts, and this readme file:
