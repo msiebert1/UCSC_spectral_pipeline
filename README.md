@@ -41,7 +41,7 @@ copy the disp.cl file into ~/iraf and run mkiraf in that directory.
 
 - in the folder $UCSC_SPECPIPE/test_data run:
 
-```QUICKLOOK.py -i -c```
+     ```QUICKLOOK.py -i -c```
 
 and follow the prompts.  If all goes well - and if you interactively 
 move the red aperture so that it's not centered on the galaxy - 
