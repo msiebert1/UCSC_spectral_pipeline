@@ -21,17 +21,17 @@ Installation of the pipeline.
 
 - Via anaconda, install astroconda. More info on https://astroconda.readthedocs.io/en/latest/
 - Make sure you include the iraf environment, https://astroconda.readthedocs.io/en/latest/installation.html
-- After that, just in case, check if you have pyraf, numpy, pyfits and pylab.
+- After that, just in case, check if you have pyraf, numpy, astropy and pylab.
 - Clone the repository
   	```git clone https://github.com/msiebert1/UCSC_spectral_pipeline.git```
 - In your ~/.bashrc file (or your ~/.bash_profile for Mac people), add the following lines:
-     ```export UCSC_SPECPIPE=<the new directory just created by git>
-     export PATH=$UCSC_SPECPIPE/spectral_reduction:$PATH```
+     ```export UCSC_SPECPIPE=<the new directory just created by git>```
+     ```export PATH=$UCSC_SPECPIPE/spectral_reduction:$PATH```
 - Copy the disp.cl file (located in the extra_files folder) into your iraf folder
 (this was hopefully created when you installed astroconda). If you cannot find it,
 copy the disp.cl file into ~/iraf and run mkiraf in that directory.
-- At the login.cl file of your iraf implementation, add the line task
-disp='<your_iraf_directory>/disp.cl', with the appropriate path.
+- At the end of your iraf login.cl file, add the following line with the appropriate path:
+     ```disp='<your_iraf_directory>/disp.cl'```
 
 ------------
 
