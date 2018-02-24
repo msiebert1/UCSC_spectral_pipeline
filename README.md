@@ -1,3 +1,6 @@
+UCSC Spectral Reduction Pipeline
+==============
+
 This is the 0.1 version of a quicklook spectral reduction pipeline. For now, it works on KAST spectral images, the plan is to include every longslit spectral instrument.
 
 The pipeline is a python script called QUICKLOOK.py, utilising an implementation of IRAF called, not surprisingly, pyRAF. It is heavily influenced from Stefano Valenti's work on similar pipelines for NNT (EFOSC) and LCO (FLOYDS) pipelines. For a small description, type:
