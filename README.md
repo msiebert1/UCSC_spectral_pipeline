@@ -42,7 +42,9 @@ copy the disp.cl file into ~/iraf and run mkiraf in that directory.
 - in the folder "$UCSC_SPECPIPE/test_data" run the following command and
 follow the prompts.  If all goes well - and if you interactively 
 move the red aperture so that it's not centered on the galaxy - 
-you will get a SN spectrum of 2018pj!
+you will get a SN spectrum of 2018pj!  If it crashes the first time,
+be sure to remove all the files and folders that IRAF created before
+running again.
 
      ```QUICKLOOK.py -i -c```
 
