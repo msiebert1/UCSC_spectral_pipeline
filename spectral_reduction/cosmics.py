@@ -34,7 +34,7 @@ No surprise, this python module is much faster then the IRAF implementation, as 
 Usage
 =====
 
-Everything is in the file cosmics.py, all you need to do is to import it. You need pyfits, numpy and scipy.
+Everything is in the file cosmics.py, all you need to do is to import it. You need astropy, numpy and scipy.
 See the demo scripts for example usages (the second demo uses f2n.py to make pngs, and thus also needs PIL).
 
 Your image should have clean borders, cut away prescan/overscan etc.
@@ -61,7 +61,7 @@ import numpy as np
 import math
 import scipy.signal as signal
 import scipy.ndimage as ndimage
-import pyfits
+from astropy.io import fits as pyfits
 
 
 

@@ -1,4 +1,7 @@
-path_to_trunk = '/Users/georgios_imac/mats_spec_pipeline/spectral_reduction/trunk/'
+import os
+path_to_trunk = os.path.expandvars('$UCSC_SPECPIPE/spectral_reduction/trunk/')
+if not os.path.exists(path_to_trunk):
+	raise RuntimeError('Error : $UCSC_SPECPIPE variable is undefined or incorrect!')
 
 kast_blue = {'name': 'kast_blue',
 			 'read_noise': 3.7,
