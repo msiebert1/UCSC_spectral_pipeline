@@ -1,3 +1,4 @@
+from __future__    import print_function
 import numpy as np 
 import matplotlib.pyplot as plt 
 from scipy import interpolate
@@ -78,7 +79,7 @@ def combine_blue_red(blue_asci, red_asci, name):
 	#scale blue in overlap region
 	scale = optimize_scales(blue_resampled,red_olap_spec)[0]
 	blue_olap_rescaled = [blue_resampled[0], scale*blue_resampled[1], scale*blue_resampled[2]]
-	print 'I scaled the blue with : ',scale
+	print('I scaled the blue with : ',scale)
 
 
 	#inverse variance weighted average in overlap region

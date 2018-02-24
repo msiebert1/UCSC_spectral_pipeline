@@ -1,3 +1,4 @@
+from __future__    import print_function
 
 def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 
@@ -64,13 +65,13 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		elif util.readkey3(hdr, 'VERSION') == 'kastr':
 			list_arc_r.append(arcs)
 		else:
-			print util.readkey3(hdr, 'VERSION') + 'not in database'
+			print(util.readkey3(hdr, 'VERSION') + 'not in database')
 			sys.exit()
 	
 	asci_files = []
 	newlist = [[],[]]
 
-	print '\n### images to reduce :',imglist
+	print('\n### images to reduce :',imglist)
 	#raise TypeError
 	for img in imglist:
 		if 'b' in img:
@@ -88,7 +89,7 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		elif util.readkey3(hdr, 'VERSION') == 'kastr':
 			inst = instruments.kast_red
 		else:
-			print util.readkey3(hdr, 'VERSION') + 'not in database'
+			print(util.readkey3(hdr, 'VERSION') + 'not in database')
 			sys.exit()
 
 		iraf.specred.dispaxi = inst.get('dispaxis')
@@ -112,7 +113,7 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 
 		nameout0 = util.name_duplicate(imgs[0], nameout0, '')
 		timg = nameout0
-		print '\n### now processing :',timg,' for -> ',inst.get('name')
+		print('\n### now processing :',timg,' for -> ',inst.get('name'))
 		if len(imgs) > 1:
 			img_str = ''
 			for i in imgs:
@@ -143,14 +144,14 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		img = timg
 
 		#raw_input("Press Enter to continue...")
-		print '\n### starting cosmic removal'
+		print('\n### starting cosmic removal')
 		if _cosmic:
 			array, header = cosmics.fromfits(img)
 			c = cosmics.cosmicsimage(array, gain=inst.get('gain'), readnoise=inst.get('read_noise'), sigclip = 4.5, sigfrac = 0.5, objlim = 1.0)
 			c.run(maxiter = 4)
 			cosmics.tofits('cosmic_' + img, c.cleanarray, header)
 
-		print '\n### cosmic removal finished'
+		print('\n### cosmic removal finished')
 
 		img='cosmic_' + img
 
@@ -168,7 +169,7 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 						 readaxi='line', trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
 			arcfile = 't' + arcfile
 		else:
-			print '\n### warning no arcfile \n exit '
+			print('\n### warning no arcfile \n exit ')
 			sys.exit()
 
 		if not os.path.isdir('database/'):
@@ -176,8 +177,8 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		
 		if _arc_identify:
 			arc_ex=re.sub('.fits', '.ms.fits', arcfile)
-			print '\n### arcfile : ',arcfile
-			print '\n### arcfile extraction : ',arc_ex
+			print('\n### arcfile : ',arcfile)
+			print('\n### arcfile extraction : ',arc_ex)
 			iraf.specred.apall(arcfile, output='', line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
 			iraf.longslit.identify(images=arc_ex, section=inst.get('section'),coordli=inst.get('line_list'),function = 'spline3',order=3, mode='h')
 		else:
@@ -189,9 +190,9 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 
 			arc_ex=re.sub('.fits', '.ms.fits', arcfile)
 
-			print '\n###  arcfile : ',arcfile
-			print '\n###  arcfile extraction : ',arc_ex
-			print '\n###  arc referenece : ',arcref
+			print('\n###  arcfile : ',arcfile)
+			print('\n###  arcfile extraction : ',arc_ex)
+			print('\n###  arc referenece : ',arcref)
 			iraf.specred.apall(arcfile, output=arc_ex, line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
 
 			iraf.longslit.reidentify(referenc=arcref, images=arc_ex, interac='NO', section=inst.get('section'), 
@@ -203,24 +204,24 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		#shift = util.skyfrom2d(img, _skyfile,'True')
 		#print '\n### I found a shift of : ',shift
 
-		print '\n### extraction using apall'
+		print('\n### extraction using apall')
 		result = []
 		hdr_image = util.readhdr(img)
 		_type=util.readkey3(hdr_image, 'object')
 
 		if _type.startswith("arc") or _type.startswith("dflat") or _type.startswith("Dflat") or _type.startswith("Dbias") or _type.startswith("Bias"):
-			print '\n### warning problem \n exit '
+			print('\n### warning problem \n exit ')
 			sys.exit()
 		else:
 			imgex = util.extractspectrum(
 				img, dv, inst, _interactive, 'obj')
-			print '\n### applying wavelength solution'
+			print('\n### applying wavelength solution')
 			iraf.disp(inlist=imgex, reference=arc_ex)	
 			sensfile = inst.get('archive_sens')
 			os.system('cp ' + sensfile + ' .')
 			sensfile = string.split(sensfile, '/')[-1]
 			if sensfile:
-				print '\n### sensitivity function : ',sensfile
+				print('\n### sensitivity function : ',sensfile)
 				imgf = re.sub('.fits', '_f.fits', img)
 				_extinction = inst.get('extinction_file')
 				_observatory = inst.get('observatory')
@@ -266,8 +267,8 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		util.delete('logfile')
 		util.delete(dimgex)
 		util.delete('cosmic_*')
-	print '\n### now i will merge ...'
+	print('\n### now i will merge ...')
 	if len(asci_files) > 1:
 		final = cs.combine_blue_red(asci_files[0], asci_files[1], _object0)
-	print '\n### final result in folder ',_object0,' is ',_object0+'_merged.asci'
+	print('\n### final result in folder ',_object0,' is ',_object0+'_merged.asci')
 	return result

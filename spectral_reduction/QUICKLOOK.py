@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 import sys
 from optparse import OptionParser
@@ -69,12 +70,12 @@ if __name__ == "__main__":
 	if not _arc:   _arc = False
 
 	if len(files_science) > 0:
-		print '\n#######################################\n### start of reduction'
+		print('\n#######################################\n### start of reduction')
 		outputfile = quick_reduc.reduce(files_science,files_arc, _cosmic, _interactive_extraction,_arc)
 		stoptime = time.time()
-		print '\n### wow, only ' + str(stoptime - starttime) + ' seconds'
-		print '\n### end of reduction'
-		print '\n#######################################'
+		print('\n### wow, only ' + str(stoptime - starttime) + ' seconds')
+		print('\n### end of reduction')
+		print('\n#######################################')
 	else:
-		print '\n### problem, exit '
+		print('\n### problem, exit ')
 		sys.exit()

@@ -1,3 +1,4 @@
+from __future__    import print_function
 try:      from astropy.io import fits as pyfits
 except:   import pyfits
 
@@ -149,12 +150,12 @@ def correctcard(img):
     except:
         aa = ''
 
-    print aa
-    print ww
+    print(aa)
+    print(ww)
     if len(ww) > 0:
         newheader = []
         headername = []
-        for j in _header.items():
+        for j in list(_header.items()):
             headername.append(j[0])
             newheader.append(j[1])
         for i in ww:
@@ -199,11 +200,11 @@ def updateheader(image, dimension, headerdict):
     # added to cut long header
     while len(max([str(headerdict[i][0]) for i in headerdict], key=len)) > 68:
         key = [i for i in headerdict]
-        valori, commenti = zip(*[headerdict[i] for i in headerdict])
+        valori, commenti = list(zip(*[headerdict[i] for i in headerdict]))
         num = valori.index(max([str(headerdict[i][0])
                                 for i in headerdict], key=len))
         headerdict[key[num]] = [valori[num][0:68], commenti[num]]
-        print 'warning: header to long, ', str(key[num]), str(valori[num][0:68]), str(commenti[num])
+        print('warning: header to long, ', str(key[num]), str(valori[num][0:68]), str(commenti[num]))
         #   keytochange=hdr.keys()[hdr.values().index(max([str(i) for i in hdr.values()],key=len))]
         #   hdr[keytochange]=[str(hdr[keytochange])[0:68]]
 
@@ -211,23 +212,23 @@ def updateheader(image, dimension, headerdict):
         try:
             imm = pyfits.open(image, mode='update')
             _header = imm[dimension].header
-            for i in headerdict.keys():
+            for i in list(headerdict.keys()):
                 _header.update(i, headerdict[i][0], headerdict[i][1])
             imm.flush()
             imm.close()
         except:
-            print 'warning: problem to update header, try to correct header format ....'
+            print('warning: problem to update header, try to correct header format ....')
             correctcard(image)
             try:
-                print headerdict
+                print(headerdict)
                 imm = pyfits.open(image, mode='update')
                 _header = imm[dimension].header
-                for i in headerdict.keys():
+                for i in list(headerdict.keys()):
                     _header.update(i, headerdict[i][0], headerdict[i][1])
                 imm.flush()
                 imm.close()
             except:
-                print 'error: not possible update header'
+                print('error: not possible update header')
     else:
         #
         #
@@ -236,7 +237,7 @@ def updateheader(image, dimension, headerdict):
         #
         imm = pyfits.open(image, mode='update')
         _header = imm[dimension].header
-        for i in headerdict.keys():
+        for i in list(headerdict.keys()):
             _header.update( { i : (headerdict[i][0], headerdict[i][1]) } )
         imm.flush()
         imm.close()
@@ -272,22 +273,22 @@ def display_image(img, frame, _z1, _z2, scale, _xcen=0.5, _ycen=0.5, _xsize=1, _
                 sss = iraf.display(img, frame, xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase,
                                    fill='yes', zscale='no', zrange='no', z1=_z1, z2=_z2, Stdout=1)
             except:
-                print ''
-                print '### ERROR: PROBLEM OPENING DS9'
-                print ''
+                print('')
+                print('### ERROR: PROBLEM OPENING DS9')
+                print('')
                 goon = 'False'
         else:
             try:
                 sss = iraf.display(img, frame, xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize, erase=_erase,
                                    fill='yes', Stdout=1)
             except:
-                print ''
-                print '### ERROR: PROBLEM OPENING DS9'
-                print ''
+                print('')
+                print('### ERROR: PROBLEM OPENING DS9')
+                print('')
                 goon = False
 
         if scale and goon:
-            answ0 = raw_input('>>> Cuts OK ? [y/n] ? [y] ')
+            answ0 = input('>>> Cuts OK ? [y/n] ? [y] ')
             if not answ0:
                 answ0 = 'y'
             elif answ0 == 'no' or answ0 == 'NO':
@@ -296,8 +297,8 @@ def display_image(img, frame, _z1, _z2, scale, _xcen=0.5, _ycen=0.5, _xsize=1, _
             while answ0 == 'n':
                 _z11 = float(string.split(string.split(sss[0])[0], '=')[1])
                 _z22 = float(string.split(string.split(sss[0])[1], '=')[1])
-                z11 = raw_input('>>> z1 = ? [' + str(_z11) + '] ? ')
-                z22 = raw_input('>>> z2 = ? [' + str(_z22) + '] ? ')
+                z11 = input('>>> z1 = ? [' + str(_z11) + '] ? ')
+                z22 = input('>>> z2 = ? [' + str(_z22) + '] ? ')
                 if not z11:
                     z11 = _z11
                 else:
@@ -306,10 +307,10 @@ def display_image(img, frame, _z1, _z2, scale, _xcen=0.5, _ycen=0.5, _xsize=1, _
                     z22 = _z22
                 else:
                     z22 = float(z22)
-                print z11, z22
+                print(z11, z22)
                 sss = iraf.display(img, frame, fill='yes', xcen=_xcen, ycen=_ycen, xsize=_xsize, ysize=_ysize,
                                    erase=_erase, zrange='no', zscale='no', z1=z11, z2=z22, Stdout=1)
-                answ0 = raw_input('>>> Cuts OK ? [y/n] ? [y] ')
+                answ0 = input('>>> Cuts OK ? [y/n] ? [y] ')
                 if not answ0:
                     answ0 = 'y'
                 elif answ0 == 'no' or answ0 == 'NO':
@@ -318,7 +319,7 @@ def display_image(img, frame, _z1, _z2, scale, _xcen=0.5, _ycen=0.5, _xsize=1, _
             _z1, _z2 = string.split(string.split(sss[0])[0], '=')[
                 1], string.split(string.split(sss[0])[1], '=')[1]
     else:
-        print 'Warning: image ' + str(img) + ' not found in the directory '
+        print('Warning: image ' + str(img) + ' not found in the directory ')
     return _z1, _z2, goon
 
 
@@ -357,13 +358,13 @@ def readspectrum(img):
             cdelt1 = head['cdelt1']
         except:
             cdelt1 = head['cd1_1']
-        pix = array(range(1, naxis1 + 1, 1))
-        pix = array(range(1, len(fl) + 1, 1))
+        pix = array(list(range(1, naxis1 + 1, 1)))
+        pix = array(list(range(1, len(fl) + 1, 1)))
         lam = (pix - crpix1) * cdelt1 + crval1
     except:
         try:
             WAT = head['WAT2_001']
-            pix = array(range(1, naxis1 + 1, 1))
+            pix = array(list(range(1, naxis1 + 1, 1)))
             crpix1 = string.split(string.split(WAT, '"')[1])[0]
             crval1 = string.split(string.split(WAT, '"')[1])[3]
             cdelt1 = string.split(string.split(WAT, '"')[1])[4]
@@ -468,7 +469,7 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
     import datetime
     import numpy as np
 
-    MJDtoday = 55927 + (datetime.date.today() - datetime.date(2012, 01, 01)).days
+    MJDtoday = 55927 + (datetime.date.today() - datetime.date(2012, 0o1, 0o1)).days
     from pyraf import iraf
 
     iraf.noao(_doprint=0)
@@ -493,7 +494,7 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
             if _interactive in ['Yes', 'yes', 'YES', 'y', 'Y']:
                 answ = 'x'
                 while answ not in ['o', 'n', 's']:
-                    answ = raw_input(
+                    answ = input(
                         '\n### New extraction [n], extraction with old parameters [o], skip extraction [s] ? [o]')
                     if not answ:
                         answ = 'o'
@@ -509,7 +510,7 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
             if _interactive in ['Yes', 'yes', 'YES', 'y', 'Y']:
                 answ = 'x'
                 while answ not in ['y', 'n']:
-                    answ = raw_input(
+                    answ = input(
                         '\n### do you want to extract again [[y]/n] ? ')
                     if not answ:
                         answ = 'y'
@@ -575,7 +576,7 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
                            t_order=dv[_type]['_t_order'],
                            weights=dv[_type]['_weights'], interactive=_interactive, review=_review, mode=_mode)
     else:
-        print '\n### skipping new extraction'
+        print('\n### skipping new extraction')
     return imgex
 
 def skyfrom2d(fitsfile, skyfile, interac=True):

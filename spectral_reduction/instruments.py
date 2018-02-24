@@ -1,3 +1,4 @@
+from __future__    import print_function
 import os
 path_to_trunk = os.path.expandvars('$UCSC_SPECPIPE/spectral_reduction/trunk/')
 if not os.path.exists(path_to_trunk):
