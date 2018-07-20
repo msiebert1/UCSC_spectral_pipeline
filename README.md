@@ -37,7 +37,7 @@ Installation of the pipeline.
 copy the disp.cl file into ~/iraf and run mkiraf in that directory.
 - At the end of your iraf login.cl file, add the following line with the appropriate path:
 
-     ```disp='<your_iraf_directory>/disp.cl'```
+     ```task disp='<your_iraf_directory>/disp.cl'```
 
 - in the folder "$UCSC_SPECPIPE/test_data" run the following command and
 follow the prompts.  If all goes well - and if you interactively 
