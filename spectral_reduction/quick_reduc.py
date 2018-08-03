@@ -133,6 +133,8 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		os.system('cp ' + flat_file + ' .')
 		flat_file = string.split(flat_file, '/')[-1]
 		
+		#ASSUMING INPUT FILES TRIMMED AND FLATFIELDED
+		print (timg)
 		iraf.ccdproc(timg, output='', overscan='yes', trim='yes', zerocor="no", flatcor="no", readaxi='line',
 					 trimsec=str(_trimsec0),biassec=str(_biassec0), Stdout=1)
 
@@ -155,18 +157,20 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 
 		img='cosmic_' + img
 
+		####NEED TO COMBINE ARCS HERE
 		if inst.get('name') == 'kast_blue':
 			arcfile = list_arc_b[0]
 		elif inst.get('name') == 'kast_red':
 			arcfile = list_arc_r[0]
+		####
 		
 		if not arcfile.endswith(".fits"):
 			arcfile=arcfile+'.fits'
 
 		if os.path.isfile(arcfile):
 			util.delete('t' + arcfile)
-			iraf.ccdproc(arcfile, output= 't' + arcfile, overscan='yes', trim='yes', zerocor="no", flatcor="no",
-						 readaxi='line', trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
+			# iraf.ccdproc(arcfile, output= 't' + arcfile, overscan='yes', trim='yes', zerocor="no", flatcor="no",
+			# 			 readaxi='line', trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
 			arcfile = 't' + arcfile
 		else:
 			print('\n### warning no arcfile \n exit ')
@@ -192,9 +196,9 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 
 			print('\n###  arcfile : ',arcfile)
 			print('\n###  arcfile extraction : ',arc_ex)
-			print('\n###  arc referenece : ',arcref)
+			print('\n###  arc reference : ',arcref)
 			iraf.specred.apall(arcfile, output=arc_ex, line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
-
+			#PROBLEM HERE
 			iraf.longslit.reidentify(referenc=arcref, images=arc_ex, interac='NO', section=inst.get('section'), 
 									coordli=inst.get('line_list'), shift='INDEF', search='INDEF',
 									mode='h', verbose='YES', step=0,nsum=5, nlost=2, cradius=10, refit='yes',overrid='yes',newaps='no')
@@ -216,6 +220,7 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 			imgex = util.extractspectrum(
 				img, dv, inst, _interactive, 'obj')
 			print('\n### applying wavelength solution')
+			print (arc_ex)
 			iraf.disp(inlist=imgex, reference=arc_ex)	
 			sensfile = inst.get('archive_sens')
 			os.system('cp ' + sensfile + ' .')
@@ -265,7 +270,7 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		util.delete(arc_ex)
 		util.delete(arcfile)
 		util.delete('logfile')
-		util.delete(dimgex)
+		#util.delete(dimgex)
 		util.delete('cosmic_*')
 	print('\n### now i will merge ...')
 	if len(asci_files) > 1:
