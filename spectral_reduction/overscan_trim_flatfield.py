@@ -10,6 +10,7 @@ import glob
 import matplotlib
 import instruments
 from pyraf import iraf
+import os
 
 matplotlib.use('TkAgg')
 
@@ -89,6 +90,9 @@ if __name__ == "__main__":
 			print(util.readkey3(hdr, 'VERSION') + 'not in database')
 			sys.exit()
 
+	if not os.path.isdir('pre_reduced/'):
+		os.mkdir('pre_reduced/')
+
 	tlist_files = []
 	for img in listfile:
 		hdr = util.readhdr(img)
@@ -106,26 +110,41 @@ if __name__ == "__main__":
 		_biassec0 = inst.get('biassec')
 		_trimsec0 = inst.get('trimsec')
 
-		#OVERSCAN CORRECT AND TRIM ALL IMAGES
+		#OVERSCAN CORRECT AND TRIM ALL IMAGES (OVERSCAN IS CAUSING PROBLEMS)
 		# iraf.ccdproc(img, output='t'+img, overscan='yes', trim='yes', zerocor="no", flatcor="no", readaxi='line',
 		# 			 trimsec=str(_trimsec0),biassec=str(_biassec0), Stdout=1)
 		iraf.ccdproc(img, output='t'+img, overscan='no', trim='yes', zerocor="no", flatcor="no", readaxi='line',
 			         trimsec=str(_trimsec0), Stdout=1)
 
+		if img in list_arc_b or img in list_arc_r:
+			os.system('mv ' + 't' + img + ' ' + 'pre_reduced' + '/')
+
 	#CREATE RESPONSE FILES, NEED TO IMPLEMENT FLAT COMBINING
 	inter = 'yes'
 	iraf.specred.dispaxi = 1
-	# iraf.flatcombine('@bflat_list', output='Flat_blue')
 	if len(list_flat_b) == 1:
 		Flat_blue = list_flat_b[0]
+	else:
+		flat_str = ''
+		for flat in list_flat_b:
+			flat_str = flat_str + 't'+ flat + ','
+		iraf.flatcombine(flat_str, output='tFlat_blue', ccdtype='',rdnoise=3.7, subsets='yes', process='no')
+		Flat_blue = 'Flat_blue.fits'
+
 	iraf.specred.response('t'+Flat_blue, normaliz='t'+Flat_blue, response='RESP_blue', interac=inter, thresho='INDEF',
                                                  sample='*', naverage=2, function='legendre', low_rej=3,
                                                  high_rej=3, order=120, niterat=20, grow=0, graphic='stdgraph')
 
 	iraf.specred.dispaxi = 2
-	# iraf.flatcombine('@rflat_list', output='Flat_red')
 	if len(list_flat_r) == 1:
 		Flat_red = list_flat_r[0]
+	else:
+		flat_str = ''
+		for flat in list_flat_r:
+			flat_str = flat_str + 't'+ flat + ','
+		iraf.flatcombine(flat_str, output='tFlat_red', ccdtype='', rdnoise=3.8, subsets='yes', process='no')
+		Flat_red = 'Flat_red.fits'
+
 	iraf.specred.response('t'+Flat_red, normaliz='t'+Flat_red, response='RESP_red', interac=inter, thresho='INDEF',
                                                  sample='*', naverage=2, function='legendre', low_rej=3,
                                                  high_rej=3, order=120, niterat=20, grow=0, graphic='stdgraph')
@@ -148,3 +167,4 @@ if __name__ == "__main__":
 
 		iraf.ccdproc('t'+obj, output='ft'+obj, overscan='no', trim='no', zerocor="no", flatcor="yes", readaxi='line', 
 			 		 flat=flat_file, Stdout=1)
+		os.system('mv ' + 'ft'+ obj + ' ' + 'pre_reduced' + '/')

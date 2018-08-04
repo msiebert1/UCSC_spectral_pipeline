@@ -81,6 +81,9 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 
 	if len(newlist[1]) < 1:
 		newlist = newlist[:-1]
+
+	if len(newlist[0]) < 1:
+		newlist = newlist[1:]
 	
 	for imgs in newlist:
 		hdr = util.readhdr(imgs[0])
@@ -134,14 +137,15 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		flat_file = string.split(flat_file, '/')[-1]
 		
 		#ASSUMING INPUT FILES TRIMMED AND FLATFIELDED
-		print (timg)
-		iraf.ccdproc(timg, output='', overscan='yes', trim='yes', zerocor="no", flatcor="no", readaxi='line',
-					 trimsec=str(_trimsec0),biassec=str(_biassec0), Stdout=1)
+		# iraf.ccdproc(timg, output='', overscan='yes', trim='yes', zerocor="no", flatcor="no", readaxi='line',
+		# 			 trimsec=str(_trimsec0),biassec=str(_biassec0), Stdout=1)
+		# iraf.ccdproc(timg, output='', overscan='no', trim='yes', zerocor="no", flatcor="no", readaxi='line',
+		# 			 trimsec=str(_trimsec0), Stdout=1)
 
-		iraf.ccdproc(timg, output='', overscan='no', trim='no', zerocor="yes", flatcor="no", readaxi='line',
-					 zero=zero_file,order=3, Stdout=1)
-		iraf.ccdproc(timg, output='', overscan='no', trim='no', zerocor="no", flatcor="yes", readaxi='line',
-					 flat=flat_file, Stdout=1)
+		# iraf.ccdproc(timg, output='', overscan='no', trim='no', zerocor="yes", flatcor="no", readaxi='line',
+		# 			 zero=zero_file,order=3, Stdout=1)
+		# iraf.ccdproc(timg, output='', overscan='no', trim='no', zerocor="no", flatcor="yes", readaxi='line',
+		# 			 flat=flat_file, Stdout=1)
 
 		img = timg
 
@@ -155,7 +159,8 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 
 		print('\n### cosmic removal finished')
 
-		img='cosmic_' + img
+		if _cosmic:
+			img='cosmic_' + img
 
 		####NEED TO COMBINE ARCS HERE
 		if inst.get('name') == 'kast_blue':
@@ -167,14 +172,14 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		if not arcfile.endswith(".fits"):
 			arcfile=arcfile+'.fits'
 
-		if os.path.isfile(arcfile):
-			util.delete('t' + arcfile)
-			# iraf.ccdproc(arcfile, output= 't' + arcfile, overscan='yes', trim='yes', zerocor="no", flatcor="no",
-			# 			 readaxi='line', trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
-			arcfile = 't' + arcfile
-		else:
-			print('\n### warning no arcfile \n exit ')
-			sys.exit()
+		# if os.path.isfile(arcfile):
+		# 	util.delete('t' + arcfile)
+		# 	iraf.ccdproc(arcfile, output= 't' + arcfile, overscan='yes', trim='yes', zerocor="no", flatcor="no",
+		# 				 readaxi='line', trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
+		# 	arcfile = 't' + arcfile
+		# else:
+		# 	print('\n### warning no arcfile \n exit ')
+		# 	sys.exit()
 
 		if not os.path.isdir('database/'):
 				os.mkdir('database/')
@@ -183,6 +188,7 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 			arc_ex=re.sub('.fits', '.ms.fits', arcfile)
 			print('\n### arcfile : ',arcfile)
 			print('\n### arcfile extraction : ',arc_ex)
+			print(inst.get('line_list'))
 			iraf.specred.apall(arcfile, output='', line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
 			iraf.longslit.identify(images=arc_ex, section=inst.get('section'),coordli=inst.get('line_list'),function = 'spline3',order=3, mode='h')
 		else:
@@ -268,7 +274,7 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		util.delete(zero_file)
 		util.delete(flat_file)
 		util.delete(arc_ex)
-		util.delete(arcfile)
+		# util.delete(arcfile)
 		util.delete('logfile')
 		#util.delete(dimgex)
 		util.delete('cosmic_*')
