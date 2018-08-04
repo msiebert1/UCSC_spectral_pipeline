@@ -116,10 +116,25 @@ if __name__ == "__main__":
 		iraf.ccdproc(img, output='t'+img, overscan='no', trim='yes', zerocor="no", flatcor="no", readaxi='line',
 			         trimsec=str(_trimsec0), Stdout=1)
 
-		if img in list_arc_b or img in list_arc_r:
-			os.system('mv ' + 't' + img + ' ' + 'pre_reduced' + '/')
-
 	#CREATE RESPONSE FILES, NEED TO IMPLEMENT FLAT COMBINING
+	if len(list_arc_b) == 1:
+		arc_blue = list_arc_b[0]
+		os.system('cp ' + arc_blue + ' ' + 'ARC_blue.fits')
+	else:
+		arc_str = ''
+		for arc in list_arc_b:
+			arc_str = arc_str + 't'+ arc + ','
+		iraf.imcombine(arc_str, output='ARC_blue')
+
+	if len(list_arc_r) == 1:
+		arc_red = list_arc_r[0]
+		os.system('cp ' + arc_red + ' ' + 'ARC_red.fits')
+	else:
+		arc_str = ''
+		for arc in list_arc_r:
+			arc_str = arc_str + 't'+ arc + ','
+		iraf.imcombine(arc_str, output='ARC_red')
+
 	inter = 'yes'
 	iraf.specred.dispaxi = 1
 	if len(list_flat_b) == 1:
@@ -149,7 +164,10 @@ if __name__ == "__main__":
                                                  sample='*', naverage=2, function='legendre', low_rej=3,
                                                  high_rej=3, order=120, niterat=20, grow=0, graphic='stdgraph')
 
-	# ccdproc @objcomp.list flatcor+ flat=Resp_blue
+	os.system('mv ' + 'RESP_blue.fits' + ' ' + 'pre_reduced' + '/')
+	os.system('mv ' + 'RESP_red.fits' + ' ' + 'pre_reduced' + '/')
+	os.system('mv ' + 'ARC_blue.fits' + ' ' + 'pre_reduced' + '/')
+	os.system('mv ' + 'ARC_red.fits' + ' ' + 'pre_reduced' + '/')
 
 	#science files should have 't' in front now
 	for obj in files_science:
@@ -165,6 +183,6 @@ if __name__ == "__main__":
 			sys.exit()
 		iraf.specred.dispaxi = inst.get('dispaxis')
 
-		iraf.ccdproc('t'+obj, output='ft'+obj, overscan='no', trim='no', zerocor="no", flatcor="yes", readaxi='line', 
-			 		 flat=flat_file, Stdout=1)
-		os.system('mv ' + 'ft'+ obj + ' ' + 'pre_reduced' + '/')
+		# iraf.ccdproc('t'+obj, output='ft'+obj, overscan='no', trim='no', zerocor="no", flatcor="yes", readaxi='line', 
+		# 	 		 flat=flat_file, Stdout=1)
+		os.system('mv ' + 't'+ obj + ' ' + 'pre_reduced' + '/')

@@ -1,6 +1,6 @@
 from __future__    import print_function
 
-def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
+def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc):
 
 	import string
 	import os
@@ -89,8 +89,10 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		hdr = util.readhdr(imgs[0])
 		if util.readkey3(hdr, 'VERSION') == 'kastb':
 			inst = instruments.kast_blue
+			flat_file = 'RESP_blue'
 		elif util.readkey3(hdr, 'VERSION') == 'kastr':
 			inst = instruments.kast_red
+			flat_file = 'RESP_red'
 		else:
 			print(util.readkey3(hdr, 'VERSION') + 'not in database')
 			sys.exit()
@@ -132,11 +134,11 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		os.system('cp ' + zero_file + ' .')
 		zero_file = string.split(zero_file, '/')[-1]
 		
-		flat_file = inst.get('archive_flat_file')
-		os.system('cp ' + flat_file + ' .')
-		flat_file = string.split(flat_file, '/')[-1]
+		# flat_file = inst.get('archive_flat_file')
+		# os.system('cp ' + flat_file + ' .')
+		# flat_file = string.split(flat_file, '/')[-1]
 		
-		#ASSUMING INPUT FILES TRIMMED AND FLATFIELDED
+		#ASSUMING INPUT FILES TRIMMED AND OVERSCAN CORRECTED
 		# iraf.ccdproc(timg, output='', overscan='yes', trim='yes', zerocor="no", flatcor="no", readaxi='line',
 		# 			 trimsec=str(_trimsec0),biassec=str(_biassec0), Stdout=1)
 		# iraf.ccdproc(timg, output='', overscan='no', trim='yes', zerocor="no", flatcor="no", readaxi='line',
@@ -146,6 +148,8 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 		# 			 zero=zero_file,order=3, Stdout=1)
 		# iraf.ccdproc(timg, output='', overscan='no', trim='no', zerocor="no", flatcor="yes", readaxi='line',
 		# 			 flat=flat_file, Stdout=1)
+		iraf.ccdproc(timg, output='', overscan='no', trim='no', zerocor="no", flatcor="yes", readaxi='line', 
+			 		 flat=flat_file, Stdout=1)
 
 		img = timg
 
@@ -272,7 +276,7 @@ def reduce(imglist,files_arc, _cosmic, _interactive_extraction,_arc):
 			util.delete(arcref)
 		util.delete(sensfile)
 		util.delete(zero_file)
-		util.delete(flat_file)
+		# util.delete(flat_file)
 		util.delete(arc_ex)
 		# util.delete(arcfile)
 		util.delete('logfile')

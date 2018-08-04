@@ -40,6 +40,10 @@ if __name__ == "__main__":
 
 	util.delete('*.png')
 
+	yn = raw_input("Did you run overscan_trim_flatfield.py? (y/n) ")
+	if yn == 'n':
+		print ('Then go fuck yourself...')
+		sys.exit()
 	if len(args) > 1:
 		files=[]
 		sys.argv.append('--help')
@@ -50,6 +54,7 @@ if __name__ == "__main__":
 		listfile = glob.glob('*.fits')
 		files_science = []
 		files_arc = []
+		files_flat = []
 		#print 'checking your files ...'
 		for img in listfile:
 			_type = ''
@@ -57,6 +62,8 @@ if __name__ == "__main__":
 			_type=util.readkey3(hdr0, 'object')
 			if _type.startswith("arc"):
 				files_arc.append(img)
+			elif 'RESP' in img:
+				files_flat.append(img)
 			else:
 				files_science.append(img)
 
@@ -71,7 +78,7 @@ if __name__ == "__main__":
 
 	if len(files_science) > 0:
 		print('\n#######################################\n### start of reduction')
-		outputfile = quick_reduc.reduce(files_science,files_arc, _cosmic, _interactive_extraction,_arc)
+		outputfile = quick_reduc.reduce(files_science, files_arc, files_flat, _cosmic, _interactive_extraction,_arc)
 		stoptime = time.time()
 		print('\n### wow, only ' + str(stoptime - starttime) + ' seconds')
 		print('\n### end of reduction')
