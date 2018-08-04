@@ -40,10 +40,6 @@ if __name__ == "__main__":
 
 	util.delete('*.png')
 
-	yn = raw_input("Did you run overscan_trim_flatfield.py? (y/n) ")
-	if yn == 'n':
-		print ('Then go fuck yourself...')
-		sys.exit()
 	if len(args) > 1:
 		files=[]
 		sys.argv.append('--help')
