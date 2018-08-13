@@ -93,8 +93,8 @@ if __name__ == "__main__":
 	if not os.path.isdir('pre_reduced/'):
 		os.mkdir('pre_reduced/')
 
-	mkarc = raw_input("Make arc? (y/n)")
-	mkflat = raw_input("Make flat? (y/n)")
+	mkarc = raw_input("Make arc? ([y]/n)")
+	mkflat = raw_input("Make flat? ([y]/n)")
 
 	tlist_files = []
 	for img in listfile:
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 				         trimsec=str(_trimsec0), Stdout=1)
 
 	#CREATE RESPONSE FILES, NEED TO IMPLEMENT FLAT COMBINING
-	if mkarc == 'y':
+	if mkarc != 'n':
 		if len(list_arc_b) == 1:
 			arc_blue = list_arc_b[0]
 			os.system('cp ' + arc_blue + ' ' + 'ARC_blue.fits')
@@ -143,7 +143,7 @@ if __name__ == "__main__":
 		os.system('mv ' + 'ARC_blue.fits' + ' ' + 'pre_reduced' + '/')
 		os.system('mv ' + 'ARC_red.fits' + ' ' + 'pre_reduced' + '/')
 
-	if mkflat == 'y':
+	if mkflat != 'n':
 		inter = 'yes'
 		iraf.specred.dispaxi = 1
 		if len(list_flat_b) == 1:
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
 		iraf.specred.response('t'+Flat_blue, normaliz='t'+Flat_blue, response='RESP_blue', interac=inter, thresho='INDEF',
 	                                                 sample='*', naverage=2, function='legendre', low_rej=3,
-	                                                 high_rej=3, order=120, niterat=20, grow=0, graphic='stdgraph')
+	                                                 high_rej=3, order=60, niterat=20, grow=0, graphic='stdgraph')
 
 		iraf.specred.dispaxi = 2
 		if len(list_flat_r) == 1:
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
 		iraf.specred.response('t'+Flat_red, normaliz='t'+Flat_red, response='RESP_red', interac=inter, thresho='INDEF',
 	                                                 sample='*', naverage=2, function='legendre', low_rej=3,
-	                                                 high_rej=3, order=120, niterat=20, grow=0, graphic='stdgraph')
+	                                                 high_rej=3, order=80, niterat=20, grow=0, graphic='stdgraph')
 
 		os.system('mv ' + 'RESP_blue.fits' + ' ' + 'pre_reduced' + '/')
 		os.system('mv ' + 'RESP_red.fits' + ' ' + 'pre_reduced' + '/')

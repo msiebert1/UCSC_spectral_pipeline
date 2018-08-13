@@ -232,38 +232,40 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 			print('\n### applying wavelength solution')
 			print (arc_ex)
 			iraf.disp(inlist=imgex, reference=arc_ex)	
-			sensfile = inst.get('archive_sens')
-			os.system('cp ' + sensfile + ' .')
-			sensfile = string.split(sensfile, '/')[-1]
-			if sensfile:
-				print('\n### sensitivity function : ',sensfile)
-				imgf = re.sub('.fits', '_f.fits', img)
-				_extinction = inst.get('extinction_file')
-				_observatory = inst.get('observatory')
-				_exptime = util.readkey3(hdr, 'EXPTIME')
-				_airmass = util.readkey3(hdr, 'AIRMASS')
-				util.delete(imgf)
-				dimgex='d'+imgex
-				iraf.specred.calibrate(input=dimgex, output=imgf, sensiti=sensfile, extinct='yes',
-										extinction=_extinction,flux='yes', ignorea='yes', airmass=_airmass, exptime=_exptime,
-										fnu='no')
-				imgout = imgf
-				imgasci = re.sub('.fits', '.asci', imgout)
-				errasci = re.sub('.fits', '_err.asci', imgout)
-				util.delete(imgasci)
-				iraf.onedspec.wspectext(imgout + '[*,1,1]', imgasci, header='no')
-				iraf.onedspec.wspectext(imgout + '[*,1,4]', errasci, header='no')
-				spec = np.transpose(np.genfromtxt(imgasci))
-				err = np.transpose(np.genfromtxt(errasci))
-				util.delete(errasci)
-				final = np.transpose([spec[0], spec[1], err[1]])
-				np.savetxt(imgasci, final)
 
-				result = result + [imgout, imgasci]
+			###OLD FLUX CALIBRATION
+			# sensfile = inst.get('archive_sens')
+			# os.system('cp ' + sensfile + ' .')
+			# sensfile = string.split(sensfile, '/')[-1]
+			# if sensfile:
+			# 	print('\n### sensitivity function : ',sensfile)
+			# 	imgf = re.sub('.fits', '_f.fits', img)
+			# 	_extinction = inst.get('extinction_file')
+			# 	_observatory = inst.get('observatory')
+			# 	_exptime = util.readkey3(hdr, 'EXPTIME')
+			# 	_airmass = util.readkey3(hdr, 'AIRMASS')
+			# 	util.delete(imgf)
+			# 	dimgex='d'+imgex
+			# 	iraf.specred.calibrate(input=dimgex, output=imgf, sensiti=sensfile, extinct='yes',
+			# 							extinction=_extinction,flux='yes', ignorea='yes', airmass=_airmass, exptime=_exptime,
+			# 							fnu='no')
+			# 	imgout = imgf
+			# 	imgasci = re.sub('.fits', '.asci', imgout)
+			# 	errasci = re.sub('.fits', '_err.asci', imgout)
+			# 	util.delete(imgasci)
+			# 	iraf.onedspec.wspectext(imgout + '[*,1,1]', imgasci, header='no')
+			# 	iraf.onedspec.wspectext(imgout + '[*,1,4]', errasci, header='no')
+			# 	spec = np.transpose(np.genfromtxt(imgasci))
+			# 	err = np.transpose(np.genfromtxt(errasci))
+			# 	util.delete(errasci)
+			# 	final = np.transpose([spec[0], spec[1], err[1]])
+			# 	np.savetxt(imgasci, final)
+
+			# 	result = result + [imgout, imgasci]
 
 		result = result + [imgex] + [timg]
 	   
-		asci_files.append(imgasci)
+		# asci_files.append(imgasci)
 		if not os.path.isdir(_object0 + '/'):
 			os.mkdir(_object0 + '/')
 			for img in result:
@@ -274,7 +276,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 		
 		if not _arc_identify:
 			util.delete(arcref)
-		util.delete(sensfile)
+		# util.delete(sensfile)
 		util.delete(zero_file)
 		# util.delete(flat_file)
 		util.delete(arc_ex)
@@ -282,8 +284,15 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 		util.delete('logfile')
 		#util.delete(dimgex)
 		util.delete('cosmic_*')
-	print('\n### now i will merge ...')
-	if len(asci_files) > 1:
-		final = cs.combine_blue_red(asci_files[0], asci_files[1], _object0)
-	print('\n### final result in folder ',_object0,' is ',_object0+'_merged.asci')
+
+		list_name = raw_input('Enter list file name: ')
+		if os.path.isfile(list_name):
+			util.delete(list_name)
+		f= open(list_name,"w+")
+		f.write('d'+ imgex)
+		f.close()
+	# print('\n### now i will merge ...')
+	# if len(asci_files) > 1:
+	# 	final = cs.combine_blue_red(asci_files[0], asci_files[1], _object0)
+	# print('\n### final result in folder ',_object0,' is ',_object0+'_merged.asci')
 	return result
