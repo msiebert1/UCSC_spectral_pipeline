@@ -168,7 +168,7 @@ if __name__ == "__main__":
 	#CREATE RESPONSE FILES, NEED TO IMPLEMENT FLAT COMBINING
 	if mkarc != 'n':
 		if len(list_arc_b) == 1:
-			arc_blue = 'pre_reduced/' + list_arc_b[0]
+			arc_blue = list_arc_b[0]
 			os.system('cp ' + arc_blue + ' ' + 'pre_reduced/ARC_blue.fits')
 		else:
 			arc_str = ''
@@ -177,7 +177,7 @@ if __name__ == "__main__":
 			iraf.imcombine(arc_str, output='pre_reduced/ARC_blue.fits')
 
 		if len(list_arc_r) == 1:
-			arc_red = 'pre_reduced/' + list_arc_r[0]
+			arc_red = list_arc_r[0]
 			os.system('cp ' + arc_red + ' ' + 'pre_reduced/ARC_red.fits')
 		else:
 			arc_str = ''
