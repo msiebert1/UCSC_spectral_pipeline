@@ -137,10 +137,10 @@ def main():
                 
             # trim
             if not img.startswith('t'):
-                if os.isfile('pre_reduced/t'+img):
-                    os.remove('pre_reduced/t'+img)
-                iraf.ccdproc(img, output='pre_reduced/t'+img, o
-                             verscan='no', trim='yes', zerocor="no", flatcor="no", 
+                if os.isfile('pre_reduced/to'+img:
+                    os.remove('pre_reduced/to'+img)
+                iraf.ccdproc('pre_reduced/o'+img, output='pre_reduced/to'+img, 
+                             overscan='no', trim='yes', zerocor="no", flatcor="no", 
                              readaxi='line',trimsec=str(_trimsec0), Stdout=1)
     else:
         pfiles = []
@@ -182,10 +182,11 @@ def main():
                     
                 # trim
                 if not img.startswith('t'):
-                    if os.isfile('pre_reduced/t'+img):
-                        os.remove('pre_reduced/t'+img)
-                    iraf.ccdproc(img, output='pre_reduced/t'+img, overscan='no', trim='yes', zerocor="no", flatcor="no", readaxi='line',
-                                 trimsec=str(_trimsec0), Stdout=1)
+                    if os.isfile('pre_reduced/to'+img):
+                        os.remove('pre_reduced/to'+img)
+                    iraf.ccdproc('pre_reduced/o'+img, output='pre_reduced/to'+img, 
+                                 overscan='no', trim='yes', zerocor="no", flatcor="no", 
+                                 readaxi='line',trimsec=str(_trimsec0), Stdout=1)
 
 
     #CREATE RESPONSE FILES, NEED TO IMPLEMENT FLAT COMBINING
