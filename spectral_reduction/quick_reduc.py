@@ -81,18 +81,23 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 
 	if len(newlist[1]) < 1:
 		newlist = newlist[:-1]
-
-	if len(newlist[0]) < 1:
+	elif len(newlist[0]) < 1:
 		newlist = newlist[1:]
-	
+	else:
+		sides = raw_input("Reduce which side? ([both]/b/r): ")
+		if sides == 'b':
+			newlist = newlist[:-1]
+		elif sides == 'r':
+			newlist = newlist[1:]
+
 	for imgs in newlist:
 		hdr = util.readhdr(imgs[0])
 		if util.readkey3(hdr, 'VERSION') == 'kastb':
 			inst = instruments.kast_blue
-			flat_file = 'RESP_blue'
+			flat_file = '../RESP_blue'
 		elif util.readkey3(hdr, 'VERSION') == 'kastr':
 			inst = instruments.kast_red
-			flat_file = 'RESP_red'
+			flat_file = '../RESP_red'
 		else:
 			print(util.readkey3(hdr, 'VERSION') + 'not in database')
 			sys.exit()
@@ -130,9 +135,9 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 				os.system('rm -rf ' + timg)
 			iraf.imcopy(img, output=timg)
 		
-		zero_file = inst.get('archive_zero_file')
-		os.system('cp ' + zero_file + ' .')
-		zero_file = string.split(zero_file, '/')[-1]
+		# zero_file = inst.get('archive_zero_file')
+		# os.system('cp ' + zero_file + ' .')
+		# zero_file = string.split(zero_file, '/')[-1]
 		
 		# flat_file = inst.get('archive_flat_file')
 		# os.system('cp ' + flat_file + ' .')
@@ -166,14 +171,14 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 		if _cosmic:
 			img='cosmic_' + img
 
-		####NEED TO COMBINE ARCS HERE
-		if inst.get('name') == 'kast_blue':
+		if inst.get('name') == 'kast_blue' and len(list_arc_b)>0:
 			arcfile = list_arc_b[0]
-		elif inst.get('name') == 'kast_red':
+		elif inst.get('name') == 'kast_red' and len(list_arc_r)>0:
 			arcfile = list_arc_r[0]
-		####
+		else:
+			arcfile=None
 		
-		if not arcfile.endswith(".fits"):
+		if arcfile is not None and not arcfile.endswith(".fits"):
 			arcfile=arcfile+'.fits'
 
 		# if os.path.isfile(arcfile):
@@ -189,6 +194,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 				os.mkdir('database/')
 		
 		if _arc_identify:
+			os.system('cp ' + arcfile + ' .')
+			arcfile = string.split(arcfile, '/')[-1]
 			arc_ex=re.sub('.fits', '.ms.fits', arcfile)
 			print('\n### arcfile : ',arcfile)
 			print('\n### arcfile extraction : ',arc_ex)
@@ -201,14 +208,14 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 			os.system('cp ' + arcref + ' .')
 			arcref = string.split(arcref, '/')[-1]
 			os.system('cp ' + arcrefid + ' ./database')
+			arcfile=arcref
 
-			arc_ex=re.sub('.fits', '.ms.fits', arcfile)
+			arc_ex=arcfile
 
 			print('\n###  arcfile : ',arcfile)
 			print('\n###  arcfile extraction : ',arc_ex)
 			print('\n###  arc reference : ',arcref)
 			iraf.specred.apall(arcfile, output=arc_ex, line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
-			#PROBLEM HERE
 			iraf.longslit.reidentify(referenc=arcref, images=arc_ex, interac='NO', section=inst.get('section'), 
 									coordli=inst.get('line_list'), shift='INDEF', search='INDEF',
 									mode='h', verbose='YES', step=0,nsum=5, nlost=2, cradius=10, refit='yes',overrid='yes',newaps='no')
@@ -266,29 +273,36 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 		result = result + [imgex] + [timg]
 	   
 		# asci_files.append(imgasci)
-		if not os.path.isdir(_object0 + '/'):
-			os.mkdir(_object0 + '/')
-			for img in result:
-				os.system('mv ' + img + ' ' + _object0 + '/')
-		else:
-			for img in result:
-				os.system('mv ' + img + ' ' + _object0 + '/')
+		if not os.path.isdir(_object0 + '_ex/'):
+			os.mkdir(_object0 + '_ex/')
+			# for img in result:
+			# 	os.system('mv ' + img + ' ' + _object0 + '/')
+		# else:
+		# 	for img in result:
+		# 		os.system('mv ' + img + ' ' + _object0 + '/')
 		
 		if not _arc_identify:
 			util.delete(arcref)
+		else:
+			util.delete(arcfile)
 		# util.delete(sensfile)
-		util.delete(zero_file)
+		# util.delete(zero_file)
 		# util.delete(flat_file)
 		util.delete(arc_ex)
+		util.delete(img)
+		util.delete(imgex)
 		# util.delete(arcfile)
 		util.delete('logfile')
 		#util.delete(dimgex)
-		util.delete('cosmic_*')
+		if _cosmic:
+			util.delete(img[7:])
+			util.delete("cosmic_*")
 
+		os.system('mv ' + 'd'+ imgex + ' ' + _object0 + '_ex/')
 		list_name = raw_input('Enter list file name: ')
 		if os.path.isfile(list_name):
-			util.delete(list_name)
-		f= open(list_name,"w+")
+			util.delete(_object0 + '_ex/'+ list_name)
+		f= open(_object0 + '_ex/'+ list_name,"w+")
 		f.write('d'+ imgex)
 		f.close()
 	# print('\n### now i will merge ...')

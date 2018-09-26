@@ -39,6 +39,7 @@ if __name__ == "__main__":
 	starttime = time.time()
 
 	util.delete('*.png')
+	_arc= option.arc
 
 	if len(args) > 1:
 		files=[]
@@ -47,10 +48,13 @@ if __name__ == "__main__":
 	elif len(args) == 1:
 		files = util.readlist(args[0])
 	else:
-		listfile = glob.glob('*.fits')
+		listfile = glob.glob('t*.fits')
 		files_science = []
 		files_arc = []
 		files_flat = []
+		if _arc:
+			files_arc.append('../ARC_blue.fits')
+			files_arc.append('../ARC_red.fits')
 		#print 'checking your files ...'
 		for img in listfile:
 			_type = ''
@@ -69,7 +73,7 @@ if __name__ == "__main__":
 	_interactive_extraction = option.interactive_extraction
 	if not _interactive_extraction:	  _interactive_extraction = False
 
-	_arc= option.arc
+	
 	if not _arc:   _arc = False
 
 	if len(files_science) > 0:
