@@ -1,6 +1,7 @@
 from __future__    import print_function
 try:      from astropy.io import fits as pyfits
 except:   import pyfits
+import numpy as np
 
 #---------------------------------------------------------------------------
 # 
@@ -27,7 +28,7 @@ except:   import pyfits
 # Version 1.0 -- Elinor Gates, 2015 Nov 24
 def kastbias(ifile,ofile):
     
-    data, header = fits.getdata(ifile,header=True)
+    data, header = pyfits.getdata(ifile,header=True)
 
     # change data to float
     data=data.astype('float32')
@@ -123,7 +124,7 @@ def kastbias(ifile,ofile):
     header['HISTORY'] = 'Overscan subtracted'
 
     # write new fits file
-    fits.writeto(ofile,datanew,header,clobber=True)
+    pyfits.writeto(ofile,datanew,header,clobber=True)
 
     return 0
 
