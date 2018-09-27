@@ -193,29 +193,35 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 		if not os.path.isdir('database/'):
 				os.mkdir('database/')
 		
+		# if _arc_identify:
+		# 	os.system('cp ' + arcfile + ' .')
+		# 	arcfile = string.split(arcfile, '/')[-1]
+		# 	arc_ex=re.sub('.fits', '.ms.fits', arcfile)
+		# 	print('\n### arcfile : ',arcfile)
+		# 	print('\n### arcfile extraction : ',arc_ex)
+		# 	print(inst.get('line_list'))
+		# 	iraf.specred.apall(arcfile, output='', line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
+		# 	iraf.longslit.identify(images=arc_ex, section=inst.get('section'),coordli=inst.get('line_list'),function = 'spline3',order=3, mode='h')
 		if _arc_identify:
 			os.system('cp ' + arcfile + ' .')
 			arcfile = string.split(arcfile, '/')[-1]
 			arc_ex=re.sub('.fits', '.ms.fits', arcfile)
-			print('\n### arcfile : ',arcfile)
-			print('\n### arcfile extraction : ',arc_ex)
-			print(inst.get('line_list'))
-			iraf.specred.apall(arcfile, output='', line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
-			iraf.longslit.identify(images=arc_ex, section=inst.get('section'),coordli=inst.get('line_list'),function = 'spline3',order=3, mode='h')
-		else:
+
 			arcref = inst.get('archive_arc_extracted')
+			arcref_img = string.split(arcref, '/')[-1]
+			arcref_img = arcref_img.replace('.ms.fits', '')
 			arcrefid = inst.get('archive_arc_extracted_id')
 			os.system('cp ' + arcref + ' .')
 			arcref = string.split(arcref, '/')[-1]
 			os.system('cp ' + arcrefid + ' ./database')
-			arcfile=arcref
 
-			arc_ex=arcfile
+			aperture = inst.get('archive_arc_aperture')
+			os.system('cp ' + aperture + ' ./database')
 
 			print('\n###  arcfile : ',arcfile)
 			print('\n###  arcfile extraction : ',arc_ex)
 			print('\n###  arc reference : ',arcref)
-			iraf.specred.apall(arcfile, output=arc_ex, line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
+			iraf.specred.apall(arcfile, output=arc_ex, ref=arcref_img, line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
 			iraf.longslit.reidentify(referenc=arcref, images=arc_ex, interac='NO', section=inst.get('section'), 
 									coordli=inst.get('line_list'), shift='INDEF', search='INDEF',
 									mode='h', verbose='YES', step=0,nsum=5, nlost=2, cradius=10, refit='yes',overrid='yes',newaps='no')
@@ -291,7 +297,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 		util.delete(arc_ex)
 		util.delete(img)
 		util.delete(imgex)
-		# util.delete(arcfile)
+		util.delete(arcref)
 		util.delete('logfile')
 		#util.delete(dimgex)
 		if _cosmic:
@@ -299,12 +305,21 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 			util.delete("cosmic_*")
 
 		os.system('mv ' + 'd'+ imgex + ' ' + _object0 + '_ex/')
-		list_name = raw_input('Enter list file name: ')
-		if os.path.isfile(list_name):
-			util.delete(_object0 + '_ex/'+ list_name)
-		f= open(_object0 + '_ex/'+ list_name,"w+")
-		f.write('d'+ imgex)
-		f.close()
+
+
+		# list_name = raw_input('Enter list file name: ')
+		# if os.path.isfile(list_name):
+		# 	util.delete(_object0 + '_ex/'+ list_name)
+		# f= open(_object0 + '_ex/'+ list_name,"w+")
+		# f.write('d'+ imgex)
+		# f.close()
+
+		use_sens = raw_input('Use archival flux calibration? [y]/n ')
+		if use_sens != 'no':
+			sensfile = inst.get('archive_sens')
+			os.system('cp ' + sensfile + ' ' + _object0 + '_ex/')
+			bstarfile = inst.get('archive_bstar')
+			os.system('cp ' + bstarfile + ' ' + _object0 + '_ex/')
 	# print('\n### now i will merge ...')
 	# if len(asci_files) > 1:
 	# 	final = cs.combine_blue_red(asci_files[0], asci_files[1], _object0)
