@@ -36,6 +36,11 @@ copy the disp.cl file into ~/iraf and run mkiraf in that directory.
 - At the end of your iraf login.cl file, add the following line with the appropriate path:
 
      ```task disp='<your_iraf_directory>/disp.cl'```
+
+- For the flux calibration portion of the pipline make sure you have a python 3 environment. This can be 
+created with a command like:
+
+    ```conda create -n py36 python=3.6 anaconda```
   
 ------------
 
