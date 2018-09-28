@@ -11,9 +11,7 @@ In order for the pipeline to work, collect in a folder the science files (for KA
 
 The recommended syntax is 
 
-QUICKLOOK.py -i -c
-
-You can add the option -a if you want to identify the arcs of the night by yourself, instead of comparing them with the archival ones.
+QUICKLOOK.py -i -a -c
 
 -------------
 
@@ -38,16 +36,6 @@ copy the disp.cl file into ~/iraf and run mkiraf in that directory.
 - At the end of your iraf login.cl file, add the following line with the appropriate path:
 
      ```task disp='<your_iraf_directory>/disp.cl'```
-
-- in the folder "$UCSC_SPECPIPE/test_data" run the following command and
-follow the prompts.  If all goes well - and if you interactively 
-move the red aperture so that it's not centered on the galaxy - 
-you will get a SN spectrum of 2018pj!  If it crashes the first time,
-be sure to remove all the files and folders that IRAF created before
-running again.
-
-     ```QUICKLOOK.py -i -c```
-
   
 ------------
 
@@ -59,51 +47,39 @@ functions that are not called at all. In time, this will be corrected.
 Moreover, there is a folder called trunk, where the archival files, used in the pipeline are included.
 - Extra_files. This includes 2 plots with emission arc lines for KAST,
 for your convenience, and the disp.cl file, for which we will mention later on.
-- Test_data. This includes 4 files: b1063.fits and r1085.fits are
-blue and red exposures of SN 2018pj, a normal type Ia, and b1003.fits
-and r1003.fits, a set of blue and red arcs. When I run the pipeline
-for these exposures, I type QUICKLOOK.py -c, so cosmic removal, no
-interactive extraction and only comparison with the archival arcs, I
-get a nice merged spectrum at ~14.5 seconds. Keep in mind that in the
-non-interactive case, the spectrum is not correct: the automated iraf
-extraction algorithm picks the galaxy instead of the SN at the red part.
+- Test_data. Contains arcs (b1003, r1003), flats (b1020-b1030, r1020-r1030), and science frames 
+(b1064, r1073-r1075).
 
 -----------
 
-The pipeline will :
+The 3 main parts to this pipeline are pre-reduction, extraction, and flux calibration. Each of
+the files specified below need to be made executable:
 
-- Identify which files are science and which are arcs, for each spectrograph's arm
-- Start from the blue arm
-- Overscan correction and trimming, for pre-defined regions of the CCD
-- Dark and Flat correction, from biases and dome flats taken on 02/06/2018
-- Cosmic ray removal, using the python implementation of LACOS
-- Compare the night's arcs with a set of already wavelength
-identified arcs (tbb1070.ms.fit) from 02/06/2018, calculating a new set of wavelength solution
-- (commented out for now, since I am still testing it) Determine
-an extra wavelength corrections from sky lines
+1) Pre-reduction (pre_reduction.py)
+- IMPORTANT: requires the iraf27 env
+- Starts with folder containing raw arcs, flats, and science frames.
+- Overscan correction, trimming, master arcs, master flats, and object folder organizing
+- A "pre_reduced" directory is created containing these new calibration files and 
+folders for individual targets.
+
+2) Extraction (QUICKLOOK.py -i -a -c)
+- IMPORTANT: requires the iraf27 env
+- Move to a target folder created in step 1 and run this script.
+- Cosmic ray removal (-c), using the python implementation of LACOS
+- Compares the night's arcs with a set of already wavelength
+identified arcs calculating a new set of wavelength solutions
 - Extract a spectrum using the apall task from IRAF
 - Map the extracted spectrum with the calculated wavelength solution
-- Calibrate the extracted, wavelength solved spectrum with a sensitivity
-function from Feige34, taken on 02/06/2018
 - The same for the red arm
 - If more than one red exposures are provided (normal), the images
 are combined prior to reduction
-- The red arm arcs fits file is tbr1103.ms.fits
-- The red sensitivity function is from BD262606, taken on 02/06/2018
-- The blue and red arm are merged to a single spectrum
+- Creates "target_ex" directory containing the d*_ex.fits file used in flux calibration
 
-------------
-
-The pipeline produces:
-
-- A folder with the name of the supernova, that contains 3 ascii
-files (blue, red, merged) and 6 fits files (2D spectrum, extracted
-1D spectrum and flux-calibrated 1D spectrum, for each arm)
-- A folder named database, that contains files regarding the aperture
-(ap*) and wavelength solutions (id*). This specific file is used by IRAF
-- A png file with the plot of the extracted, wavelength solved, flux
-calibrated and merged spectrum
-
-Keep in mind that the script copies at the working folder several
-files, but in the end, everything that is not needed is deleted.
+3) Flux Calibration (headerfix.py, cal.py, wombat.py)
+- IMPORTANT: requires a python3 env
+- Run headerfix.py inside of the "target_ex" directory.
+- Run cal.py in the same directory.
+- Flux calibrates and telluric corrects the extracted spectrum from part 2.
+- If you specified to use an archival flux calibration in part 2, then the relevant files have
+been moved into this directory. Simply choose "n" when prompted to fit a flux or bstar.
 
