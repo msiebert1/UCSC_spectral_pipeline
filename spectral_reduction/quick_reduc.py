@@ -59,13 +59,11 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 	list_arc_r = []
 
 	for arcs in files_arc:
-		hdr = util.readhdr(arcs)
-		if util.readkey3(hdr, 'VERSION') == 'kastb':
+		if instruments.blue_or_red(arcs)[0] == 'blue':
 			list_arc_b.append(arcs)
-		elif util.readkey3(hdr, 'VERSION') == 'kastr':
+		elif instruments.blue_or_red(arcs)[0] == 'red':
 			list_arc_r.append(arcs)
 		else:
-			print(util.readkey3(hdr, 'VERSION') + 'not in database')
 			sys.exit()
 	
 	asci_files = []
@@ -74,9 +72,9 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 	print('\n### images to reduce :',imglist)
 	#raise TypeError
 	for img in imglist:
-		if 'b' in img:
+		if instruments.blue_or_red(img)[0] == 'blue':
 			newlist[0].append(img)
-		elif 'r' in img:
+		elif instruments.blue_or_red(img)[0] == 'red':
 			newlist[1].append(img)
 
 	if len(newlist[1]) < 1:
@@ -92,14 +90,13 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 
 	for imgs in newlist:
 		hdr = util.readhdr(imgs[0])
-		if util.readkey3(hdr, 'VERSION') == 'kastb':
-			inst = instruments.kast_blue
+		br, inst = instruments.blue_or_red(imgs[0])
+		if br == 'blue':
 			flat_file = '../RESP_blue'
-		elif util.readkey3(hdr, 'VERSION') == 'kastr':
-			inst = instruments.kast_red
+		elif br == 'red':
 			flat_file = '../RESP_red'
 		else:
-			print(util.readkey3(hdr, 'VERSION') + 'not in database')
+			print ("Not in intrument list")
 			sys.exit()
 
 		iraf.specred.dispaxi = inst.get('dispaxis')
@@ -171,9 +168,9 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 		if _cosmic:
 			img='cosmic_' + img
 
-		if inst.get('name') == 'kast_blue' and len(list_arc_b)>0:
+		if inst.get('arm') == 'blue' and len(list_arc_b)>0:
 			arcfile = list_arc_b[0]
-		elif inst.get('name') == 'kast_red' and len(list_arc_r)>0:
+		elif inst.get('arm') == 'red' and len(list_arc_r)>0:
 			arcfile = list_arc_r[0]
 		else:
 			arcfile=None
@@ -193,16 +190,16 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 		if not os.path.isdir('database/'):
 				os.mkdir('database/')
 		
-		# if _arc_identify:
-		# 	os.system('cp ' + arcfile + ' .')
-		# 	arcfile = string.split(arcfile, '/')[-1]
-		# 	arc_ex=re.sub('.fits', '.ms.fits', arcfile)
-		# 	print('\n### arcfile : ',arcfile)
-		# 	print('\n### arcfile extraction : ',arc_ex)
-		# 	print(inst.get('line_list'))
-		# 	iraf.specred.apall(arcfile, output='', line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
-		# 	iraf.longslit.identify(images=arc_ex, section=inst.get('section'),coordli=inst.get('line_list'),function = 'spline3',order=3, mode='h')
 		if _arc_identify:
+			os.system('cp ' + arcfile + ' .')
+			arcfile = string.split(arcfile, '/')[-1]
+			arc_ex=re.sub('.fits', '.ms.fits', arcfile)
+			print('\n### arcfile : ',arcfile)
+			print('\n### arcfile extraction : ',arc_ex)
+			print(inst.get('line_list'))
+			iraf.specred.apall(arcfile, output=arc_ex, line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
+			iraf.longslit.identify(images=arc_ex, section=inst.get('section'),coordli=inst.get('line_list'),function = 'spline3',order=3, mode='h')
+		elif ~_arc_identify:
 			os.system('cp ' + arcfile + ' .')
 			arcfile = string.split(arcfile, '/')[-1]
 			arc_ex=re.sub('.fits', '.ms.fits', arcfile)

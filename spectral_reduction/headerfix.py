@@ -27,7 +27,6 @@ reduxdir=reduxdir.rsplit('/',1)[0]+'/'
 
 degrad=180.0/np.pi
 
-
 # if (len(sys.argv) < 2):
 #     sys.exit('Please include files in the command line (in single quotes)!')
     
