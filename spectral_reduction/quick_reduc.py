@@ -150,8 +150,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 		# 			 zero=zero_file,order=3, Stdout=1)
 		# iraf.ccdproc(timg, output='', overscan='no', trim='no', zerocor="no", flatcor="yes", readaxi='line',
 		# 			 flat=flat_file, Stdout=1)
-		iraf.ccdproc(timg, output='', overscan='no', trim='no', zerocor="no", flatcor="yes", readaxi='line', 
-			 		 flat=flat_file, Stdout=1)
+
+		# iraf.ccdproc(timg, output='', overscan='no', trim='no', zerocor="no", flatcor="yes", readaxi='line', 
+		# 	 		 flat=flat_file, Stdout=1)
+		iraf.ccdproc(timg, output='', overscan='no', trim='no', zerocor="no", flatcor="no", readaxi='line', Stdout=1)
 
 		img = timg
 
@@ -191,6 +193,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 				os.mkdir('database/')
 		
 		if _arc_identify:
+			# pass
+			arcfile = '../ARC_blue.fits' #THIS IS A HACK
 			os.system('cp ' + arcfile + ' .')
 			arcfile = string.split(arcfile, '/')[-1]
 			arc_ex=re.sub('.fits', '.ms.fits', arcfile)
@@ -218,7 +222,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 			print('\n###  arcfile : ',arcfile)
 			print('\n###  arcfile extraction : ',arc_ex)
 			print('\n###  arc reference : ',arcref)
-			iraf.specred.apall(arcfile, output=arc_ex, ref=arcref_img, line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
+			# iraf.specred.apall(arcfile, output=arc_ex, ref=arcref_img, line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
+			iraf.specred.apall(arcfile, output=arc_ex, line = 'INDEF', nsum=10, interactive='no', extract='yes',find='yes', nfind=1 ,format='multispec', trace='no',back='no',recen='no')
 			iraf.longslit.reidentify(referenc=arcref, images=arc_ex, interac='NO', section=inst.get('section'), 
 									coordli=inst.get('line_list'), shift='INDEF', search='INDEF',
 									mode='h', verbose='YES', step=0,nsum=5, nlost=2, cradius=10, refit='yes',overrid='yes',newaps='no')

@@ -143,9 +143,12 @@ def main():
             elif not img.startswith('t')and inst.get('observatory')!='lick':
                 if os.path.isfile('pre_reduced/to'+img):
                     os.remove('pre_reduced/to'+img)
+                # iraf.ccdproc('pre_reduced/'+img, output='pre_reduced/to'+img, 
+                #              overscan='yes', trim='yes', zerocor="no", flatcor="no", 
+                #              readaxi='line',trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
                 iraf.ccdproc('pre_reduced/'+img, output='pre_reduced/to'+img, 
-                             overscan='yes', trim='yes', zerocor="no", flatcor="no", 
-                             readaxi='line',trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
+                             overscan='yes', trim='no', zerocor="no", flatcor="no", 
+                             readaxi='line', biassec=str(_biassec0), Stdout=1)
     else:
         pfiles = []
         new_files = []

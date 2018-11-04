@@ -52,6 +52,7 @@ if __name__ == "__main__":
 		files_science = []
 		files_arc = []
 		files_flat = []
+		# prep_files = glob.glob('../*.fits')
 		files_arc.append('../ARC_blue.fits')
 		files_arc.append('../ARC_red.fits')
 		#print 'checking your files ...'
