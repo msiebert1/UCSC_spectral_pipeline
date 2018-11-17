@@ -5,6 +5,7 @@ import logging
 import copy
 # need copy.deepcopy() for Spec class
 import os
+import pdb
 import sys
 import glob
 import datetime
