@@ -1,7 +1,5 @@
-from __future__    import print_function
-
 def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc):
-
+    from __future__    import print_function
     import string
     import os
     import re
@@ -63,18 +61,16 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
     
     for arcs in files_arc:
         hdr = util.readhdr(arcs)
-        if util.readkey3(hdr, 'VERSION') == 'kastb':
-            list_arc_b.append(arcs)
-        elif util.readkey3(hdr, 'VERSION') == 'kastr':
-            list_arc_r.append(arcs)
+        br, inst = instruments.blue_or_red(imgs[0])
         
-        # hacky lris support
-        elif util.readkey3(hdr, 'INSTRUME') == 'LRISBLUE':
+        if br == 'blue':
             list_arc_b.append(arcs)
-        elif util.readkey3(hdr, 'INSTRUME') == 'LRIS':
+        elif br == 'red':
             list_arc_r.append(arcs)
         else:
-            print(str(util.readkey3(hdr, 'VERSION')) + ' not in database')
+            errStr = '{} '.format(str(util.readkey3(hdr, 'VERSION')))
+            errStr += 'not in database'
+            print errStr
             sys.exit()
     
     asci_files = []
@@ -98,28 +94,19 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             newlist = newlist[:-1]
         elif sides == 'r':
             newlist = newlist[1:]
-                
+            
     for imgs in newlist:
         hdr = util.readhdr(imgs[0])
-        if util.readkey3(hdr, 'VERSION') == 'kastb':
-            inst = instruments.kast_blue
+        br, inst = instruments.blue_or_red(imgs[0])
+        if br == 'blue':
             flat_file = '../RESP_blue'
-        elif util.readkey3(hdr, 'VERSION') == 'kastr':
-            inst = instruments.kast_red
+        elif br == 'red':
             flat_file = '../RESP_red'
-            
-        # hacky lris support
-        elif util.readkey3(hdr, 'INSTRUME') == 'LRISBLUE':
-            inst = instruments.lris_blue
-            flat_file = '../RESP_blue'
-        elif util.readkey3(hdr, 'INSTRUME') == 'LRIS':
-            inst = instruments.lris_red
-            flat_file = '../RESP_red'
-            
         else:
-            print(util.readkey3(hdr, 'VERSION') + 'not in database')
+            errStr = 'Not in intrument list'
+            print errStr
             sys.exit()
-
+                
         iraf.specred.dispaxi = inst.get('dispaxis')
         iraf.longslit.dispaxi = inst.get('dispaxis')
 
@@ -178,16 +165,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             print('\n### No cosmic removal, saving normalized image for inspection???')
             
 
-        if inst.get('name') == 'kast_blue' and len(list_arc_b)>0:
+        if inst.get('arm') == 'blue' and len(list_arc_b)>0:
             arcfile = list_arc_b[0]
-        elif inst.get('name') == 'kast_red' and len(list_arc_r)>0:
+        elif inst.get('arm') == 'red' and len(list_arc_r)>0:
             arcfile = list_arc_r[0]
-        
-        # hacky lris support
-        elif inst.get('name') == 'lris_blue' and len(list_arc_b)>0:
-            arcfile = list_arc_b[0]
-        elif inst.get('name') == 'lris_red' and len(list_arc_r)>0:
-            arcfile = list_arc_r[0]            
         else:
             arcfile=None
         
@@ -306,3 +287,6 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             os.system('cp ' + bstarfile + ' ' + _object0 + '_ex/')
 
     return result
+    
+    
+    
