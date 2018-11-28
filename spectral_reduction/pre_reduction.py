@@ -112,20 +112,22 @@ def main():
         for file in filenames:
             if file.startswith('to'):
                 pfiles.append(file)
-    print (pfiles)
+    print(pfiles)
     
-    print ('jb chekcing this works...')
-    pdb.set_trace()
     
     # loop over each image in pre_reduced
     for img in listfile:
         hdr = util.readhdr(img)
         targ=util.readkey3(hdr, 'object')
         
-        # if file is not an arc or flat and not a processed file, run the overscan+trim code
-        if 'arc' not in targ.lower() and 'flat' not in targ.lower() and 'to'+ img not in pfiles:
-            new_files.append(img)
-            print ('Adding data for: ' + targ)
+        # if file is not not a processed file, run the overscan+trim code
+        if 'to'+ img not in pfiles:
+            
+            # if the file is a science file, grab the name for later
+            if 'arc' not in targ.lower() and 'flat' not in targ.lower():
+                new_files.append(img)
+                print ('Adding data for: ' + targ)
+                
             inst = instruments.blue_or_red(img)[1]
 
             iraf.specred.dispaxi = inst.get('dispaxis')
@@ -137,7 +139,7 @@ def main():
             ######################################################################
             #
             # JB: this chunk of code needs attention
-            # Its hacky for anything but Kast...
+            # It seems incredibly hacky for anything but Kast...
             #
             # overscan
             if not img.startswith('o') and inst.get('observatory')=='lick':
@@ -253,11 +255,9 @@ def main():
     
 
     # science files should have 't' in front now
+    # this just gets the base name, to prefix assumed below
     if new_files is not None:
         files_science = new_files
-        
-    print ('jb chekcing this works for empty pre_reduced...')
-    pdb.set_trace()
 
     # get all the science objects for the night
     science_targets = []
@@ -286,12 +286,12 @@ def main():
     tfiles = glob.glob('pre_reduced/to'+ '*.fits')
     
     # delete raw files from the pre_reduced dir
-    # there shouldn't be any there though....
+    # there shouldn't be any there though?
+    # maybe if the overscan isn't implemented for that detector
     for img in rawfiles:
         util.delete('pre_reduced/' + img)
         
     # delete the ofiles from pre_reduced dir
-    # again, in principle these shouldn't exist....
     for img in ofiles:
         util.delete(img)
     

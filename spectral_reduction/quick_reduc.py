@@ -1,5 +1,6 @@
+from __future__    import print_function
+
 def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc):
-    from __future__    import print_function
     import string
     import os
     import re
@@ -70,7 +71,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         else:
             errStr = '{} '.format(str(util.readkey3(hdr, 'VERSION')))
             errStr += 'not in database'
-            print errStr
+            print(errStr)
             sys.exit()
     
     asci_files = []
@@ -104,7 +105,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             flat_file = '../RESP_red'
         else:
             errStr = 'Not in intrument list'
-            print errStr
+            print(errStr)
             sys.exit()
                 
         iraf.specred.dispaxi = inst.get('dispaxis')
