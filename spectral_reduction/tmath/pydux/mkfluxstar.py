@@ -1,4 +1,5 @@
 def mkfluxstar(fluxfile,gratcode):
+    import pdb
     import numpy as np
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Cursor
@@ -14,11 +15,11 @@ def mkfluxstar(fluxfile,gratcode):
     from tmath.pydux.finalscaler import finalscaler
     from tmath.pydux.abcalc import abcalc
     from tmath.pydux.pacheck import pacheck
+    
     screen_width, screen_height=get_screen_size()
     plt.ion()
     screenpos='+{}+{}'.format(int(screen_width*0.2),int(screen_height*0.05))
     fig=plt.figure()
-
     fig.canvas.manager.window.wm_geometry(screenpos)
     fig.canvas.set_window_title('Flux Star')
     fig.set_size_inches(18,12)
@@ -41,10 +42,14 @@ def mkfluxstar(fluxfile,gratcode):
     extvals=[68.0,89.0,36.0,4.5,1.30,0.84,0.68,0.55,0.46,0.31, \
              0.23,0.195,0.170,0.126,0.092,0.062,0.048,0.039, \
              0.028,0.021]
+             
+    pdb.set_trace()
+    
     fitsfile=fits.open(fluxfile)
     rawdata=fitsfile[0].data
     head=fitsfile[0].header
     num_apertures=rawdata.shape[1]
+        
     wavearr=np.zeros((rawdata.shape[2],rawdata.shape[1]))
     objectname=head['OBJECT']
     airmass=float(head['AIRMASS'])
@@ -62,6 +67,8 @@ def mkfluxstar(fluxfile,gratcode):
         print('************************************************')
         sys.exit(1)
     ap_choice=-1
+    
+    
 
     if (num_apertures != 1):
         axarr=fig.subplots(num_apertures,sharex=True)
@@ -80,6 +87,7 @@ def mkfluxstar(fluxfile,gratcode):
         fig.clf()
     else:
         ap_choice=0    
+        
     ymin, ymax=finalscaler(rawdata[0,ap_choice,:])
     fig.clf()
     x1=wavearr[:,ap_choice]

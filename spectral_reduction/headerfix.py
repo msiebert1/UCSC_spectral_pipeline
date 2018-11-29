@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import glob
 import sys
+import pdb
 import os
 import csv
 from astropy.io import fits
@@ -89,16 +90,27 @@ for f in files:
     hainput=fitsfile[0].header['HA']
     ha=parsehourangle(hainput)
     harad=ha*15./degrad
-        
+    
+    # deal with lris header nonsense
     exptime=float(fitsfile[0].header['EXPTIME'])
     dateobs=fitsfile[0].header['DATE-OBS'].strip().split('T')[0]
+
     year,month,day=dateparser(dateobs)
     if ('UT' in fitsfile[0].header):
         utst=fitsfile[0].header['UT'].strip()
         if ('T' in utst):
             utst=utst.split('T')[1]
+    elif ('UT-TIME' in fitsfile[0].header):
+            utst=fitsfile[0].header['UT-TIME'].strip()
+        
     else:
-        utst=fitsfile[0].header['DATE-OBS'].strip().split('T')[1]
+        if 'T' in fitsfile[0].header['DATE-OBS']:
+            utst=fitsfile[0].header['DATE-OBS'].strip().split('T')[1]
+        else:
+            utst=fitsfile[0].header['TIME-OBS'].strip()
+            
+
+            
     hour,minute,second=utst.split(':')
     dhour=int(hour)+(int(minute)+float(second)/60.)/60.
     doy=dayofyear(year,month,day)

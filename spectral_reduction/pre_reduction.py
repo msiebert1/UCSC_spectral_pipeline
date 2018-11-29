@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from __future__ import print_function
-
 import sys, os, pdb
 from optparse import OptionParser
 import util
@@ -9,13 +8,10 @@ import time
 import glob
 import matplotlib
 import instruments
-
 from astropy.io import fits, ascii
-
 from pyraf import iraf
 
 matplotlib.use('TkAgg')
-
 description = "> Performs pre-reduction steps"
 usage = "%prog  \t [option] \n Recommended syntax: %prog -i -c"
 
@@ -103,35 +99,59 @@ def main():
                 list_flat_r.append(dflats)
             else:
                 sys.exit()
-
+                
+                
+    # make pre_reduced if it doesn't exist
     if not os.path.isdir('pre_reduced/'):
         os.mkdir('pre_reduced/')
-        new_files = None
-        tlist_files = []
-        for img in listfile:
+        
+    # log the existing processed files (need to verify this works if pre_reduced is empty...)
+    pfiles = []
+    new_files = []
+    for root, dirnames, filenames in os.walk('pre_reduced'):
+        for file in filenames:
+            if file.startswith('to'):
+                pfiles.append(file)
+    print(pfiles)
+    
+    
+    # loop over each image in pre_reduced
+    for img in listfile:
+        hdr = util.readhdr(img)
+        targ=util.readkey3(hdr, 'object')
+        
+        # if file is not not a processed file, run the overscan+trim code
+        if 'to'+ img not in pfiles:
+            
+            # if the file is a science file, grab the name for later
+            if 'arc' not in targ.lower() and 'flat' not in targ.lower():
+                new_files.append(img)
+                print ('Adding data for: ' + targ)
+                
             inst = instruments.blue_or_red(img)[1]
 
             iraf.specred.dispaxi = inst.get('dispaxis')
             iraf.longslit.dispaxi = inst.get('dispaxis')
 
-            _biassec0 = inst.get('biassec') #JB: the biassec in instruments.py is not correct
+            _biassec0 = inst.get('biassec')
             _trimsec0 = inst.get('trimsec')
-
-            #OVERSCAN CORRECT AND TRIM ALL IMAGES (OVERSCAN IS CAUSING PROBLEMS)
-            # iraf.ccdproc(img, output='t'+img, overscan='yes', trim='yes', zerocor="no", flatcor="no", readaxi='line',
-            #              trimsec=str(_trimsec0),biassec=str(_biassec0), Stdout=1)
             
+            ######################################################################
+            #
+            # JB: this chunk of code needs attention
+            # It seems incredibly hacky for anything but Kast...
+            #
             # overscan
             if not img.startswith('o') and inst.get('observatory')=='lick':
                 if os.path.isfile('pre_reduced/o'+img):
                     os.remove('pre_reduced/o'+img)
                 util.kastbias(img,'pre_reduced/o'+img)
-
             elif not img.startswith('o') and inst.get('observatory')!='lick':
-                if os.path.isfile('pre_reduced/'+img):
-                    os.remove('pre_reduced/'+img)
+                if os.path.isfile('pre_reduced/o'+img):
+                    os.remove('pre_reduced/o'+img)
                 os.system('cp ' +  img + ' ' + 'pre_reduced/' + img)
 
+                
             # trim
             if not img.startswith('t')and inst.get('observatory')=='lick':
                 if os.path.isfile('pre_reduced/to'+img):
@@ -143,61 +163,14 @@ def main():
             elif not img.startswith('t')and inst.get('observatory')!='lick':
                 if os.path.isfile('pre_reduced/to'+img):
                     os.remove('pre_reduced/to'+img)
-                # iraf.ccdproc('pre_reduced/'+img, output='pre_reduced/to'+img, 
-                #              overscan='yes', trim='yes', zerocor="no", flatcor="no", 
-                #              readaxi='line',trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
                 iraf.ccdproc('pre_reduced/'+img, output='pre_reduced/to'+img, 
-                             overscan='yes', trim='no', zerocor="no", flatcor="no", 
-                             readaxi='line', biassec=str(_biassec0), Stdout=1)
-    else:
-        pfiles = []
-        new_files = []
-        for root, dirnames, filenames in os.walk('pre_reduced'):
-            for file in filenames:
-                if file.startswith('to'):
-                    pfiles.append(file)
-        print (pfiles)
-        for img in listfile:
-            hdr = util.readhdr(img)
-            targ=util.readkey3(hdr, 'object')
-            if 'arc' not in targ.lower() and 'flat' not in targ.lower() and 'to'+ img not in pfiles:
-                new_files.append(img)
-                print ('Adding data for: ' + targ)
-                inst = instruments.blue_or_red(img)[1]
+                             overscan='yes', trim='yes', zerocor="no", flatcor="no", 
+                             readaxi='line',trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
 
-                iraf.specred.dispaxi = inst.get('dispaxis')
-                iraf.longslit.dispaxi = inst.get('dispaxis')
-
-                _biassec0 = inst.get('biassec') #JB: the biassec in instruments.py is not correct
-                _trimsec0 = inst.get('trimsec')
-
-                # overscan
-                if not img.startswith('o') and inst.get('observatory')=='lick':
-                    if os.path.isfile('pre_reduced/o'+img):
-                        os.remove('pre_reduced/o'+img)
-                    util.kastbias(img,'pre_reduced/o'+img)
-                elif not img.startswith('o') and inst.get('observatory')!='lick':
-                    if os.path.isfile('pre_reduced/o'+img):
-                        os.remove('pre_reduced/o'+img)
-                    os.system('cp ' +  img + ' ' + 'pre_reduced/' + img)
-
-                    
-                # trim
-                if not img.startswith('t')and inst.get('observatory')=='lick':
-                    if os.path.isfile('pre_reduced/to'+img):
-                        os.remove('pre_reduced/to'+img)
-                    iraf.ccdproc('pre_reduced/o'+img, output='pre_reduced/to'+img, 
-                                 overscan='no', trim='yes', zerocor="no", flatcor="no", 
-                                 readaxi='line',trimsec=str(_trimsec0), Stdout=1)
-
-                elif not img.startswith('t')and inst.get('observatory')!='lick':
-                    if os.path.isfile('pre_reduced/to'+img):
-                        os.remove('pre_reduced/to'+img)
-                    iraf.ccdproc('pre_reduced/'+img, output='pre_reduced/to'+img, 
-                                 overscan='yes', trim='yes', zerocor="no", flatcor="no", 
-                                 readaxi='line',trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
-
+    # combine the arcs
     if mkarc != 'n':
+        
+        # blue arcs
         if len(list_arc_b) > 0:
             if len(list_arc_b) == 1:
                 arc_blue = list_arc_b[0]
@@ -210,6 +183,7 @@ def main():
                     os.remove('pre_reduced/ARC_blue.fits')
                 iraf.imcombine(arc_str, output='pre_reduced/ARC_blue.fits')
 
+        # red arcs
         if len(list_arc_r) > 0:
             if len(list_arc_r) == 1:
                 arc_red = list_arc_r[0]
@@ -222,11 +196,11 @@ def main():
                     os.remove('pre_reduced/ARC_red.fits')
                 iraf.imcombine(arc_str, output='pre_reduced/ARC_red.fits')
 
-        # os.system('mv ' + 'ARC_blue.fits' + ' ' + 'pre_reduced' + '/')
-        # os.system('mv ' + 'ARC_red.fits' + ' ' + 'pre_reduced' + '/')
-
+    # combine the flats
     if mkflat != 'n':
         inter = 'yes'
+        
+        # blue flats
         if len(list_flat_b) > 0:
             br, inst = instruments.blue_or_red(list_flat_b[0])
             iraf.specred.dispaxi = inst.get('dispaxis')
@@ -253,6 +227,7 @@ def main():
                                    low_rej=3,high_rej=3, order=60, niterat=20, 
                                    grow=0, graphic='stdgraph')
 
+        # red flats
         if len(list_flat_r) > 0:
             br, inst = instruments.blue_or_red(list_flat_r[0])
             iraf.specred.dispaxi = inst.get('dispaxis')
@@ -277,43 +252,27 @@ def main():
                                   sample='*', naverage=2, function='legendre', 
                                   low_rej=3,high_rej=3, order=80, niterat=20, 
                                   grow=0, graphic='stdgraph')
-
-        # os.system('mv ' + 'RESP_blue.fits' + ' ' + 'pre_reduced' + '/')
-        # os.system('mv ' + 'RESP_red.fits' + ' ' + 'pre_reduced' + '/')
     
 
-    #science files should have 't' in front now
+    # science files should have 't' in front now
+    # this just gets the base name, to prefix assumed below
     if new_files is not None:
         files_science = new_files
 
+    # get all the science objects for the night
     science_targets = []
     for obj in files_science:
         hdr = util.readhdr(obj)
         _type=util.readkey3(hdr, 'object')
         science_targets.append(_type)
-        # if util.readkey3(hdr, 'VERSION') == 'kastb':
-        #     inst = instruments.kast_blue
-        #     flat_file = 'RESP_blue'
-        # elif util.readkey3(hdr, 'VERSION') == 'kastr':
-        #     inst = instruments.kast_red
-        #     flat_file = 'RESP_red'
-        # else:
-        #     print(util.readkey3(hdr, 'VERSION') + 'not in database')
-        #     sys.exit()
-        # iraf.specred.dispaxi = inst.get('dispaxis')
 
-        # iraf.ccdproc('t'+obj, output='ft'+obj, overscan='no', trim='no', zerocor="no", flatcor="yes", readaxi='line', 
-        #               flat=flat_file, Stdout=1)
-
+    # make a dir for each sci object
     science_targets = set(science_targets)
     for targ in science_targets:
         if not os.path.isdir('pre_reduced/' + targ + '/'):
             os.mkdir('pre_reduced/'+ targ + '/')
-            # os.system('cp ' + 'pre_reduced/RESP_blue.fits' + ' ' + 'pre_reduced' + '/'+ targ + '/')
-            # os.system('cp ' + 'pre_reduced/RESP_red.fits' + ' ' + 'pre_reduced' + '/'+ targ + '/')
-            # os.system('cp ' + 'pre_reduced/ARC_blue.fits' + ' ' + 'pre_reduced' + '/'+ targ + '/')
-            # os.system('cp ' + 'pre_reduced/ARC_red.fits' + ' ' + 'pre_reduced' + '/'+ targ + '/')
 
+    # copy the files into the obj dir
     for obj in files_science:
         hdr = util.readhdr(obj)
         targ=util.readkey3(hdr, 'object')
@@ -323,15 +282,18 @@ def main():
             os.system('cp ' +  'pre_reduced/'+ obj + ' ' + 'pre_reduced/' + targ + '/')
 
     rawfiles = glob.glob('*.fits')
-
     ofiles = glob.glob('pre_reduced/o'+ '*.fits')
     tfiles = glob.glob('pre_reduced/to'+ '*.fits')
+    
+    # delete raw files from the pre_reduced dir
+    # there shouldn't be any there though?
+    # maybe if the overscan isn't implemented for that detector
     for img in rawfiles:
         util.delete('pre_reduced/' + img)
+        
+    # delete the ofiles from pre_reduced dir
     for img in ofiles:
         util.delete(img)
-    # for img in tfiles:
-    #     util.delete(img)
     
     
     
