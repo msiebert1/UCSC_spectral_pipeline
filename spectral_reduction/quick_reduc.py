@@ -62,7 +62,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
     
     for arcs in files_arc:
         hdr = util.readhdr(arcs)
-        br, inst = instruments.blue_or_red(imgs[0])
+        br, inst = instruments.blue_or_red(arcs)
         
         if br == 'blue':
             list_arc_b.append(arcs)
@@ -203,7 +203,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             # read for some meta data to get the row right
             tmpHDU = pyfits.open(arcfile)
             header = tmpHDU[0].header
-            spatialBin = int(header['binning'].split(',')[0])
+            try:
+                spatialBin = int(header['binning'].split(',')[0])
+            except KeyError:
+                spatialBin = 1
             apLine = 700//spatialBin
             
             
