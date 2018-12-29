@@ -518,7 +518,7 @@ def residual(p, y, x):
 
 
 ##########################################################################
-#JB edit this for extraction parameters
+#Edit this for extraction parameters
 def dvex():
     # print "LOGX:: Entering `dvex` method/function in %(__file__)s" %
     # globals()
@@ -704,7 +704,7 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
                                '_upper'], t_niter=dv[_type]['_t_niter'],
                            width=dv[_type]['_width'],
                            radius=dv[_type]['_radius'], 
-                           line='INDEF', nsum=dv[_type]['_nsum'], #JB edit 
+                           line='INDEF', nsum=dv[_type]['_nsum'], 
                            t_step=dv[_type]['_t_step'],
                            t_nsum=dv[_type]['_t_nsum'],
                            t_nlost=dv[_type]['_t_nlost'], t_sample=dv[
