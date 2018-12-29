@@ -42,9 +42,7 @@ def mkfluxstar(fluxfile,gratcode):
     extvals=[68.0,89.0,36.0,4.5,1.30,0.84,0.68,0.55,0.46,0.31, \
              0.23,0.195,0.170,0.126,0.092,0.062,0.048,0.039, \
              0.028,0.021]
-             
-    pdb.set_trace()
-    
+                 
     fitsfile=fits.open(fluxfile)
     rawdata=fitsfile[0].data
     head=fitsfile[0].header

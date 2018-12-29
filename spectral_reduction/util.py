@@ -518,18 +518,26 @@ def residual(p, y, x):
 
 
 ##########################################################################
+#JB edit this for extraction parameters
 def dvex():
     # print "LOGX:: Entering `dvex` method/function in %(__file__)s" %
     # globals()
     dv = {}
     #dv['line'] = {'Gr16': 300, 'Gr11': 430, 'Gr13': 200, 'GR': 150, 'GB': 430}
-    dv['std'] = {'_t_order': 4, '_t_niter': 20, '_t_sample': '*', '_t_nlost': 20, '_width': 10, '_radius': 10,
+    dv['std'] = {'_t_order': 4, '_t_niter': 20, '_t_sample': '*', '_t_nlost': 20, 
+                 '_width': 10, '_radius': 10,
                  '_weights': 'variance',
-                 '_nsum': 30, '_t_step': 10, '_t_nsum': 10, '_lower': -10, '_upper': 10, '_b_sample': '-40:-20,20:40',
+                 '_nsum': 30, 
+                 '_t_step': 10, '_t_nsum': 10, 
+                 '_lower': -10, '_upper': 10, 
+                 '_b_sample': '-40:-20,20:40',
                  '_b_order': 2, '_resize': 'no'}
-    dv['obj'] = {'_t_order': 4, '_t_niter': 20, '_t_sample': '*', '_t_nlost': 20, '_width': 10, '_radius': 10,
+    dv['obj'] = {'_t_order': 4, '_t_niter': 20, '_t_sample': '*', '_t_nlost': 20, 
+                 '_width': 10, '_radius': 10,
                  '_weights': 'variance',
-                 '_nsum': 40, '_t_step': 10, '_t_nsum': 10, '_lower': -5, '_upper': 5, '_b_sample': '-25:-15,15:25',
+                 '_nsum': 40, '_t_step': 10, '_t_nsum': 10, 
+                 '_lower': -5, '_upper': 5, 
+                 '_b_sample': '-25:-15,15:25',
                  '_b_order': 2,
                  '_resize': 'yes'}
     return dv
@@ -695,13 +703,15 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
                            lower=dv[_type]['_lower'], upper=dv[_type][
                                '_upper'], t_niter=dv[_type]['_t_niter'],
                            width=dv[_type]['_width'],
-                           radius=dv[_type]['_radius'], line='INDEF', nsum=dv[
-                               _type]['_nsum'], t_step=dv[_type]['_t_step'],
+                           radius=dv[_type]['_radius'], 
+                           line='INDEF', nsum=dv[_type]['_nsum'], #JB edit 
+                           t_step=dv[_type]['_t_step'],
                            t_nsum=dv[_type]['_t_nsum'],
                            t_nlost=dv[_type]['_t_nlost'], t_sample=dv[
                                _type]['_t_sample'], resize=_resize,
                            t_order=dv[_type]['_t_order'],
-                           weights=dv[_type]['_weights'], interactive=_interactive, review=_review, mode=_mode)
+                           weights=dv[_type]['_weights'], 
+                           interactive=_interactive, review=_review, mode=_mode)
     else:
         print('\n### skipping new extraction')
     return imgex
