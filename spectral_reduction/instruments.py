@@ -67,7 +67,7 @@ lris_blue = {'name': 'lris_blue',
              'archive_arc_extracted': path_to_trunk + 'LRIS_cals/LRIS_Blue_Arc_Ref.ms.fits',
              'archive_arc_extracted_id': path_to_trunk + 'LRIS_cals/id/idLRIS_Blue_Arc_Ref.ms',
              'archive_arc_aperture': path_to_trunk + 'LRIS_cals/apLRIS_Blue_Arc_Ref',
-             'line_list': path_to_trunk+'LRIS_cals/LRIS_lines.dat',
+             'line_list': path_to_trunk+'LRIS_cals/lines.dat', #this nearly hits pathname length limits
              'extinction_file': path_to_trunk + 'LRIS_cals/lick_extinction.dat', # JB: need to fix
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
@@ -77,17 +77,21 @@ lris_red = { 'name': 'lris_red',
              'arm': 'red',
              'read_noise': 4.7,
              'gain': 1.2,
+             'grism': 'temp',
+             'filter': 'temp',
+             'slit': 'temp',
+             'dispaxis': 1,
              'archive_flat_file': path_to_trunk + 'LRIS_cals/RESP_red.fits',
              'archive_sens': path_to_trunk + 'LRIS_cals/fluxstarred.fits',
              'archive_bstar': path_to_trunk + 'LRIS_cals/bstarred.fits',
              'archive_arc_extracted': path_to_trunk + 'LRIS_cals/LRIS_Red_Arc_Ref.ms.fits',
              'archive_arc_extracted_id': path_to_trunk + 'LRIS_cals/id/idLRIS_Red_Arc_Ref.ms',
              'archive_arc_aperture': path_to_trunk + 'LRIS_cals/apLRIS_Red_Arc_Ref',
-             'line_list': path_to_trunk+'LRIS_cals/LRIS_lines.dat',
+             'line_list': path_to_trunk+'LRIS_cals/lines.dat', #this nearly hits pathname length limits
              'extinction_file': path_to_trunk + 'LRIS_cals/lick_extinction.dat', # JB: need to fix
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
-             'section': 'middle column'}
+             'section': 'middle line'}
              
 goodman_m1={ 'name': 'goodman_blue',
              'arm': 'blue',

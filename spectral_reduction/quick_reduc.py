@@ -143,7 +143,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                            trim='no', 
                            zerocor="no", 
                            flatcor="yes", 
-                           readaxi='line', # hmmmmmmm
+                           readaxi='line',
                            flat=flat_file, 
                            Stdout=1)
 
@@ -209,7 +209,6 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                 spatialBin = 1
             apLine = 700//spatialBin
             
-            
             iraf.specred.apall(arcfile, 
                                output=arc_ex, 
                                ref=arcref_img, 
@@ -223,6 +222,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                                trace='no',
                                back='no',
                                recen='no')
+                               
                                                               
             iraf.longslit.reidentify(referenc=arcref, 
                                      images=arc_ex, 
@@ -240,6 +240,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                                      refit='yes',
                                      overrid='yes',
                                      newaps='no')
+                                     
         
 
         print('\n### extraction using apall')
@@ -273,7 +274,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             util.delete(arcfile)
 
         util.delete(arc_ex)
-        #util.delete(img)
+        util.delete(img)
         util.delete(imgex)
         util.delete(arcref)
         util.delete('logfile')
