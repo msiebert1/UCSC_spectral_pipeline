@@ -10,6 +10,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
     try:      from astropy.io import fits as pyfits
     except:      import   pyfits
     import numpy as np
+    import glob
     import util
     import instruments
     import combine_sides as cs
@@ -80,9 +81,9 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
     print('\n### images to reduce :',imglist)
     #raise TypeError
     for img in imglist:
-        if 'b' in img:
+        if instruments.blue_or_red(img)[0] == 'blue':
             newlist[0].append(img)
-        elif 'r' in img:
+        elif instruments.blue_or_red(img)[0] == 'red':
             newlist[1].append(img)
 
     if len(newlist[1]) < 1:
@@ -97,6 +98,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             newlist = newlist[1:]
             
     for imgs in newlist:
+        print (imgs)
         hdr = util.readhdr(imgs[0])
         br, inst = instruments.blue_or_red(imgs[0])
         if br == 'blue':
@@ -179,10 +181,82 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         if not os.path.isdir('database/'):
                 os.mkdir('database/')
         
+        #There is a bug in identify when the path to the coordlist is too long
+        #This is my hacky workaround for now, the file  is deleted later
+        os.system('cp ' + inst.get('line_list') + ' .')
 
         if _arc_identify:
-            os.system('cp ' + arcfile + ' .')
-            arcfile = string.split(arcfile, '/')[-1]
+            if not os.path.isdir('../master_files/'):
+                os.mkdir('../master_files/')
+
+            arcref = None
+
+            if br == 'blue':
+                arcfile = 'ARC_blue.fits' #THIS IS A HACK
+                wave_sol_file = 'idARC_blue.ms'
+            elif br == 'red':
+                arcfile = 'ARC_red.fits' #THIS IS A HACK
+                wave_sol_file = 'idARC_red.ms'
+            
+            masters = [os.path.basename(x) for x in glob.glob('../master_files/*')]
+            if wave_sol_file in masters:
+                wave_sol= raw_input("Use your master wavelength solution? [y]/n: ") or 'y'
+                if wave_sol == 'y':
+                    print ('Copying master file')
+                    arc_ex=re.sub('.fits', '.ms.fits', arcfile)
+                    os.system('cp ' + '../master_files/' + wave_sol_file + ' ./database/')
+                else:
+                    os.system('cp ' + '../' + arcfile + ' .')
+                    arc_ex=re.sub('.fits', '.ms.fits', arcfile)
+                    print('\n### arcfile : ',arcfile)
+                    print('\n### arcfile extraction : ',arc_ex)
+                    print(inst.get('line_list'))
+                    iraf.specred.apall(arcfile, 
+                                        output=arc_ex, 
+                                        line = 'INDEF', 
+                                        nsum=10, 
+                                        interactive='no', 
+                                        extract='yes',
+                                        find='yes', 
+                                        nfind=1 ,
+                                        format='multispec', 
+                                        trace='no',
+                                        back='no',
+                                        recen='no')
+                    iraf.longslit.identify(images=arc_ex, 
+                                            section=inst.get('section'),
+                                            coordli='lines.dat',
+                                            function = 'spline3',
+                                            order=3, 
+                                            mode='h')
+                    os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')
+            else:
+                os.system('cp ' + '../' + arcfile + ' .')
+                arc_ex=re.sub('.fits', '.ms.fits', arcfile)
+                print('\n### arcfile : ',arcfile)
+                print('\n### arcfile extraction : ',arc_ex)
+                print(inst.get('line_list'))
+                iraf.specred.apall(arcfile, 
+                                    output=arc_ex, 
+                                    line = 'INDEF', 
+                                    nsum=10, 
+                                    interactive='no', 
+                                    extract='yes',
+                                    find='yes', 
+                                    nfind=1 ,
+                                    format='multispec', 
+                                    trace='no',
+                                    back='no',
+                                    recen='no')
+                iraf.longslit.identify(images=arc_ex, 
+                                        section=inst.get('section'),
+                                        coordli='lines.dat',
+                                        function = 'spline3',
+                                        order=3, 
+                                        mode='h')
+                os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')
+        else:
+            os.system('cp ' + '../' + arcfile + ' .')
             arc_ex=re.sub('.fits', '.ms.fits', arcfile)
 
             arcref = inst.get('archive_arc_extracted')
@@ -228,7 +302,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                                      images=arc_ex, 
                                      interac='NO', 
                                      section=inst.get('section'), 
-                                     coordli=inst.get('line_list'), 
+                                     coordli='lines.dat', 
                                      shift='INDEF', 
                                      search='INDEF',
                                      mode='h', 
@@ -240,6 +314,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                                      refit='yes',
                                      overrid='yes',
                                      newaps='no')
+        util.delete('lines.dat')
                                      
         
 
@@ -276,7 +351,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         util.delete(arc_ex)
         util.delete(img)
         util.delete(imgex)
-        util.delete(arcref)
+        if arcref is not None:
+            util.delete(arcref)
         util.delete('logfile')
         #if _cosmic:
             #util.delete(img[7:])
