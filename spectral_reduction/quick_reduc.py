@@ -16,6 +16,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
     import combine_sides as cs
     import cosmics
     from pyraf import iraf
+    from . import pyzapspec
 
     dv = util.dvex()
     scal = np.pi / 180.
@@ -155,13 +156,18 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         if _cosmic:
             print('\n### starting cosmic removal')
             
-            array, header = cosmics.fromfits(img)
-            c = cosmics.cosmicsimage(array, 
-                                     gain=inst.get('gain'), readnoise=inst.get('read_noise'), 
-                                     sigclip = 5, sigfrac = 0.5, objlim = 2.0)
-            c.run(maxiter = 5)
-            cosmics.tofits('cosmic_' + img, c.cleanarray, header)
-            img='cosmic_' + img
+            # array, header = cosmics.fromfits(img)
+            # c = cosmics.cosmicsimage(array, 
+            #                          gain=inst.get('gain'), readnoise=inst.get('read_noise'), 
+            #                          sigclip = 5, sigfrac = 0.5, objlim = 2.0)
+            # c.run(maxiter = 5)
+            # cosmics.tofits('cosmic_' + img, c.cleanarray, header)
+            # img='cosmic_' + img
+
+            outimg,outmask,header = pyzapspec(infile, 
+                                              outfile='cosmic_{}'.format(img), 
+                                              WRITE_OUTFILE = True):
+            img = 'cosmic_{}'.format(img)
 
             print('\n### cosmic removal finished')
         else:
