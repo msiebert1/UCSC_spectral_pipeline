@@ -112,9 +112,8 @@ def main():
         for file in filenames:
             if file.startswith('to'):
                 pfiles.append(file)
-    print(pfiles)
-    
-    
+    #print(pfiles)
+
     # loop over each image in pre_reduced
     for img in listfile:
         hdr = util.readhdr(img)
@@ -139,7 +138,7 @@ def main():
             ######################################################################
             #
             # JB: this chunk of code needs attention
-            # It seems incredibly hacky for anything but Kast...
+            # It seems hacky for anything but Kast...
             #
             # overscan
             if not img.startswith('o') and inst.get('observatory')=='lick':
@@ -171,55 +170,8 @@ def main():
                              readaxi='line',trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
 
         else:
-            pfiles = []
-            new_files = []
-            for root, dirnames, filenames in os.walk('pre_reduced'):
-                for file in filenames:
-                    if file.startswith('to'):
-                        pfiles.append(file)
-            print (pfiles)
-            for img in listfile:
-                hdr = util.readhdr(img)
-                targ=util.readkey3(hdr, 'object')
-                if 'arc' not in targ.lower() and 'flat' not in targ.lower() and 'to'+ img not in pfiles:
-                    new_files.append(img)
-                    print ('Adding data for: ' + targ)
-                    inst = instruments.blue_or_red(img)[1]
-
-                    iraf.specred.dispaxi = inst.get('dispaxis')
-                    iraf.longslit.dispaxi = inst.get('dispaxis')
-
-                    _biassec0 = inst.get('biassec') #JB: the biassec in instruments.py is not correct
-                    _trimsec0 = inst.get('trimsec')
-
-                    # overscan
-                    if not img.startswith('o') and inst.get('observatory')=='lick':
-                        if os.path.isfile('pre_reduced/o'+img):
-                            os.remove('pre_reduced/o'+img)
-                        util.kastbias(img,'pre_reduced/o'+img)
-                    elif not img.startswith('o') and inst.get('observatory')!='lick':
-                        if os.path.isfile('pre_reduced/o'+img):
-                            os.remove('pre_reduced/o'+img)
-                        os.system('cp ' +  img + ' ' + 'pre_reduced/' + img)
-
-                        
-                    # trim
-                    if not img.startswith('t')and inst.get('observatory')=='lick':
-                        if os.path.isfile('pre_reduced/to'+img):
-                            os.remove('pre_reduced/to'+img)
-                        iraf.ccdproc('pre_reduced/o'+img, output='pre_reduced/to'+img, 
-                                     overscan='no', trim='yes', zerocor="no", flatcor="no", 
-                                     readaxi='line',trimsec=str(_trimsec0), Stdout=1)
-
-                    elif not img.startswith('t')and inst.get('observatory')!='lick':
-                        if os.path.isfile('pre_reduced/to'+img):
-                            os.remove('pre_reduced/to'+img)
-                        # iraf.ccdproc('pre_reduced/'+img, output='pre_reduced/to'+img, 
-                        #              overscan='yes', trim='yes', zerocor="no", flatcor="no", 
-                        #              readaxi='line',trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
-                        iraf.ccdproc('pre_reduced/'+img, output='pre_reduced/to'+img, 
-                                     overscan='no', trim='yes', zerocor="no", flatcor="no", 
-                                     readaxi='line',trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
+            pass 
+            # 'to'+img exists, so do nothing, 
 
     # combine the arcs
     if mkarc != 'n':

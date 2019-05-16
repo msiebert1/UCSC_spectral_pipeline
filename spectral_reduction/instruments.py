@@ -27,7 +27,8 @@ kast_blue = {'name': 'kast_blue',
              'extinction_file': path_to_trunk + 'KAST_cals/lick_extinction.dat',
              'observatory': 'lick',
              'sky_file': path_to_trunk + 'KAST_cals/licksky.fits',
-             'section': 'middle line'}
+             'section': 'middle line',
+             'pyzap_boxsize': 5}
 
 
 kast_red = { 'name': 'kast_red',
@@ -51,7 +52,8 @@ kast_red = { 'name': 'kast_red',
              'extinction_file': path_to_trunk + 'KAST_cals/lick_extinction.dat',
              'observatory': 'lick',
              'sky_file': path_to_trunk + 'KAST_cals/licksky.fits',
-             'section': 'middle column'}
+             'section': 'middle column',
+             'pyzap_boxsize': 5}
 
 lris_blue = {'name': 'lris_blue',
              'arm': 'blue',
@@ -71,7 +73,8 @@ lris_blue = {'name': 'lris_blue',
              'extinction_file': path_to_trunk + 'LRIS_cals/lick_extinction.dat', # JB: need to fix
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
-             'section': 'middle line'}
+             'section': 'middle line',
+             'pyzap_boxsize': 7}
              
 lris_red = { 'name': 'lris_red',
              'arm': 'red',
@@ -91,7 +94,8 @@ lris_red = { 'name': 'lris_red',
              'extinction_file': path_to_trunk + 'LRIS_cals/lick_extinction.dat', # JB: need to fix
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
-             'section': 'middle line'}
+             'section': 'middle line',
+             'pyzap_boxsize': 7}
              
 goodman_m1={ 'name': 'goodman_blue',
              'arm': 'blue',
@@ -118,7 +122,8 @@ goodman_m1={ 'name': 'goodman_blue',
              'extinction_file': path_to_trunk + 'lick_extinction.dat', # JB: need to fix
              'observatory': 'soar',
              'sky_file': path_to_trunk + 'licksky.fits', # JB: need to fix
-             'section': 'middle column'}
+             'section': 'middle column',
+             'pyzap_boxsize': 5}
              
 goodman_m2={ 'name': 'goodman_red',
              'arm': 'red',
@@ -143,7 +148,8 @@ goodman_m2={ 'name': 'goodman_red',
              'extinction_file': path_to_trunk + 'SOAR_cals/lick_extinction.dat', # JB: need to fix
              'observatory': 'soar',
              'sky_file': path_to_trunk + 'SOAR_cals/licksky.fits', # JB: need to fix
-             'section': 'middle column'}
+             'section': 'middle column',
+             'pyzap_boxsize': 5}
 
 
 def blue_or_red(img):

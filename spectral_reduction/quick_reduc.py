@@ -16,7 +16,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
     import combine_sides as cs
     import cosmics
     from pyraf import iraf
-    from . import pyzapspec
+    import pyzapspec
 
     dv = util.dvex()
     scal = np.pi / 180.
@@ -164,9 +164,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             # cosmics.tofits('cosmic_' + img, c.cleanarray, header)
             # img='cosmic_' + img
 
-            outimg,outmask,header = pyzapspec(infile, 
-                                              outfile='cosmic_{}'.format(img), 
-                                              WRITE_OUTFILE = True):
+            outimg,outmask,header = pyzapspec.pyzapspec(img, 
+                                                        outfile='cosmic_{}'.format(img), 
+                                                        WRITE_OUTFILE = True,
+                                                        boxsize=inst.get('pyzap_boxsize'))
             img = 'cosmic_{}'.format(img)
 
             print('\n### cosmic removal finished')
@@ -360,7 +361,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             util.delete(arcfile)
 
         util.delete(arc_ex)
-        util.delete(img)
+        #util.delete(img)
         util.delete(imgex)
         if arcref is not None:
             util.delete(arcref)

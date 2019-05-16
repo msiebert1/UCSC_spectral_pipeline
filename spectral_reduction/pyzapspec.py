@@ -133,7 +133,8 @@ def pyzapspec(infile,
     nbadCount = 1
 
     # first do a crude median subtraction of the sky lines
-    for x in range(nx):
+    # for x in range(nx):
+    for x in xrange(nx):
         ymedimage[:,x] = np.median(outimg[:,x])
     ysubimage = outimg - ymedimage
 
@@ -147,8 +148,10 @@ def pyzapspec(infile,
     xs0 = np.insert(x0[0:nxblock-1],x0[0],0)
     xs1 = np.append(x1[1:nxblock],x1[nxblock-1])
 
-    for b in range(nxblock):
-        for y in range(ny):
+    # for b in range(nxblock):
+    for b in xrange(nxblock):
+        # for y in range(ny):
+        for y in xrange(ny):
             xmedimage[y, x0[b]:x1[b]+1] = np.median(ysubimage[y, xs0[b]:xs1[b]+1])
 
     kernel = 1.*np.arange(0,realsourcefiltsize/2)
@@ -158,7 +161,8 @@ def pyzapspec(infile,
 
     # pzap is convolving the 2D xmedimage with a 1D kernel, 
     # I'm pretty sure this is just a row by row convolution.
-    for xrow in range(ny):
+    # for xrow in range(ny):
+    for xrow in xrange(ny):
         newRow = np.convolve(xmedimage[xrow,:],kernel,mode='same')
         xmedimage[xrow,:] = 1.*newRow
     xsubimage = outimg - xmedimage
@@ -173,8 +177,10 @@ def pyzapspec(infile,
     ys0 = np.insert(y0[0:nyblock-1],y0[0],0)
     ys1 = np.append(y1[1:nyblock],y1[nyblock-1])
 
-    for b in range(nyblock):
-        for x in range(nx):
+    # for b in range(nyblock):
+    #     for x in range(nx):
+    for b in xrange(nyblock):
+        for x in xrange(nx):
             scm = sigclipmedian(xsubimage[ys0[b]:ys1[b]+1,x])
             ymedimage[y0[b]:y1[b]+1,x] = scm
 
@@ -185,7 +191,8 @@ def pyzapspec(infile,
 
     # pzap is convolving the 2D xmedimage with a 1D kernel, 
     # I'm pretty sure this is just a column by column convolution.
-    for ycol in range(nx):
+    # for ycol in range(nx):
+    for ycol in xrange(nx):
         newCol = np.convolve(ymedimage[:,ycol],kernel,mode='same')
         ymedimage[:,ycol] = 1.*newCol
     ysubimage = outimg - ymedimage
@@ -200,8 +207,10 @@ def pyzapspec(infile,
     nyb = round(ny / 200)
     yint = np.ceil(ny*1./nyb)
 
-    for yb in range(nyb):
-        for x in range(nx):
+    # for yb in range(nyb):
+    #     for x in range(nx):
+    for yb in xrange(int(nyb)):
+        for x in xrange(nx):
             # select the pixels in this chunk of rows
             selectRowIndsLo = int(yb*yint)
             selectRowIndsHi = int(np.min([(yb+1)*yint,ny])) # this indexing is potentially hazardous
@@ -255,7 +264,8 @@ def pyzapspec(infile,
             break
 
         nrays = len(nextperc)
-        for c in range(nrays):
+        # for c in range(nrays):
+        for c in xrange(nrays):
             ci = nextperc[c]
 
             # avoid the detector edges
@@ -303,7 +313,8 @@ def pyzapspec(infile,
     ct = len(nextperc)
     if ct > 3:
         nrays = len(nextperc)
-        for c in range(nrays):
+        # for c in range(nrays):
+        for c in xrange(nrays):
             ci = nextperc[c]
 
             # avoid the detector edges

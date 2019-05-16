@@ -3,7 +3,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
     from matplotlib import gridspec
     import numpy as np
     from datetime import datetime
-    import os
+    import os, pdb
     import inspect
     from astropy.io import fits
     from astropy import units as u
@@ -346,7 +346,11 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             axarr[1].plot(wave[-100:],bobj[-100:],drawstyle='steps-mid')
             axarr[1].set_xlabel('Wavelength')
             axarr[1].set_ylabel('Flux')
-            axarr[1].set_ylim((ymin,ymax))
+            try:
+                axarr[1].set_ylim((ymin,ymax))
+            except ValueError:
+                bobj_median = np.nanmedian(bobj)
+                axarr[1].set_ylim((bobj_median/10.,bobj_median*10.))
             if (secondtime):
                 axarr[1].plot([wavesaven,wavesaven],[ymin,ymax],color='r')
 
