@@ -199,7 +199,9 @@ def parse_keck_header(header,std_star_list='',sci_obj_list=''):
 #   5. The flats and arcs are stacked, and the science and std star scripts
 #      are moved to the object directory. 
 #
-#
+#   NOTE: the object name recognition will be improved and refactored to
+#         match the implementation for used in specBrowser; the current
+#         implementation is pretty hacky.
 #
 # Author:
 #   J. Brown, UCSC Astronomy Dept
@@ -220,11 +222,11 @@ def main():
     
     
     # set these false if you don't want to overwrite lists you've edited
-    REGENERATE_ARC_LISTS = False
-    REGENERATE_FLAT_LISTS = False
-    REGENERATE_SCI_LISTS = False
-    REGENERATE_STD_LISTS = False
-    REGENERATE_ALL_LIST = False
+    REGENERATE_ARC_LISTS = True
+    REGENERATE_FLAT_LISTS = True
+    REGENERATE_SCI_LISTS = True
+    REGENERATE_STD_LISTS = True
+    REGENERATE_ALL_LIST = True
     
     INSPECT_FRAMES = True # opens DS9 windows
     
@@ -238,27 +240,7 @@ def main():
     
     SKYSUB_STANDARD = False # not implemented yet
     SKYSUB_SCIENCE = False # not implemented yet
-        
-    # This is a list of standards
-    # feel free to edit/add new ones especially if you've
-    # observed a standard that isn't already included in the list; 
-    # the starting point is the HST/CALSPEC list.
-    std_star_list = ['G191-B2B', # white dwarf
-                     'GD71', # white dwarf
-                     'FEIGE34',
-                     'FEIGE66',
-                     'FEIGE67',
-                     'GD153', # white dwarf
-                     'HZ43', # white dwarf
-                     'HZ44',
-                     'BD322642',
-                     'BD284211',
-                     'FEIGE110',
-                     
-                     # non HST-calspec standards below
-                     'BD262606',
-                     'BD174708']  
-                     
+
     # NOTE: 
     #
     # The matching is done is by checking if the objects in this list 
@@ -270,6 +252,29 @@ def main():
     #
     sci_obj_list = ['2016gkg']
     #sci_obj_list = ['AT2018bcb','2017gfl']
+
+        
+    # This is a list of standards
+    # feel free to edit/add new ones especially if you've
+    # observed a standard that isn't already included in the list; 
+    # the starting point is the HST/CALSPEC list.
+    std_star_list = ['G191-B2B',
+                     'GD71',
+                     'FEIGE34',
+                     'FEIGE66',
+                     'FEIGE67',
+                     'GD153',
+                     'HZ43',
+                     'HZ44',
+                     'BD322642',
+                     'BD284211',
+                     'FEIGE110',
+                     
+                     # non HST-calspec standards below
+                     'BD262606',
+                     'BD174708']  
+                     
+
     
     cwd = os.getcwd()
     if cwd.split('/')[-1] != 'pre_reduced':
@@ -766,10 +771,6 @@ def main():
                                 hduOut = fits.PrimaryHDU(imgData,header)
                                 hduOut.writeto(destFile,output_verify='ignore')
                                 
-                                
-    
-    # done!
-    
     
     return 0
     
