@@ -314,7 +314,7 @@ def fitspl(wave,flux,airlimit,fig):
     """fit spline to spectrum"""
     global nsplinepoints, tmpsplptsx, tmpsplptsy, pflag
     
-    # starting points for spline
+    # starting points for spline (ENHANCE!)
     bandpts = np.array([3000, 3050, 3090, 3200, 3430, 3450, 3500, 3550, 3600, \
                3650, 3700, 3767, 3863, 3945, 4025, 4144, 4200, 4250, \
                4280, 4390, 4450, 4500, 4600, 4655, 4717, 4750, 4908, \
@@ -437,6 +437,7 @@ def fitspl(wave,flux,airlimit,fig):
             done=True
 
     return splineresult
+
 
 def bblo(wave,bstar,airlimit,fig):
     """blotch out bad data"""
