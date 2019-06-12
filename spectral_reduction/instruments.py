@@ -105,12 +105,10 @@ goodman_m1={ 'name': 'goodman_blue',
              'filter': 'temp',
              'slit': 'temp',
              'dispaxis': 1, 
-             # 'biassec': '[2058:2071,1:200]',
-             # 'trimsec': '[380:2050,30:870]',
-             'biassec': '[1:25,100:800]', #FOR RED DETECTOR
-             'trimsec': '[400:2068,84:900]', #FOR RED DETECTOR
-             # 'biassec': '[2058:2071,1:200]',
-             # 'trimsec': '[1:4142,1:400]',
+             #'biassec': '[1:25,100:800]', # RED CAMERA
+             #'trimsec': '[400:2068,84:900]', # RED CAMERA
+             'biassec': '[2060:2070,100:800]', # BLUE CAMERA
+             'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
              'archive_zero_file': path_to_trunk + 'SOAR_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'SOAR_cals/RESP_blue.fits',
              'archive_sens': path_to_trunk + 'SOAR_cals/fluxstarblue.fits',
@@ -133,10 +131,10 @@ goodman_m2={ 'name': 'goodman_red',
              'filter': 'temp',
              'slit': 'temp',
              'dispaxis': 1, 
-             # 'biassec': '[2058:2071,1:200]',
-             # 'trimsec': '[380:2050,30:870]',
-             'biassec': '[1:25,100:800]', #FOR RED DETECTOR
-             'trimsec': '[400:2068,84:900]',#FOR RED DETECTOR
+             #'biassec': '[1:25,100:800]', # RED CAMERA
+             #'trimsec': '[400:2068,84:900]', # RED CAMERA
+             'biassec': '[2060:2070,100:800]', # BLUE CAMERA
+             'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
              'archive_zero_file': path_to_trunk + 'SOAR_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'SOAR_cals/RESP_red.fits',
              'archive_sens': path_to_trunk + 'SOAR_cals/fluxstarred.fits',
