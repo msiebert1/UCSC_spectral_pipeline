@@ -618,6 +618,7 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
     iraf.specred.dispaxi = inst.get('dispaxis')
 
     imgex = re.sub('.fits', '_ex.fits', img)
+    print (img)
     imgfast = re.sub(string.split(img, '_')[-2] + '_', '', img)
     if not os.path.isfile(imgex) and not os.path.isfile(
             'database/ap' + re.sub('.fits', '', img)) and not os.path.isfile(

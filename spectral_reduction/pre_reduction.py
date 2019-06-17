@@ -114,7 +114,7 @@ def main():
                 pfiles.append(file)
     print(pfiles)
     
-    
+    new_files = []
     # loop over each image in pre_reduced
     for img in listfile:
         hdr = util.readhdr(img)
@@ -172,12 +172,11 @@ def main():
 
         else:
             pfiles = []
-            new_files = []
             for root, dirnames, filenames in os.walk('pre_reduced'):
                 for file in filenames:
                     if file.startswith('to'):
                         pfiles.append(file)
-            print (pfiles)
+            # print (pfiles)
             for img in listfile:
                 hdr = util.readhdr(img)
                 targ=util.readkey3(hdr, 'object')
@@ -310,6 +309,7 @@ def main():
 
     # science files should have 't' in front now
     # this just gets the base name, to prefix assumed below
+    print (new_files)
     if new_files is not None:
         files_science = new_files
 
@@ -324,6 +324,7 @@ def main():
     science_targets = set(science_targets)
     for targ in science_targets:
         if not os.path.isdir('pre_reduced/' + targ + '/'):
+            targ = targ.strip()
             os.mkdir('pre_reduced/'+ targ + '/')
 
     # copy the files into the obj dir
