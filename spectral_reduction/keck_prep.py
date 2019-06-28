@@ -209,17 +209,11 @@ def parse_keck_header(header,std_star_list='',sci_obj_list=''):
 #   2018 Oct 10
 #
 
-def main():
-        
-    description = 'TBD'
-    usage= 'TBD'
-    parser = OptionParser(usage=usage, description=description, version="0.1" )
-    option, args = parser.parse_args()
+def main(*args,**kwargs):
     
     ### To be defined command line options ###
     CLOBBER = True
     FULL_CLEAN = False
-    
     
     # set these false if you don't want to overwrite lists you've edited
     REGENERATE_ARC_LISTS = True
