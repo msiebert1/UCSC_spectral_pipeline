@@ -218,9 +218,14 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                     print('\n### arcfile : ',arcfile)
                     print('\n### arcfile extraction : ',arc_ex)
                     print(inst.get('line_list'))
+
+                    # remove the file from the extract destination
+                    if os.path.isfile(arc_ex):
+                        os.remove(arc_ex)
+
                     iraf.specred.apall(arcfile, 
                                         output=arc_ex, 
-                                        line = 'INDEF', 
+                                        line = inst.get('approx_extract_line'), 
                                         nsum=10, 
                                         interactive='no', 
                                         extract='yes',
@@ -231,7 +236,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                                         back='no',
                                         recen='no')
                     iraf.longslit.identify(images=arc_ex, 
-                                            section=inst.get('section'),
+                                            section='line {}'.format(inst.get('approx_extract_line')),
                                             coordli='lines.dat',
                                             function = 'spline3',
                                             order=3, 

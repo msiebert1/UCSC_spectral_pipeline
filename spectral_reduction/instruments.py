@@ -74,7 +74,8 @@ lris_blue = {'name': 'lris_blue',
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
              'section': 'middle line',
-             'pyzap_boxsize': 7}
+             'pyzap_boxsize': 7,
+             'approx_extract_line': 740}
              
 lris_red = { 'name': 'lris_red',
              'arm': 'red',
@@ -95,7 +96,8 @@ lris_red = { 'name': 'lris_red',
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
              'section': 'middle line',
-             'pyzap_boxsize': 7}
+             'pyzap_boxsize': 7,
+             'approx_extract_line': 370}
              
 goodman_m1={ 'name': 'goodman_blue',
              'arm': 'blue',

@@ -14,7 +14,14 @@ from scipy import interpolate
 from scipy import optimize
 from scipy import signal, ndimage
 
-
+from pyraf import iraf
+iraf.noao(_doprint=0)
+iraf.imred(_doprint=0)
+iraf.ccdred(_doprint=0)
+iraf.twodspec(_doprint=0)
+iraf.longslit(_doprint=0)
+iraf.onedspec(_doprint=0)
+iraf.specred(_doprint=0)
 import pyds9 as pyds9
 #from pyds9 import *
 
@@ -231,8 +238,11 @@ def parse_cmd_args():
     FULL_CLEAN = cmdArgs.full_clean
     REGENERATE_ALL_LIST = cmdArgs.regenerate_all
     REGENERATE_ARC_LIST = cmdArgs.regenerate_arc
+    REGENERATE_FLAT_LIST = cmdArgs.regenerate_flat
     REGENERATE_STD_LIST = cmdArgs.regenerate_std
     REGENERATE_SCI_LIST = cmdArgs.regenerate_sci
+    REORG_STANDARDS = cmdArgs.reorganize_std
+    REORG_SCIENCE = cmdArgs.reorganize_sci
     STACK_CAL_FRAMES = cmdArgs.stack_cals
 
     # package up
@@ -243,8 +253,12 @@ def parse_cmd_args():
     kwargs['FULL_CLEAN'] = FULL_CLEAN
     kwargs['REGENERATE_ALL_LIST'] = REGENERATE_ALL_LIST
     kwargs['REGENERATE_ARC_LIST'] = REGENERATE_ARC_LIST
+    kwargs['REGENERATE_FLAT_LIST'] = REGENERATE_FLAT_LIST
     kwargs['REGENERATE_STD_LIST'] = REGENERATE_STD_LIST
     kwargs['REGENERATE_SCI_LIST'] = REGENERATE_SCI_LIST
+    kwargs['REORG_STANDARDS'] = REORG_STANDARDS
+    kwargs['REORG_SCIENCE'] = REORG_SCIENCE
+
     kwargs['STACK_CAL_FRAMES'] = STACK_CAL_FRAMES
 
     return (args,kwargs)
@@ -294,10 +308,10 @@ def main(*args,**kwargs):
     
     CLOBBER = kwargs.get('CLOBBER',False)
     FULL_CLEAN = kwargs.get('FULL_CLEAN',False)
-    REGENERATE_ARC_LISTS = kwargs.get('REGENERATE_ARC_LISTS',False)
-    REGENERATE_FLAT_LISTS = kwargs.get('REGENERATE_FLAT_LISTS',False)
-    REGENERATE_SCI_LISTS = kwargs.get('REGENERATE_SCI_LISTS',False)
-    REGENERATE_STD_LISTS = kwargs.get('REGENERATE_STD_LISTS',False)
+    REGENERATE_ARC_LIST = kwargs.get('REGENERATE_ARC_LIST',False)
+    REGENERATE_FLAT_LIST = kwargs.get('REGENERATE_FLAT_LIST',False)
+    REGENERATE_SCI_LIST = kwargs.get('REGENERATE_SCI_LIST',False)
+    REGENERATE_STD_LIST = kwargs.get('REGENERATE_STD_LIST',False)
     REGENERATE_ALL_LIST = kwargs.get('REGENERATE_ALL_LIST',False)
     INSPECT_FRAMES = kwargs.get('INSPECT_FRAMES',False)
     STACK_CAL_FRAMES = kwargs.get('STACK_CAL_FRAMES',False)
@@ -346,6 +360,8 @@ def main(*args,**kwargs):
 
             
     # empties
+    sci_obj_list = []
+
     blueArcList = np.array([])
     blueArcAux = np.array([])
     
@@ -441,16 +457,16 @@ def main(*args,**kwargs):
     # write the list files
     # if the rewrite flag was set OR if the files aren't there, then write out
     WRITE_ALL_LIST = REGENERATE_ALL_LIST or not os.path.isfile('allList.txt')
-    WRITE_ARC_LISTS = (REGENERATE_ARC_LISTS or 
+    WRITE_ARC_LISTS = (REGENERATE_ARC_LIST or 
                        not (os.path.isfile('blueArcList.txt') or 
                             os.path.isfile('redArcList.txt')))
-    WRITE_FLAT_LISTS = (REGENERATE_FLAT_LISTS or
+    WRITE_FLAT_LISTS = (REGENERATE_FLAT_LIST or
                         not (os.path.isfile('blueFlatList.txt') or 
                              os.path.isfile('redFlatList.txt')))
-    WRITE_STD_LISTS = (REGENERATE_STD_LISTS or
+    WRITE_STD_LISTS = (REGENERATE_STD_LIST or
                         not (os.path.isfile('blueStdList.txt') or 
                              os.path.isfile('redStdList.txt')))
-    WRITE_SCI_LISTS = (REGENERATE_SCI_LISTS or 
+    WRITE_SCI_LISTS = (REGENERATE_SCI_LIST or 
                         not (os.path.isfile('blueSciList.txt') or 
                              os.path.isfile('redSciList.txt')))
 
@@ -640,13 +656,23 @@ def main(*args,**kwargs):
 
         # write out 
         header.add_comment(commentStr)
+        header['DISPAXIS'] = 1
         hduOut = fits.PrimaryHDU(stackBlueFlat,header)
-        if os.path.isfile('RESP_blue.fits'):
+        if os.path.isfile('FLAT_blue.fits'):
             if CLOBBER:
-                os.remove('RESP_blue.fits')
-                hduOut.writeto('RESP_blue.fits')
+                os.remove('FLAT_blue.fits')
+                hduOut.writeto('FLAT_blue.fits')
         else:
-            hduOut.writeto('RESP_blue.fits')
+            hduOut.writeto('FLAT_blue.fits')
+
+        # now do the response curve
+        iraf.specred.response('FLAT_blue.fits', 
+                               normaliz='FLAT_blue.fits', 
+                               response='RESP_blue', 
+                               interac='y', thresho='INDEF',
+                               sample='*', naverage=2, function='legendre', 
+                               low_rej=3,high_rej=3, order=60, niterat=20, 
+                               grow=0, graphic='stdgraph')
                     
         # stack red flats
         stackRedFlat = np.array([])
@@ -669,13 +695,23 @@ def main(*args,**kwargs):
         stackRedFlat[stackRedFlat < 1.] = 1.
         
         header.add_comment(commentStr)
+        header['DISPAXIS'] = 1
         hduOut = fits.PrimaryHDU(stackRedFlat,header)
-        if os.path.isfile('RESP_red.fits'):
+        if os.path.isfile('FLAT_red.fits'):
             if CLOBBER:
-                os.remove('RESP_red.fits')
-                hduOut.writeto('RESP_red.fits')
+                os.remove('FLAT_red.fits')
+                hduOut.writeto('FLAT_red.fits')
         else:
-            hduOut.writeto('RESP_red.fits')
+            hduOut.writeto('FLAT_red.fits')
+
+        # now do the response curve
+        iraf.specred.response('FLAT_red.fits', 
+                               normaliz='FLAT_red.fits', 
+                               response='RESP_red', 
+                               interac='y', thresho='INDEF',
+                               sample='*', naverage=2, function='legendre', 
+                               low_rej=3,high_rej=3, order=60, niterat=20, 
+                               grow=0, graphic='stdgraph')
             
     # calibration frames are all set, now move the std/sci files to their directory
     if REORG_STANDARDS:
