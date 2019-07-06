@@ -269,7 +269,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                 os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')
         else:
             if br == 'blue':
-                    arcfile = 'ARC_blue.fits' #THIS IS A HACK
+                arcfile = 'ARC_blue.fits' #THIS IS A HACK
             elif br == 'red':
                 arcfile = 'ARC_red.fits' #THIS IS A HACK
                 

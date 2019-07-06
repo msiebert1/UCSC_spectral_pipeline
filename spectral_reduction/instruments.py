@@ -29,7 +29,8 @@ kast_blue = {'name': 'kast_blue',
              'sky_file': path_to_trunk + 'KAST_cals/licksky.fits',
              'section': 'middle line',
              'pyzap_boxsize': 5,
-             'approx_extract_line': 200}
+             'approx_extract_line': 200,
+             'approx_extract_column': 1000}
 
 
 kast_red = { 'name': 'kast_red',
@@ -55,7 +56,8 @@ kast_red = { 'name': 'kast_red',
              'sky_file': path_to_trunk + 'KAST_cals/licksky.fits',
              'section': 'middle column',
              'pyzap_boxsize': 5,
-             'approx_extract_line': 200}
+             'approx_extract_line': 200,
+             'approx_extract_column': 1000}
 
 lris_blue = {'name': 'lris_blue',
              'arm': 'blue',
