@@ -22,7 +22,10 @@ def main():
     usage = "%prog    \t [option] \n Recommended syntax: %prog -i -c"
   
     parser = OptionParser(usage=usage, description=description, version="0.1" )
+    parser.add_option('-n','--nflats',type=int,default=50,
+                        help='max number of flats to use (to prevent IRAF crash)')
     option, args = parser.parse_args()
+    MAX_N_FLATS = option.nflats
     
     iraf.noao(_doprint=0)
     iraf.imred(_doprint=0)
@@ -94,9 +97,11 @@ def main():
         list_flat_r = []
         for dflats in files_dflat:
             if instruments.blue_or_red(dflats)[0] == 'blue':
-                list_flat_b.append(dflats)
+                if len(list_flat_b) < MAX_N_FLATS:
+                    list_flat_b.append(dflats)
             elif instruments.blue_or_red(dflats)[0] == 'red':
-                list_flat_r.append(dflats)
+                if len(list_flat_r) < MAX_N_FLATS:
+                    list_flat_r.append(dflats)
             else:
                 sys.exit()
                 
