@@ -699,7 +699,7 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
                            recenter=_recenter, edit=_edit,
                            nfind=1, backgro='fit', lsigma=3, usigma=3,
                            format='multispec', extras='yes',
-                           b_function='chebychev', b_sample=dv[_type]['_b_sample'], clean='yes', pfit='fit1d',
+                           b_function='chebyshev', b_sample=dv[_type]['_b_sample'], clean='yes', pfit='fit1d',
                            lower=dv[_type]['_lower'], upper=dv[_type][
                                '_upper'], t_niter=dv[_type]['_t_niter'],
                            width=dv[_type]['_width'],

@@ -632,6 +632,8 @@ def parse_cmd_args():
                         help='Do not reorient to wavelength increasing rightward')
     parser.add_argument('--no_trim',action='store_true',
                         help='Do not trim 2D image to hardcoded section')
+    parser.add_argument('--mask_middle',action='store_true',
+                        help='Mask the middle section of rows')
 
     # parse
     cmdArgs = parser.parse_args()
@@ -801,3 +803,4 @@ if __name__=='__main__':
     ''' Run parsing, then main '''
     args,kwargs = parse_cmd_args()
     main(*args,**kwargs)
+

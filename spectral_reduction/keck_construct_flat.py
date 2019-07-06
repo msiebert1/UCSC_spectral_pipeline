@@ -1,4 +1,4 @@
-import os,sys,pdb,shutil,glob,subprocess,shlex
+import os,sys,pdb,argparse,shutil,glob,subprocess,shlex
 from time import sleep
 import numpy as np
 
@@ -495,10 +495,11 @@ class fitFlatClass(object):
             
             
             # plot?
-            if colArr[i] == 3348:
-                PLOT=True
-            else:
-                PLOT=False
+            # if colArr[i] == 3348:
+            #     PLOT=True
+            # else:
+            #     PLOT=False
+            PLOT = False
             if PLOT:
                 fig=plt.figure(figsize=(6,6))    
                 axMain = plt.subplot2grid((4,4),(0,0),rowspan=4,colspan=6)
@@ -631,6 +632,43 @@ class flatFitRegion(object):
 
 
 
+def parse_cmd_args():
+    ''' Parse the command line options '''
+
+    # init parser
+    descStr = 'Utility for masking bad regions on a flat field '
+    parser = argparse.ArgumentParser(description=descStr)
+
+    # required args
+    parser.add_argument('flat_file',type=str,
+                       help='the flat field to inspect/mask')
+
+    # optional
+    parser.add_argument('-v','--verbose',
+                        help='print diagnostic info',action='store_true')
+    parser.add_argument('-c','--clobber',action='store_true',
+                        help='Clobber files already in pre_reduced/ but not subdirs')
+
+    # parse
+    cmdArgs = parser.parse_args()
+
+    # logic mapping to my args/kwargs
+    FLAT_FILE = cmdArgs.flat_file
+    VERBOSE = cmdArgs.verbose
+    CLOBBER = cmdArgs.clobber
+
+    # package up
+    args = (FLAT_FILE,) # no args implemented yet
+    kwargs = {}
+    kwargs['VERBOSE'] = VERBOSE
+    kwargs['CLOBBER'] = CLOBBER
+
+    return (args,kwargs)
+
+
+
+
+
 
 ############################################################################
 
@@ -680,10 +718,11 @@ class flatFitRegion(object):
 #   2018 Nov 14
 #
 
-def main():
+def main(*args,**kwargs):
     
     # read data
-    inFile = './tmp/RESP_red.fits'
+    inFile = args[0]
+
     hdu = fits.open(inFile)
     data = hdu[0].data
     header = hdu[0].header
@@ -847,4 +886,6 @@ def main():
     return 0
     
 if __name__=='__main__':
-    main()
+    ''' Run parsing, then main '''
+    args,kwargs = parse_cmd_args()
+    main(*args,**kwargs)

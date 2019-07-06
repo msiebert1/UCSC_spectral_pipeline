@@ -208,7 +208,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             masters = [os.path.basename(x) for x in glob.glob('../master_files/*')]
             if wave_sol_file in masters:
                 wave_sol= raw_input("Use your master wavelength solution? [y]/n: ") or 'y'
-                if wave_sol == 'y':
+                if wave_sol.strip().lower() == 'y':
                     print ('Copying master file')
                     arc_ex=re.sub('.fits', '.ms.fits', arcfile)
                     os.system('cp ' + '../master_files/' + wave_sol_file + ' ./database/')
