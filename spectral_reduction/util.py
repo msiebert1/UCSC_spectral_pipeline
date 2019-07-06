@@ -704,7 +704,7 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
                                '_upper'], t_niter=dv[_type]['_t_niter'],
                            width=dv[_type]['_width'],
                            radius=dv[_type]['_radius'], 
-                           line=inst.get('approx_extract_column'), nsum=dv[_type]['_nsum'], 
+                           line=inst.get('approx_extract_column','INDEF'), nsum=dv[_type]['_nsum'], 
                            t_step=dv[_type]['_t_step'],
                            t_nsum=dv[_type]['_t_nsum'],
                            t_nlost=dv[_type]['_t_nlost'], t_sample=dv[
