@@ -632,27 +632,24 @@ def parse_cmd_args():
                         help='Do not reorient to wavelength increasing rightward')
     parser.add_argument('--no_trim',action='store_true',
                         help='Do not trim 2D image to hardcoded section')
-    parser.add_argument('--mask_middle',action='store_true',
-                        help='Mask the middle section of rows')
+    parser.add_argument('--mask_middle_blue',action='store_true',
+                        help='Mask the middle section of rows on the blue detector')
+    parser.add_argument('--mask_middle_red',action='store_true',
+                        help='Mask the middle section of rows on the red detector')
 
     # parse
     cmdArgs = parser.parse_args()
 
-    # logic mapping to my args/kwargs
-    VERBOSE = cmdArgs.verbose
-    CLOBBER = cmdArgs.clobber
-    FULL_CLEAN = cmdArgs.full_clean
-    REORIENT = not cmdArgs.no_reorient
-    TRIM = not cmdArgs.no_trim
-
     # package up
     args = () # no args implemented yet
     kwargs = {}
-    kwargs['VERBOSE'] = VERBOSE
-    kwargs['CLOBBER'] = CLOBBER
-    kwargs['FULL_CLEAN'] = FULL_CLEAN
-    kwargs['REORIENT'] = REORIENT
-    kwargs['TRIM'] = TRIM
+    kwargs['VERBOSE'] = cmdArgs.verbose
+    kwargs['CLOBBER'] = cmdArgs.clobber
+    kwargs['FULL_CLEAN'] = cmdArgs.full_clean
+    kwargs['REORIENT'] = not cmdArgs.no_reorient
+    kwargs['TRIM'] = not cmdArgs.no_trim
+    kwargs['MASK_MIDDLE_BLUE'] = cmdArgs.mask_middle_blue
+    kwargs['MASK_MIDDLE_RED'] = cmdArgs.mask_middle_red
 
     return (args,kwargs)
 
@@ -699,6 +696,8 @@ def main(*args,**kwargs):
     PIXEL_FLOOR = kwargs.get('PIXEL_FLOOR',False) # removes negative values
     REORIENT = kwargs.get('REORIENT',True) # transposes to wavelength increasing rightward
     TRIM = kwargs.get('TRIM',False) # trims to some hard coded section of the detector
+    MASK_MIDDLE_BLUE = kwargs.get('MASK_MIDDLE_BLUE',False)
+    MASK_MIDDLE_RED = kwargs.get('MASK_MIDDLE_RED',False)
 
     # pre_reduced does not exist, needs to be made
     if not os.path.isdir('pre_reduced/'):
@@ -781,7 +780,12 @@ def main(*args,**kwargs):
                         # which is trimmed to longslit by default. The work around is
                         # to just move all the mask data to its own directory and run
                         # this with TRIM=False.
-                        #pass # if red is full frame, we probabaly don't want to bin?       
+                        #pass # if red is full frame, we probabaly don't want to bin?
+
+            if MASK_MIDDLE_RED:
+                # these rows should be chosen programatically
+                # this is much more aggressive than necessary
+                outImg[190:240,:] = np.median(outImg)
                         
             # adjust the header (these keywords aren't present by default)
             head['EXPTIME'] = head['ELAPTIME']

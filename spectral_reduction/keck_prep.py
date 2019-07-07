@@ -176,6 +176,78 @@ def determine_image_type(header,STANDARD_STAR_LIBRARY):
     imageType += 'SCI'
     return imageType
 
+
+def stack_cal_frames(file_list,outfile='stacked.fits',CLOBBER=False,DISPAXIS=1):
+    stackCalFrame = np.array([])
+    commentStr = 'keck_prep: stacked files '
+    header = {}
+    with open(file_list,'r') as fin:
+        for line in fin:
+            if line[0] != '#' and len(line.split()) > 1:
+                infile = line.split()[0]
+                hdu = fits.open(infile)
+                data = hdu[0].data
+                header = hdu[0].header
+                expTime = header['ELAPTIME']
+                commentStr += '{}'.format(infile)
+                if len(stackCalFrame) == 0:
+                    stackCalFrame = 1.*data/expTime
+                else:
+                    stackCalFrame = stackCalFrame + data/expTime
+
+    # adopt the most recent header as a template and add commentStr
+    if len(header) > 0:
+        header.add_comment(commentStr)
+        header['DISPAXIS'] = DISPAXIS
+
+    if len(stackCalFrame) > 0:
+        hduOut = fits.PrimaryHDU(stackCalFrame,header)
+        if os.path.isfile(outfile):
+            if CLOBBER:
+                os.remove(outfile)
+                hduOut.writeto(outfile)
+        else:
+            hduOut.writeto(outfile)
+    return 0
+
+def reorg_file_list(file_list,obj_list,CLOBBER=False,FULL_CLEAN=False):
+    for i,obj in enumerate(obj_list):
+    
+        if not os.path.isdir(obj):
+            os.mkdir(obj)
+            
+        elif FULL_CLEAN:
+            promptStr = 'Do you really want to wipe the dir for {}? [y/n]: '.format(obj)
+            usrRespOrig = raw_input(promptStr)
+            if usrRespOrig and usrRespOrig[0].strip().upper() == 'Y':
+                shutil.rmtree(obj)
+                os.mkdir(obj)
+        else:
+            pass
+        
+        # now move the appropriate files
+        with open(file_list,'r') as fin:
+            for line in fin:
+                if line[0] != '#' and len(line.split()) > 1:
+                    if obj.strip().upper() in line.split()[1].strip().upper():
+                        destFile = '{}/{}'.format(obj,line.split()[0])
+                        if not os.path.isfile(destFile) or CLOBBER:
+                            hdu = fits.open(line.split()[0])
+                            header = hdu[0].header
+                            imgData = hdu[0].data
+
+                            if CLOBBER:
+                                print('Clobbering {}'.format(destFile))
+
+                            # place the file
+                            hduOut = fits.PrimaryHDU(imgData,header)
+                            hduOut.writeto(destFile,output_verify='ignore')
+
+        # if no files got moved in, remove the dir
+        if not os.listdir(obj):
+            shutil.rmtree(obj)
+    return 0
+
 def add_boolean_arg(parser,name,default=False,help_string=''):
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument('--' + name, dest=name, action='store_true',
@@ -360,7 +432,7 @@ def main(*args,**kwargs):
 
             
     # empties
-    sci_obj_list = []
+    SCI_OBJ_LIST = []
 
     blueArcList = np.array([])
     blueArcAux = np.array([])
@@ -405,8 +477,8 @@ def main(*args,**kwargs):
 
         # if its a science file, track it
         target_name = header['targname']
-        if (('SCI' in fileType.upper()) and (target_name not in sci_obj_list)):
-            sci_obj_list.append(target_name)
+        if (('SCI' in fileType.upper()) and (target_name not in SCI_OBJ_LIST)):
+            SCI_OBJ_LIST.append(target_name)
                                      
         # get auxilliary header info (object, slitmask)
         auxStr = '{} '.format(header['targname'])
@@ -578,282 +650,48 @@ def main(*args,**kwargs):
             redStdDS9 = show_ds9_list('redStdList.txt',instanceName='RedStandards')        
     
     # the lists are set, now construct the master cal frames
-    
     if STACK_CAL_FRAMES:
-        
-        # stack blue arcs
-        stackBlueArc = np.array([])
-        commentStr = 'keck_prep: combined arcs from '
-        with open('blueArcList.txt','r') as fin:
-            for line in fin:
-                if line[0] != '#' and len(line.split()) > 1:
-                    infile = line.split()[0]
-                    hdu = fits.open(infile)
-                    data = hdu[0].data
-                    header = hdu[0].header
-                    expTime = header['ELAPTIME']
-                    commentStr += '{}'.format(infile)
-                    if len(stackBlueArc) == 0:
-                        stackBlueArc = 1.*data/expTime
-                    else:
-                        stackBlueArc = stackBlueArc + data/expTime
-        header.add_comment(commentStr)
-        hduOut = fits.PrimaryHDU(stackBlueArc,header)
-        if os.path.isfile('ARC_blue.fits'):
-            if CLOBBER:
-                os.remove('ARC_blue.fits')
-                hduOut.writeto('ARC_blue.fits')
-        else:
-            hduOut.writeto('ARC_blue.fits')
-        
 
-        # stack red arcs
-        stackRedArc = np.array([])
-        commentStr = 'keck_prep: combined arcs from '
-        with open('redArcList.txt','r') as fin:
-            for line in fin:
-                if line[0] != '#' and len(line.split()) > 1:
-                    infile = line.split()[0]
-                    hdu = fits.open(infile)
-                    data = hdu[0].data
-                    header = hdu[0].header
-                    expTime = header['EXPTIME']
-                    commentStr += '{}'.format(infile)
-                    if len(stackRedArc) == 0:
-                        stackRedArc = 1.*data/expTime
-                    else:
-                        stackRedArc = stackRedArc + data/expTime
-        
-        # write out
-        header.add_comment(commentStr)
-        hduOut = fits.PrimaryHDU(stackRedArc,header)    
-        if os.path.isfile('ARC_red.fits'):
-            if CLOBBER:
-                os.remove('ARC_red.fits')
-                hduOut.writeto('ARC_red.fits')
-        else:
-            hduOut.writeto('ARC_red.fits')
-        
-        # stack blue flats
-        stackBlueFlat = np.array([])
-        commentStr = 'keck_prep: combined flats from '
-        with open('blueFlatList.txt','r') as fin:
-            for line in fin:
-                if line[0] != '#' and len(line.split()) > 1:
-                    infile = line.split()[0]
-                    hdu = fits.open(infile)
-                    data = hdu[0].data
-                    header = hdu[0].header
-                    expTime = header['EXPTIME']
-                    commentStr += '{} '.format(infile)
-                    if len(stackBlueFlat) == 0:
-                        stackBlueFlat = 1.*data
-                    else:
-                        stackBlueFlat = stackBlueFlat + data
-                    
-        # apply floor to avoid iraf crashes
-        stackBlueFlat[stackBlueFlat < 1.] = 1.
+        res = stack_cal_frames('blueArcList.txt',outfile='ARC_blue.fits',CLOBBER=CLOBBER)
+        res = stack_cal_frames('redArcList.txt',outfile='ARC_red.fits',CLOBBER=CLOBBER)
+        res = stack_cal_frames('blueFlatList.txt',outfile='FLAT_blue.fits',CLOBBER=CLOBBER)
+        res = stack_cal_frames('redFlatList.txt',outfile='FLAT_red.fits',CLOBBER=CLOBBER)
 
-        # write out 
-        header.add_comment(commentStr)
-        header['DISPAXIS'] = 1
-        hduOut = fits.PrimaryHDU(stackBlueFlat,header)
+
+        # now do the response curve if the file exists
         if os.path.isfile('FLAT_blue.fits'):
-            if CLOBBER:
-                os.remove('FLAT_blue.fits')
-                hduOut.writeto('FLAT_blue.fits')
-        else:
-            hduOut.writeto('FLAT_blue.fits')
+            iraf.specred.response('FLAT_blue.fits', 
+                                   normaliz='FLAT_blue.fits', 
+                                   response='RESP_blue', 
+                                   interac='y', thresho='INDEF',
+                                   sample='*', naverage=2, function='legendre', 
+                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   grow=0, graphic='stdgraph')
 
-        # now do the response curve
-        iraf.specred.response('FLAT_blue.fits', 
-                               normaliz='FLAT_blue.fits', 
-                               response='RESP_blue', 
-                               interac='y', thresho='INDEF',
-                               sample='*', naverage=2, function='legendre', 
-                               low_rej=3,high_rej=3, order=60, niterat=20, 
-                               grow=0, graphic='stdgraph')
-                    
-        # stack red flats
-        stackRedFlat = np.array([])
-        commentStr = 'keck_prep: combined flats from '
-        with open('redFlatList.txt','r') as fin:
-            for line in fin:
-                if line[0] != '#' and len(line.split()) > 1:
-                    infile = line.split()[0]
-                    hdu = fits.open(infile)
-                    data = hdu[0].data
-                    header = hdu[0].header
-                    expTime = header['ELAPTIME']
-                    commentStr += '{} '.format(infile)
-                    if len(stackRedFlat) == 0:
-                        stackRedFlat = 1.*data
-                    else:
-                        stackRedFlat = stackRedFlat + data
-
-        # apply floor to avoid iraf crashes
-        stackRedFlat[stackRedFlat < 1.] = 1.
-        
-        header.add_comment(commentStr)
-        header['DISPAXIS'] = 1
-        hduOut = fits.PrimaryHDU(stackRedFlat,header)
+        # now do the response curve if the file exists
         if os.path.isfile('FLAT_red.fits'):
-            if CLOBBER:
-                os.remove('FLAT_red.fits')
-                hduOut.writeto('FLAT_red.fits')
-        else:
-            hduOut.writeto('FLAT_red.fits')
-
-        # now do the response curve
-        iraf.specred.response('FLAT_red.fits', 
-                               normaliz='FLAT_red.fits', 
-                               response='RESP_red', 
-                               interac='y', thresho='INDEF',
-                               sample='*', naverage=2, function='legendre', 
-                               low_rej=3,high_rej=3, order=60, niterat=20, 
-                               grow=0, graphic='stdgraph')
+            iraf.specred.response('FLAT_red.fits', 
+                                   normaliz='FLAT_red.fits', 
+                                   response='RESP_red', 
+                                   interac='y', thresho='INDEF',
+                                   sample='*', naverage=2, function='legendre', 
+                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   grow=0, graphic='stdgraph')
             
     # calibration frames are all set, now move the std/sci files to their directory
     if REORG_STANDARDS:
-        for i,stdStar in enumerate(STANDARD_STAR_LIBRARY):
-        
-            if not os.path.isdir(stdStar):
-                os.mkdir(stdStar)
-            
-            elif CLOBBER and not FULL_CLEAN:
-                # get files and remove them
-                delFiles = glob.glob('{}/*.fits'.format(stdStar))
-                for j in xrange(len(delFiles)):
-                    os.remove(delFiles[j])
-                
-            elif CLOBBER and FULL_CLEAN:
-                promptStr = 'Do you really want to wipe the dir for {}? [y/n]: '.format(stdStar)
-                usrRespOrig = raw_input(promptStr)
-                if usrRespOrig[0].strip().upper() == 'Y':
-                    shutil.rmtree(stdStar)
-                    os.mkdir(stdStar)
-            else:
-                pass # dir is there, but no CLOBBER
-            
-            # now move the appropriate files
-            # this is wildly inefficient but whatever
-            # NOTE: if the file already exists (i.e. was not removed above)
-            # then it will not be overwritten here
-            with open('blueStdList.txt','r') as fin:
-                for line in fin:
-                    if line[0] != '#' and len(line.split()) > 1:
-                        if stdStar.strip().upper() in line.split()[1].strip().upper():
-                            destFile = '{}/{}'.format(stdStar,line.split()[0])
-                            
-                            if not os.path.isfile(destFile):
-                                hdu = fits.open(line.split()[0])
-                                header = hdu[0].header
-                                imgData = hdu[0].data
-                                
-                                # optionally skysub
-                                if SKYSUB_STANDARD:
-                                    # not yet implemented
-                                    pass
-
-                                # place the file
-                                hduOut = fits.PrimaryHDU(imgData,header)
-                                hduOut.writeto(destFile,output_verify='ignore')
-                                
-            with open('redStdList.txt','r') as fin:
-                for line in fin:
-                    if line[0] != '#' and len(line.split()) > 1:
-                        if stdStar.strip().upper() in line.split()[1].strip().upper():
-                            destFile = '{}/{}'.format(stdStar,line.split()[0])
-                            
-                            if not os.path.isfile(destFile):
-                                hdu = fits.open(line.split()[0])
-                                header = hdu[0].header
-                                imgData = hdu[0].data
-                                
-                                # optionally skysub
-                                if SKYSUB_STANDARD:
-                                    # not yet implemented
-                                    pass
-
-                                # place the file
-                                hduOut = fits.PrimaryHDU(imgData,header)
-                                hduOut.writeto(destFile,output_verify='ignore')
-                                
-            # This differs from science below. If we didn't move any
-            # files into this stdStar directory, just remove it.
-            if not os.listdir(stdStar):
-                shutil.rmtree(stdStar)
+        res = reorg_file_list('blueStdList.txt',STANDARD_STAR_LIBRARY,
+                                CLOBBER=CLOBBER,FULL_CLEAN=FULL_CLEAN)
+        res = reorg_file_list('redStdList.txt',STANDARD_STAR_LIBRARY,
+                                CLOBBER=CLOBBER,FULL_CLEAN=FULL_CLEAN)
         
         
     # standards are all set, now move the science files to their directory
     if REORG_SCIENCE:
-        for i in xrange(len(sci_obj_list)):
-        
-            sciObj = sci_obj_list[i]
-        
-            if not os.path.isdir(sciObj):
-                os.mkdir(sciObj)
-            
-            elif CLOBBER and not FULL_CLEAN:
-                # get files and remove them
-                delFiles = glob.glob('{}/*.fits'.format(sciObj))
-                for j in xrange(len(delFiles)):
-                    os.remove(delFiles[j])
-                
-            elif CLOBBER and FULL_CLEAN:
-                promptStr = 'Do you really want to wipe the dir for {}? [y/n]: '.format(sciObj)
-                usrRespOrig = raw_input(promptStr)
-                if usrRespOrig and usrRespOrig[0].strip().upper() == 'Y':
-                    shutil.rmtree(sciObj)
-                    os.mkdir(sciObj)
-            else:
-                print('Ok, leaving {} as is.'.format(sciObj))
-            
-            # now move the appropriate files
-            # this is inefficient but whatever
-            # NOTE: if the file already exists (i.e. was not removed above)
-            # then it will not be overwritten here
-            with open('blueSciList.txt','r') as fin:
-                for line in fin:
-                    if line[0] != '#' and len(line.split()) > 1:
-                        if sciObj.strip().upper() in line.split()[1].strip().upper():
-                            destFile = '{}/{}'.format(sciObj,line.split()[0])
-                            
-                            if not os.path.isfile(destFile):
-                                hdu = fits.open(line.split()[0])
-                                header = hdu[0].header
-                                imgData = hdu[0].data
-
-                                # optionally skysub
-                                if SKYSUB_SCIENCE:
-                                    # not yet implemented
-                                    pass
-
-                                # place the file
-                                hduOut = fits.PrimaryHDU(imgData,header)
-                                hduOut.writeto(destFile,output_verify='ignore')
-                                
-                                
-            with open('redSciList.txt','r') as fin:
-                for line in fin:
-                    if line[0] != '#' and len(line.split()) > 1:
-                        if sciObj.strip().upper() in line.split()[1].strip().upper():
-                            destFile = '{}/{}'.format(sciObj,line.split()[0])
-                            
-                            if not os.path.isfile(destFile):
-                                hdu = fits.open(line.split()[0])
-                                header = hdu[0].header
-                                imgData = hdu[0].data
-
-                                # optionally skysub
-                                if SKYSUB_SCIENCE:
-                                    # not yet implemented
-                                    pass
-
-                                # place the file
-                                hduOut = fits.PrimaryHDU(imgData,header)
-                                hduOut.writeto(destFile,output_verify='ignore')
-                                
+        res = reorg_file_list('blueSciList.txt',SCI_OBJ_LIST,
+                                CLOBBER=CLOBBER,FULL_CLEAN=FULL_CLEAN)
+        res = reorg_file_list('redSciList.txt',SCI_OBJ_LIST,
+                                CLOBBER=CLOBBER,FULL_CLEAN=FULL_CLEAN)
     
     return 0
     
