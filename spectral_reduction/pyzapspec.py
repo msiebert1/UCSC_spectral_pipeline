@@ -424,7 +424,7 @@ def main():
 
     if os.path.isfile(outfile):
         promptStr = 'Output file {} exists...overwrite? y/[n]: '.format(outfile)
-        usrAns = input(promptStr)
+        usrAns = raw_input(promptStr)
         if usrAns.strip().upper()[0] == 'Y':
             print('Overwritting...')
             res = writefits(outimg,outfile,header=header,clobber=True)

@@ -28,7 +28,9 @@ kast_blue = {'name': 'kast_blue',
              'observatory': 'lick',
              'sky_file': path_to_trunk + 'KAST_cals/licksky.fits',
              'section': 'middle line',
-             'pyzap_boxsize': 5,
+             'pyzap_boxsize': 5, # approximate seeing in pixels
+             'pyzap_nsigma': 16,
+             'pyzap_subsigma': 2.8,
              'approx_extract_line': 200,
              'approx_extract_column': 1000}
 
@@ -56,6 +58,8 @@ kast_red = { 'name': 'kast_red',
              'sky_file': path_to_trunk + 'KAST_cals/licksky.fits',
              'section': 'middle column',
              'pyzap_boxsize': 5,
+             'pyzap_nsigma': 16,
+             'pyzap_subsigma': 2.8,
              'approx_extract_line': 200,
              'approx_extract_column': 1000}
 
@@ -78,7 +82,9 @@ lris_blue = {'name': 'lris_blue',
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
              'section': 'middle line',
-             'pyzap_boxsize': 7,
+             'pyzap_boxsize': 5,
+             'pyzap_nsigma': 16,
+             'pyzap_subsigma': 8,
              'approx_extract_line': 740}
              
 lris_red = { 'name': 'lris_red',
@@ -100,7 +106,9 @@ lris_red = { 'name': 'lris_red',
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
              'section': 'middle line',
-             'pyzap_boxsize': 7,
+             'pyzap_boxsize': 5,
+             'pyzap_nsigma': 16,
+             'pyzap_subsigma': 8,
              'approx_extract_line': 370}
              
 goodman_m1={ 'name': 'goodman_blue',

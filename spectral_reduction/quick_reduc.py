@@ -155,19 +155,13 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         #raw_input("Press Enter to continue...")
         if _cosmic:
             print('\n### starting cosmic removal')
-            
-            # array, header = cosmics.fromfits(img)
-            # c = cosmics.cosmicsimage(array, 
-            #                          gain=inst.get('gain'), readnoise=inst.get('read_noise'), 
-            #                          sigclip = 5, sigfrac = 0.5, objlim = 2.0)
-            # c.run(maxiter = 5)
-            # cosmics.tofits('cosmic_' + img, c.cleanarray, header)
-            # img='cosmic_' + img
 
             outimg,outmask,header = pyzapspec.pyzapspec(img, 
                                                         outfile='cosmic_{}'.format(img), 
                                                         WRITE_OUTFILE = True,
-                                                        boxsize=inst.get('pyzap_boxsize'))
+                                                        boxsize=inst.get('pyzap_boxsize',7),
+                                                        nsigma=inst.get('pyzap_nsigma',16),
+                                                        subsigma=inst.get('pyzap_subsigma',3))
             img = 'cosmic_{}'.format(img)
 
             print('\n### cosmic removal finished')
