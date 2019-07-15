@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os,sys,pdb,argparse,shutil,glob,subprocess,shlex
 from time import sleep
 import numpy as np
@@ -18,10 +19,12 @@ import matplotlib
 # this backend will catch buttons, but it could
 # cause an issue with tex and/or MNRAS and arXiv?
 # so be careful you copy/paste these imports elsewhere
-matplotlib.use("Qt5Agg")
+matplotlib.use('TkAgg')
 matplotlib.rcParams[u'keymap.yscale'].remove(u'l')
 from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
+import matplotlib.colors as colors
+
 
 
 ##########
@@ -138,28 +141,28 @@ class fitFlatClass(object):
                 
             if event.key == 'l':
                 outStr = 'Adding lower column'
-                print outStr
+                print(outStr)
                 self.dummyRegion['colLo'] = col
             
             elif event.key == 'u': 
                 outStr = 'Adding upper column'
-                print outStr
+                print(outStr)
                 self.dummyRegion['colUp'] = col
             
             elif event.key == 'd':
                 outStr = 'Adding region to dict'
-                print outStr
+                print(outStr)
                 self.dummyRegion['done'] = True
                 self.dummyRegion['store'] = True
             
             elif event.key == 'q':
                 outStr = 'Discarding region'
-                print outStr
+                print(outStr)
                 self.dummyRegion['done'] = True
                 self.dummyRegion['store'] = False
                         
             else:
-                print 'Unrecognized key'
+                print('Unrecognized key')
         
         
         return
@@ -209,7 +212,7 @@ class fitFlatClass(object):
             outStr += 'Press U to mark an upper column\n'
             outStr += 'Press D to add the region\n'
             outStr += 'Press Q to discard the region\n'
-            print outStr            
+            print(outStr)            
             
             # connect the key press event here
             cid = self.fig.canvas.mpl_connect('button_press_event', self.skyRegion_onClick)
@@ -239,7 +242,7 @@ class fitFlatClass(object):
         # flip order if necessary
         if self.dummyRegion['colLo'] > self.dummyRegion['colUp']:
             errStr = 'Had to flip the high/low columns...'
-            print errStr
+            print(errStr)
             colTemp = self.dummyRegion['colLo']
             self.dummyRegion['colLo'] = self.dummyRegion['colUp']
             self.dummyRegion['colUp'] = colTemp
@@ -287,16 +290,16 @@ class fitFlatClass(object):
                     
                 elif usrResp == 'Q':
                     outStr = 'Quitting region deletion...'
-                    print outStr
+                    print(outStr)
                     break
                     
                 else:
                     outStr = 'I do not understand, try again...'
-                    print outStr
+                    print(outStr)
                     
         else:
             outStr = 'Something went wrong...'
-            print outStr
+            print(outStr)
             
         
         return 0
@@ -361,36 +364,48 @@ class fitFlatClass(object):
             newCols = np.arange(region.colLo,region.colUp,1)
             modColArr = np.append(modColArr,newCols)
         modColArr = modColArr.astype(int)
-        
-                
+
         # ax1 data
-        blueSkyData = np.median(self.rawData[:,300:1500],axis=0)
+        bsd_col_lo = 100
+        bsd_col_up = bsd_col_lo + 200
+        
+        # ax2 data
+        msd_col_lo = self.rawData.shape[1] // 2
+        msd_col_up = msd_col_lo + 200
+        
+        # ax3 data
+        rsd_col_lo = self.rawData.shape[1] - 500
+        rsd_col_up = rsd_col_lo + 200
+        
+        # ax1 data
+        blueSkyData = np.median(self.rawData[:,bsd_col_lo:bsd_col_up],axis=0)
         if len(modColArr) > 0:
-            blueSkyModel = np.median(self.flatModelData[:,300:1500],axis=0)
+            blueSkyModel = np.median(self.flatModelData[:,bsd_col_lo:bsd_col_up],axis=0)
         else:
             blueSkyModel = 0.*blueSkyData
-        blueSkyX = np.arange(300,1500,1)
+        blueSkyX = np.arange(bsd_col_lo,bsd_col_up,1)
 
     
     
         # ax2 data
-        midSkyData = np.median(self.rawData[:,1800:2100],axis=0)
-        midSkyX = np.arange(1800,2100,1)
+        midSkyData = np.median(self.rawData[:,msd_col_lo:msd_col_up],axis=0)
+        midSkyX = np.arange(msd_col_lo,msd_col_up,1)
     
         # ax3 data
-        redSkyData = np.median(self.rawData[:,2700:3200],axis=0)
+        redSkyData = np.median(self.rawData[:,rsd_col_lo:rsd_col_up],axis=0)
         if len(modColArr) > 0:
-            redSkyModel = np.median(self.flatModelData[:,2700:3200],axis=0)
+            redSkyModel = np.median(self.flatModelData[:,rsd_col_lo:rsd_col_up],axis=0)
         else:
             redSkyModel = 0.*redSkyData
-        redSkyX = np.arange(2700,3200,1)
+        redSkyX = np.arange(rsd_col_lo,rsd_col_up,1)
 
         # plot blue sky
         try:
+            pass
             ax1.plot(blueSkyX,blueSkyData,c='k',ls='-',lw=3.)
             ax1.plot(blueSkyX,blueSkyModel,c='r',ls='--',lw=3.)
         except Exception as e:
-            print e
+            print(e)
             pdb.set_trace()
 
         #plot profile
@@ -400,11 +415,19 @@ class fitFlatClass(object):
         ax3.plot(redSkyX,redSkyData,c='k',ls='-',lw=3.)
         ax3.plot(redSkyX,redSkyModel,c='r',ls='--',lw=3.)
 
+        # grab the values of the 10 and 90 percentile pixels
+        rawData_ravel = np.ravel(self.rawData)
+        sortedIndexes = np.argsort(rawData_ravel)
+        vmin = 1.*rawData_ravel[sortedIndexes[int(0.2*len(sortedIndexes))]]
+        vmax = 2.*rawData_ravel[sortedIndexes[int(0.8*len(sortedIndexes))]]
+
         # image
-        ax4.imshow(self.rawData,aspect=1.,origin='lower',vmin=0.9,vmax=1.1)
+        ax4.imshow(self.rawData,aspect=1.,origin='lower',
+                    norm=colors.LogNorm(vmin=vmin,vmax=vmax))
 
         # residuals
-        ax5.imshow(self.flatCorrData,aspect=1.,origin='lower',vmin=0.9,vmax=1.1)
+        ax5.imshow(self.flatCorrData,aspect=1.,origin='lower',
+                    norm=colors.LogNorm(vmin=vmin,vmax=vmax))
         
         # over plot the sky regions
         for key in self.regionDict.keys():
@@ -419,19 +442,10 @@ class fitFlatClass(object):
         ax1.set_ylabel('counts')
         ax2.set_xlabel('column')
         ax3.set_xlabel('column')
-    
-        ax1.set_yticklabels([])
-        ax1.set_xticks([300,500,700,900,1100,1300])
-        ax1.set_xticklabels([300,500,700,900,1100,1300])
 
+        ax1.set_yticklabels([])
         ax2.set_yticklabels([])
-        ax2.set_xticks([1800,1900,2000,2100])
-        ax2.set_xticklabels([1800, 1900, 2000, 2100])
-    
         ax3.set_yticklabels([])
-        ax3.set_xticks([2800,2900,3000,3100])
-        ax3.set_xticklabels([2800,2900,3000,3100])
-            
         
         # ranges on image plots
         ax4.set_xlim([0,self.rawData.shape[1]])
@@ -456,7 +470,7 @@ class fitFlatClass(object):
         
         # update the master profile
         outStr = 'Updating the master profile (takes a bit...)'
-        print outStr
+        print(outStr)
         self.update_master_profile()
         
         # stack the regions, but preserve the row pixel numbers in rowArr
@@ -476,22 +490,26 @@ class fitFlatClass(object):
         # for each col, fit flux as a function of pixel number   
         for i in xrange(skyImage.shape[1]): 
             if i % 50 == 0:  
-                print 'Working on col {} / {}'.format(i,skyImage.shape[1])
+                print('Working on col {} / {}'.format(i,skyImage.shape[1]))
             
             # get the fit data for this column            
             fitX = np.arange(0,skyImage.shape[0]) # abscissa is row pixel number
-            fitY = skyImage[fitX,i] - self.masterProfile # grab all rows in a single column
+
+            # subtracting self.masterProfile won't yield residuals since the color term has
+            # not been removed. Instead we need a local determination of the illumination
+            localProfileScaling = np.median(skyImage[fitX,i])
+            masterProfileScaling = np.median(self.masterProfile)
+            fitY = skyImage[fitX,i] - self.masterProfile
             
             # fit with a spline
-            
             splineFit = interpolate.UnivariateSpline(fitX, fitY, s=self.splineSmooth)
             skyTheo = splineFit(fitX)
             
             # subtract fit from observed
             residual = self.rawData[:,colArr[i]] - skyTheo
             
-            # add self.masterProfile back in
-            skyModelFull[:,colArr[i]] = residual #+ self.masterProfile
+            # add residuals (pixel to pixel variations) back in
+            skyModelFull[:,colArr[i]] = residual
             
             
             # plot?
@@ -499,7 +517,7 @@ class fitFlatClass(object):
             #     PLOT=True
             # else:
             #     PLOT=False
-            PLOT = False
+            PLOT = True
             if PLOT:
                 fig=plt.figure(figsize=(6,6))    
                 axMain = plt.subplot2grid((4,4),(0,0),rowspan=4,colspan=6)
@@ -572,16 +590,16 @@ class fitFlatClass(object):
                     
                 elif usrResp == 'Q':
                     outStr = 'Quitting region deletion...'
-                    print outStr
+                    print(outStr)
                     break
                     
                 else:
                     outStr = 'I do not understand, try again...'
-                    print outStr
+                    print(outStr)
                     
         else:
             outStr = 'Something went wrong...'
-            print outStr
+            print(outStr)
             
         
         return 0
@@ -605,14 +623,18 @@ class fitFlatClass(object):
     # This will overwrite existing files automatically
     # (i.e. it assumes the user has already confirmed write)
     #    
-    def save_flat(self,outFile):
+    def save_flat(self,outFile,header=None):
         
         # clear space
         if os.path.isfile(outFile):
             os.remove(outFile)
+
         
         # write correct flat data
-        hdu = fits.PrimaryHDU(self.flatCorrData)
+        if header is not None:
+            hdu = fits.PrimaryHDU(self.flatCorrData,header)
+        else:
+            hdu = fits.PrimaryHDU(self.flatCorrData)
         hdu.writeto(outFile,output_verify='ignore')  
         
         return 0
@@ -630,6 +652,82 @@ class flatFitRegion(object):
 
 
 
+def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
+
+    # read data
+    flat_comb_image = np.array([])
+    median_image_stack = np.array([])
+    nImages = 0
+    expTime = 0
+    nFlatLimit = 15
+
+    # calculate the stack batch size
+    if nFlatLimit < len(flat_list):
+        batchSize = len(flat_list) // 2 + 1
+        while batchSize > len(flat_list):
+            batchSize = batchSize // 2 + 1
+    else:
+        batchSize = len(flat_list)
+
+
+
+    # loop over the flat files
+    for file in flat_list:
+        hdu = fits.open(file)
+        data = hdu[0].data
+        header = hdu[0].header
+        nImages += 1
+        expTime += header.get('EXPTIME',None)
+
+        # scale to expTime
+        data /= expTime
+
+        if len(flat_comb_image) == 0:
+            flat_comb_image = np.copy(data)
+        else:
+
+            # if median combining, stack the data
+            if MEDIAN_COMBINE:
+
+                # stack images in the z direction
+                flat_comb_image = np.dstack((flat_comb_image,data))
+
+                # if flat_comb_image is getting too big, or if we're at the end of flat_list,
+                # then squash it along the z axis with a median
+                if ((flat_comb_image.shape[2] == batchSize) or 
+                    (flat_comb_image.shape[2] == len(flat_list)-1)):
+
+                    # stack the intermediate squashed frames
+                    if len(median_image_stack) == 0:
+                        median_image_stack = np.median(flat_comb_image,axis=2)
+                    else:
+                        median_image_stack = np.dstack((median_image_stack,np.median(flat_comb_image,axis=2)))
+
+                    # reset the stack
+                    flat_comb_image = np.array([])
+
+
+            # otherwise just sum them
+            else:
+                flat_comb_image += np.copy(data)
+
+    # if median combining, squash the stack of median
+    if MEDIAN_COMBINE:
+        # if there are multiple median images in the stack, median them
+        if len(median_image_stack.shape) > 2:
+            flat_comb_image = np.median(median_image_stack,axis=2)
+        # otherwise just return the single frame
+        else:
+            flat_comb_image = np.copy(median_image_stack)
+        header.add_history('combine_flats: median combined {} files'.format(nImages))
+    else:
+        header.add_history('combine_flats: summed {} files'.format(nImages))
+
+
+    return (flat_comb_image,header)
+
+
+
 
 
 def parse_cmd_args():
@@ -640,28 +738,43 @@ def parse_cmd_args():
     parser = argparse.ArgumentParser(description=descStr)
 
     # required args
-    parser.add_argument('flat_file',type=str,
-                       help='the flat field to inspect/mask')
+    parser.add_argument('flat_list',type=str,nargs='*',default=[],
+                       help='The list of flat field files to process')
 
     # optional
     parser.add_argument('-v','--verbose',
-                        help='print diagnostic info',action='store_true')
+                        help='Print diagnostic info',action='store_true')
     parser.add_argument('-c','--clobber',action='store_true',
                         help='Clobber files already in pre_reduced/ but not subdirs')
+    parser.add_argument('-r','--remove_color',
+                        help='Remove color term from flat',action='store_true')
+
+    parser.add_argument('-o','--outfile',
+                        help='Output file for the processed flat field')
+    parser.add_argument('-d','--dispaxis',type=int,default=1,
+                        help='Dispersion axis (default=1)')
+
 
     # parse
     cmdArgs = parser.parse_args()
 
     # logic mapping to my args/kwargs
-    FLAT_FILE = cmdArgs.flat_file
+    FLAT_LIST = cmdArgs.flat_list
     VERBOSE = cmdArgs.verbose
     CLOBBER = cmdArgs.clobber
+    REMOVE_COLOR = cmdArgs.remove_color
+    OUTFILE = cmdArgs.outfile
+    DISPAXIS = cmdArgs.dispaxis
 
     # package up
-    args = (FLAT_FILE,) # no args implemented yet
+    args = (FLAT_LIST,) # no args implemented yet
     kwargs = {}
     kwargs['VERBOSE'] = VERBOSE
     kwargs['CLOBBER'] = CLOBBER
+    kwargs['REMOVE_COLOR'] = REMOVE_COLOR
+    kwargs['OUTFILE'] = OUTFILE
+    kwargs['DISPAXIS'] = DISPAXIS
+
 
     return (args,kwargs)
 
@@ -679,7 +792,7 @@ def parse_cmd_args():
 # construct_flat - Model a flat field from slitflat data
 #
 # Inputs:
-#    A 2D color free slit flat
+#    A list of flat field file names
 #
 # Assumes:
 #
@@ -718,24 +831,28 @@ def parse_cmd_args():
 #   2018 Nov 14
 #
 
-def main(*args,**kwargs):
+def construct_flat(flat_list,*args,**kwargs):
     
-    # read data
-    inFile = args[0]
+    # unpack
+    outFile = kwargs.get('OUTFILE',None)
+    dispaxis = kwargs.get('DISPAXIS',1)
+    remove_color = kwargs.get('REMOVE_COLOR',False)
 
-    hdu = fits.open(inFile)
-    data = hdu[0].data
-    header = hdu[0].header
+
+    # TODO: memory allocation for median combining...limit to 10 at a time, then average
+    flat_comb_image,header = combine_flats(flat_list,**kwargs)
+
+    # transpose if we're dealing with cols x rows
+    if dispaxis == 2:
+        flat_comb_image = flat_comb_image.T
+
+    if remove_color:
+        # for each column, divide by the median
+        for i in range(len(flat_comb_image[0,:])):
+            flat_comb_image[:,i] /= np.median(flat_comb_image[:,i])
     
     # set up plotting window
     plt.ion()
-    #fig=plt.figure(figsize=(16,8))
-    #axMain = plt.subplot2grid((6,6), (0,0), rowspan=6, colspan=6)
-    #ax1 = plt.subplot2grid((6,6), (0,0), rowspan=2, colspan=2)
-    #ax2 = plt.subplot2grid((6,6), (0,2), rowspan=2, colspan=2)
-    #ax3 = plt.subplot2grid((6,6), (0,4), rowspan=2, colspan=2)
-    #ax4 = plt.subplot2grid((6,6), (2,0), rowspan=2, colspan=6)
-    #ax5 = plt.subplot2grid((6,6), (4,0), rowspan=2, colspan=6)
     
     fig=plt.figure(figsize=(16,8))
     axMain = plt.subplot2grid((36,36), (0,0), rowspan=36, colspan=36)
@@ -746,34 +863,48 @@ def main(*args,**kwargs):
     ax5 = plt.subplot2grid((36,36), (24,0), rowspan=12, colspan=36)
     
     # ax1 data
-    blueSkyData = np.median(data[:,300:1500],axis=0)
-    blueSkyX = np.arange(300,1500,1)
+    bsd_col_lo = 100
+    bsd_col_up = bsd_col_lo + 200
+    blueSkyData = np.median(flat_comb_image[:,bsd_col_lo:bsd_col_up],axis=0)
+    blueSkyX = np.arange(bsd_col_lo,bsd_col_up,1)
     
     
     # ax2 data
-    midSkyData = np.median(data[:,1800:2100],axis=0)
-    midSkyX = np.arange(1800,2100,1)
+    msd_col_lo = flat_comb_image.shape[1] // 2
+    msd_col_up = msd_col_lo + 200
+    midSkyData = np.median(flat_comb_image[:,msd_col_lo:msd_col_up],axis=0)
+    midSkyX = np.arange(msd_col_lo,msd_col_up,1)
     
     # ax3 data
-    redSkyData = np.median(data[:,2700:3200],axis=0)
-    redSkyX = np.arange(2700,3200,1)
+    rsd_col_lo = flat_comb_image.shape[1] - 500
+    rsd_col_up = rsd_col_lo + 200
+    redSkyData = np.median(flat_comb_image[:,rsd_col_lo:rsd_col_up],axis=0)
+    redSkyX = np.arange(rsd_col_lo,rsd_col_up,1)
 
     ax1.plot(blueSkyX,blueSkyData,c='k',ls='-',lw=3.)
     ax2.plot(midSkyX, midSkyData,c='k',ls='-',lw=3.)
     ax3.plot(redSkyX,redSkyData,c='k',ls='-',lw=3.)
 
+    # grab the values of the 10 and 90 percentile pixels
+    flat_comb_image_ravel = np.ravel(flat_comb_image)
+    sortedIndexes = np.argsort(flat_comb_image_ravel)
+    vmin = 1.*flat_comb_image_ravel[sortedIndexes[int(0.2*len(sortedIndexes))]]
+    vmax = 2.*flat_comb_image_ravel[sortedIndexes[int(0.8*len(sortedIndexes))]]
+
     # image
-    ax4.imshow(data,aspect=1.,origin='lower',vmin=0.9,vmax=1.1)
+    ax4.imshow(flat_comb_image,aspect=1.,origin='lower',
+                norm=colors.LogNorm(vmin=vmin, vmax=vmax))
     
     # residuals
-    ax5.imshow(data,aspect=1.,origin='lower',vmin=0.9,vmax=1.1)
-    
+    ax5.imshow(flat_comb_image,aspect=1.,origin='lower',
+                norm=colors.LogNorm(vmin=vmin, vmax=vmax))
+
     # ranges on image plots
-    ax4.set_xlim([0,data.shape[1]])
-    ax4.set_ylim([0,data.shape[0]])
+    ax4.set_xlim([0,flat_comb_image.shape[1]])
+    ax4.set_ylim([0,flat_comb_image.shape[0]])
     
-    ax5.set_xlim([0,data.shape[1]])
-    ax5.set_ylim([0,data.shape[0]])
+    ax5.set_xlim([0,flat_comb_image.shape[1]])
+    ax5.set_ylim([0,flat_comb_image.shape[0]])
     
     # sparse axis labels
     ax1.set_xlabel('column')
@@ -782,22 +913,11 @@ def main(*args,**kwargs):
     ax3.set_xlabel('column')
     
     ax1.set_yticklabels([])
-    ax1.set_xticks([300,500,700,900,1100,1300])
-    ax1.set_xticklabels([300,500,700,900,1100,1300])
-
     ax2.set_yticklabels([])
-    ax2.set_xticks([1800,1900,2000,2100])
-    ax2.set_xticklabels([1800, 1900, 2000, 2100])
-
     ax3.set_yticklabels([])
-    ax3.set_xticks([2800,2900,3000,3100])
-    ax3.set_xticklabels([2800,2900,3000,3100])    
-        
-    flatFitObj = fitFlatClass(data,fig)
     
-    promptStr = 'Welcome to the flat fitting module!\n'
-    print promptStr
-    
+    flatFitObj = fitFlatClass(flat_comb_image,fig)
+
     while True:
         
         validResps = ['A','R','F','S','U','H',  # standard options
@@ -833,7 +953,7 @@ def main(*args,**kwargs):
                     colUp = int(usrResp.split()[2])
                     flatFitObj.add_fit_region(name,colLo=colLo,colUp=colUp)
                 except Exception as e:
-                    print e
+                    print(e)
                     
                     
             # remove
@@ -849,7 +969,7 @@ def main(*args,**kwargs):
                 flatFitObj.subsitute_model_flat()
                 
             if usrResp == 'U':
-                flatFitObj = fitFlatClass(data,fig)
+                flatFitObj = fitFlatClass(flat_comb_image,fig)
                 flatFitObj.refresh_plot()
                 
             if usrResp == 'H':
@@ -863,29 +983,39 @@ def main(*args,**kwargs):
             
             # write file
             if usrResp == 'W':
-                promptStr = 'Enter name of save file (e.g. RESP_blue): '
-                outFile = raw_input(promptStr).strip()
-                promptStr = 'Write to file {} [y/n]: '.format(outFile)
-                usrResp = raw_input(promptStr).upper().strip()
-                if usrResp == 'Y':
-                    flatFitObj.save_flat(outFile)
-                    break
+
+                # if cols x rows, transpose before writting
+                if dispaxis == 2:
+                    flatFitObj.flatCorrData = flatFitObj.flatCorrData.T
+
+                if outFile is None:
+                    promptStr = 'Enter name of save file (e.g. RESP_blue): '
+                    outFile = raw_input(promptStr).strip()
+                    promptStr = 'Write to file {} [y/n]: '.format(outFile)
+                    usrResp = raw_input(promptStr).upper().strip()
+                    if usrResp == 'Y':
+                        flatFitObj.save_flat(outFile,header=header)
+                        break
+                    else:
+                        print('Ok, aborting save...')
                 else:
-                    print 'Ok, aborting save...'
+                    if os.path.isfile(outFile):
+                        os.remove(outFile)
+                    flatFitObj.save_flat(outFile,header=header)
             # debug
             if usrResp == 'D':
                 pdb.set_trace()
             # quit
             if usrResp == 'Q':
-                print 'Aborting...'
+                print('Quitting.')
                 break
         else:
             errStr = 'I don\'t understand, try again...'
-            print errStr
+            print(errStr)
     
     return 0
     
 if __name__=='__main__':
     ''' Run parsing, then main '''
     args,kwargs = parse_cmd_args()
-    main(*args,**kwargs)
+    construct_flat(*args,**kwargs)

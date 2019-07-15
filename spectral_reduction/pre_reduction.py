@@ -12,6 +12,8 @@ from astropy.io import fits, ascii
 from pyraf import iraf
 
 matplotlib.use('TkAgg')
+from construct_flat import construct_flat
+
 description = "> Performs pre-reduction steps"
 usage = "%prog  \t [option] \n Recommended syntax: %prog -i -c"
 
@@ -214,24 +216,21 @@ def main():
         # blue flats
         if len(list_flat_b) > 0:
             br, inst = instruments.blue_or_red(list_flat_b[0])
-            iraf.specred.dispaxi = inst.get('dispaxis')
-            if len(list_flat_b) == 1:
-                # Flat_blue = 'pre_reduced/to'+ list_flat_b[0]
-                Flat_blue = list_flat_b[0]
-            else:
-                flat_str = ''
-                for flat in list_flat_b:
-                    flat_str = flat_str + 'pre_reduced/to'+ flat + ','
-                #subsets = 'no'
-                if os.path.isfile('pre_reduced/toFlat_blue'):
-                    os.remove('pre_reduced/toFlat_blue')
-                iraf.flatcombine(flat_str, output='pre_reduced/toFlat_blue', 
-                                 ccdtype='',rdnoise=3.7, subsets='no', process='no')
-                Flat_blue = 'Flat_blue.fits'
+            dispaxis = inst.get('dispaxis')
+            iraf.specred.dispaxi = dispaxis
+            Flat_blue = 'pre_reduced/toFlat_blue.fits'
+
+            flat_list = []
+            for flat in list_flat_b:
+                flat_list.append('pre_reduced/to'+ flat)
+            if os.path.isfile(Flat_blue):
+                os.remove(Flat_blue)
+
+            construct_flat(flat_list,OUTFILE=Flat_blue,DISPAXIS=dispaxis,MEDIAN_COMBINE=True)
                 
             #What is the output here? Check for overwrite
-            iraf.specred.response('pre_reduced/to'+Flat_blue, 
-                                   normaliz='pre_reduced/to'+Flat_blue, 
+            iraf.specred.response(Flat_blue, 
+                                   normaliz=Flat_blue, 
                                    response='pre_reduced/RESP_blue', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
@@ -241,23 +240,22 @@ def main():
         # red flats
         if len(list_flat_r) > 0:
             br, inst = instruments.blue_or_red(list_flat_r[0])
-            iraf.specred.dispaxi = inst.get('dispaxis')
-            if len(list_flat_r) == 1:
-                # Flat_red = 'pre_reduced/to' + list_flat_r[0]
-                Flat_red = list_flat_r[0]
-            else:
-                flat_str = ''
-                for flat in list_flat_r:
-                    flat_str = flat_str + 'pre_reduced/to'+ flat + ','
-                if os.path.isfile('pre_reduced/toFlat_red'):
-                    os.remove('pre_reduced/toFlat_red')
-                iraf.flatcombine(flat_str, output='pre_reduced/toFlat_red', 
-                                 ccdtype='', rdnoise=3.8, subsets='yes', process='no')
-                Flat_red = 'Flat_red.fits'
+            dispaxis = inst.get('dispaxis')
+            iraf.specred.dispaxi = dispaxis
+            Flat_red = 'pre_reduced/toFlat_red.fits'
+
+
+            flat_list = []
+            for flat in list_flat_r:
+                flat_list.append('pre_reduced/to'+ flat)
+            if os.path.isfile(Flat_red):
+                os.remove(Flat_red)
+
+            construct_flat(flat_list,OUTFILE=Flat_red,DISPAXIS=dispaxis,MEDIAN_COMBINE=True)
 
             #What is the output here? Check for overwrite
-            iraf.specred.response('pre_reduced/to'+Flat_red, 
-                                  normaliz='pre_reduced/to'+Flat_red, 
+            iraf.specred.response(Flat_red, 
+                                  normaliz=Flat_red, 
                                   response='pre_reduced/RESP_red', 
                                   interac=inter, thresho='INDEF',
                                   sample='*', naverage=2, function='legendre', 
