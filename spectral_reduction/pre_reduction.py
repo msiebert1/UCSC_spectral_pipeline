@@ -12,7 +12,7 @@ from astropy.io import fits, ascii
 from pyraf import iraf
 
 matplotlib.use('TkAgg')
-from construct_flat import construct_flat
+from flat_utils import combine_flats,inspect_flat
 
 description = "> Performs pre-reduction steps"
 usage = "%prog  \t [option] \n Recommended syntax: %prog -i -c"
@@ -226,9 +226,10 @@ def main():
             if os.path.isfile(Flat_blue):
                 os.remove(Flat_blue)
 
-            construct_flat(flat_list,OUTFILE=Flat_blue,DISPAXIS=dispaxis,MEDIAN_COMBINE=True)
-                
-            #What is the output here? Check for overwrite
+            # first, combine all the flat files into a master flat
+            res = combine_flats(flat_list,OUTFILE=Flat_blue,MEDIAN_COMBINE=True)
+            
+            # run iraf response
             iraf.specred.response(Flat_blue, 
                                    normaliz=Flat_blue, 
                                    response='pre_reduced/RESP_blue', 
@@ -236,6 +237,9 @@ def main():
                                    sample='*', naverage=2, function='legendre', 
                                    low_rej=3,high_rej=3, order=60, niterat=20, 
                                    grow=0, graphic='stdgraph')
+
+            # finally, inspect the flat and mask bad regions
+            res = inspect_flat(['pre_reduced/RESP_blue.fits'],DISPAXIS=dispaxis)
 
         # red flats
         if len(list_flat_r) > 0:
@@ -251,7 +255,8 @@ def main():
             if os.path.isfile(Flat_red):
                 os.remove(Flat_red)
 
-            construct_flat(flat_list,OUTFILE=Flat_red,DISPAXIS=dispaxis,MEDIAN_COMBINE=True)
+            # first, combine all the flat files into a master flat
+            res = combine_flats(flat_list,OUTFILE=Flat_red,MEDIAN_COMBINE=True)
 
             #What is the output here? Check for overwrite
             iraf.specred.response(Flat_red, 
@@ -261,6 +266,9 @@ def main():
                                   sample='*', naverage=2, function='legendre', 
                                   low_rej=3,high_rej=3, order=80, niterat=20, 
                                   grow=0, graphic='stdgraph')
+
+            # finally, inspect the flat and mask bad regions
+            res = inspect_flat(['pre_reduced/RESP_red.fits'],DISPAXIS=dispaxis)
     
 
     # science files should have 't' in front now

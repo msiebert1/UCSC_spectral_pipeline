@@ -418,16 +418,19 @@ class fitFlatClass(object):
         # grab the values of the 10 and 90 percentile pixels
         rawData_ravel = np.ravel(self.rawData)
         sortedIndexes = np.argsort(rawData_ravel)
-        vmin = 1.*rawData_ravel[sortedIndexes[int(0.2*len(sortedIndexes))]]
-        vmax = 2.*rawData_ravel[sortedIndexes[int(0.8*len(sortedIndexes))]]
+        # vmin = 1.*rawData_ravel[sortedIndexes[int(0.2*len(sortedIndexes))]]
+        # vmax = 2.*rawData_ravel[sortedIndexes[int(0.8*len(sortedIndexes))]]
+
+        vmin = 0.9
+        vmax = 1.1
 
         # image
         ax4.imshow(self.rawData,aspect=1.,origin='lower',
-                    norm=colors.LogNorm(vmin=vmin,vmax=vmax))
+                    norm=colors.Normalize(vmin=vmin,vmax=vmax))
 
         # residuals
         ax5.imshow(self.flatCorrData,aspect=1.,origin='lower',
-                    norm=colors.LogNorm(vmin=vmin,vmax=vmax))
+                    norm=colors.Normalize(vmin=vmin,vmax=vmax))
         
         # over plot the sky regions
         for key in self.regionDict.keys():
@@ -495,13 +498,13 @@ class fitFlatClass(object):
             # get the fit data for this column            
             fitX = np.arange(0,skyImage.shape[0]) # abscissa is row pixel number
 
-            # subtracting self.masterProfile won't yield residuals since the color term has
-            # not been removed. Instead we need a local determination of the illumination
-            localProfileScaling = np.median(skyImage[fitX,i])
-            masterProfileScaling = np.median(self.masterProfile)
+            # subtract the masterProfile (illumination), and then fit the 
+            # result with a smoothed spline. The fit should approximate the sky lines,
+            # and the residuals should approximate the pixel-to-pixel sensitivity variations.
             fitY = skyImage[fitX,i] - self.masterProfile
             
-            # fit with a spline
+            # fit with a smoothed spline
+            # note that the results are sensitive to the choice of 's' (the smoothing)
             splineFit = interpolate.UnivariateSpline(fitX, fitY, s=self.splineSmooth)
             skyTheo = splineFit(fitX)
             
@@ -517,7 +520,7 @@ class fitFlatClass(object):
             #     PLOT=True
             # else:
             #     PLOT=False
-            PLOT = True
+            PLOT = False
             if PLOT:
                 fig=plt.figure(figsize=(6,6))    
                 axMain = plt.subplot2grid((4,4),(0,0),rowspan=4,colspan=6)
@@ -654,6 +657,9 @@ class flatFitRegion(object):
 
 def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
 
+    # unpack
+    outFile = kwargs.get('OUTFILE')
+
     # read data
     flat_comb_image = np.array([])
     median_image_stack = np.array([])
@@ -677,7 +683,7 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
         data = hdu[0].data
         header = hdu[0].header
         nImages += 1
-        expTime += header.get('EXPTIME',None)
+        expTime += header.get('EXPTIME')
 
         # scale to expTime
         data /= expTime
@@ -723,8 +729,19 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
     else:
         header.add_history('combine_flats: summed {} files'.format(nImages))
 
+    # counts / sec * expTime
+    flat_comb_image *= expTime
 
-    return (flat_comb_image,header)
+    if outFile:
+        # clear space
+        if os.path.isfile(outFile):
+            os.remove(outFile)
+        # write correct flat data
+        hdu = fits.PrimaryHDU(flat_comb_image,header)
+        hdu.writeto(outFile,output_verify='ignore')  
+        return 0
+    else:
+        return (flat_comb_image,header)
 
 
 
@@ -789,7 +806,7 @@ def parse_cmd_args():
 
 #---------------------------------------------------------------------------
 # 
-# construct_flat - Model a flat field from slitflat data
+# inspect_flat - Model a flat field from slitflat data
 #
 # Inputs:
 #    A list of flat field file names
@@ -831,21 +848,26 @@ def parse_cmd_args():
 #   2018 Nov 14
 #
 
-def construct_flat(flat_list,*args,**kwargs):
+def inspect_flat(flat_list,*args,**kwargs):
     
     # unpack
     outFile = kwargs.get('OUTFILE',None)
     dispaxis = kwargs.get('DISPAXIS',1)
     remove_color = kwargs.get('REMOVE_COLOR',False)
 
-
-    # TODO: memory allocation for median combining...limit to 10 at a time, then average
-    flat_comb_image,header = combine_flats(flat_list,**kwargs)
+    # if user passed multiple files, combine them, otherwise, just read in the single file
+    if len(flat_list) > 1:
+        flat_comb_image,header = combine_flats(flat_list,**kwargs)
+    else:
+        hdu = fits.open(flat_list[0])
+        flat_comb_image = hdu[0].data
+        header = hdu[0].header
 
     # transpose if we're dealing with cols x rows
     if dispaxis == 2:
         flat_comb_image = flat_comb_image.T
 
+    # this is a hack and inferior to running IRAF response
     if remove_color:
         # for each column, divide by the median
         for i in range(len(flat_comb_image[0,:])):
@@ -888,16 +910,18 @@ def construct_flat(flat_list,*args,**kwargs):
     # grab the values of the 10 and 90 percentile pixels
     flat_comb_image_ravel = np.ravel(flat_comb_image)
     sortedIndexes = np.argsort(flat_comb_image_ravel)
-    vmin = 1.*flat_comb_image_ravel[sortedIndexes[int(0.2*len(sortedIndexes))]]
-    vmax = 2.*flat_comb_image_ravel[sortedIndexes[int(0.8*len(sortedIndexes))]]
+    # vmin = 1.*flat_comb_image_ravel[sortedIndexes[int(0.2*len(sortedIndexes))]]
+    # vmax = 2.*flat_comb_image_ravel[sortedIndexes[int(0.8*len(sortedIndexes))]]
+    vmin = 0.9
+    vmax = 1.1
 
     # image
     ax4.imshow(flat_comb_image,aspect=1.,origin='lower',
-                norm=colors.LogNorm(vmin=vmin, vmax=vmax))
+                norm=colors.Normalize(vmin=vmin, vmax=vmax))
     
     # residuals
     ax5.imshow(flat_comb_image,aspect=1.,origin='lower',
-                norm=colors.LogNorm(vmin=vmin, vmax=vmax))
+                norm=colors.Normalize(vmin=vmin, vmax=vmax))
 
     # ranges on image plots
     ax4.set_xlim([0,flat_comb_image.shape[1]])
@@ -922,16 +946,17 @@ def construct_flat(flat_list,*args,**kwargs):
         
         validResps = ['A','R','F','S','U','H',  # standard options
                       'AHARD','RHARD','REFINE', # hidden options
-                      'W','D','Q']              # stardard ends 
-        promptStr = 'Press (a) to add an exclusion region.\n'
-        promptStr += 'Press (r) to remove a region.\n'
-        promptStr += 'Press (f) to fit the exclusion regions.\n'
-        promptStr += 'Press (s) to substitute model in exclusion regions.\n'
-        promptStr += 'Press (h) to substitute the median profile in a region\n'
-        promptStr += 'Press (u) to undo everything and restart.\n'
-        promptStr += 'Press (w) to write the improved flat to disk.\n'
-        promptStr += 'Press (d) to enter the debugger.\n'
-        promptStr += 'Press (q) to quit and do nothing.\n'
+                      'W','D','Q','Q!']              # stardard ends 
+        promptStr = 'Enter (a) to add an exclusion region.\n'
+        promptStr += 'Enter (r) to remove a region.\n'
+        promptStr += 'Enter (f) to fit the exclusion regions.\n'
+        promptStr += 'Enter (s) to substitute model in exclusion regions.\n'
+        promptStr += 'Enter (h) to substitute the median profile in a region\n'
+        promptStr += 'Enter (u) to undo everything and restart.\n'
+        promptStr += 'Enter (w) to write the improved flat to disk.\n'
+        promptStr += 'Enter (d) to enter the debugger.\n'
+        promptStr += 'Enter (q) to quit and write the current flat to disk.\n'
+        promptStr += 'Enter (q!) to quit and do nothing.'
         promptStr += 'Answer: '
         usrResp = raw_input(promptStr).strip().upper()
         
@@ -997,6 +1022,7 @@ def construct_flat(flat_list,*args,**kwargs):
                         flatFitObj.save_flat(outFile,header=header)
                         break
                     else:
+                        outFile = None
                         print('Ok, aborting save...')
                 else:
                     if os.path.isfile(outFile):
@@ -1007,6 +1033,32 @@ def construct_flat(flat_list,*args,**kwargs):
                 pdb.set_trace()
             # quit
             if usrResp == 'Q':
+
+                print('Saving and quitting.')
+                # if cols x rows, transpose before writting
+                if dispaxis == 2:
+                    flatFitObj.flatCorrData = flatFitObj.flatCorrData.T
+                if outFile is None:
+                    promptStr = 'Enter name of save file '
+                    promptStr += '(e.g. pre_reduced/RESP_blue.fits): '
+                    outFile = raw_input(promptStr).strip()
+                    promptStr = 'Write to file {} [y/n]: '.format(outFile)
+                    usrResp = raw_input(promptStr).upper().strip()
+                    if usrResp == 'Y':
+                        flatFitObj.save_flat(outFile,header=header)
+                        break
+                    else:
+                        outFile = None
+                        print('Ok, aborting save...')
+                else:
+                    if os.path.isfile(outFile):
+                        os.remove(outFile)
+                    flatFitObj.save_flat(outFile,header=header)
+                break
+
+
+            # quit
+            if usrResp == 'Q!':
                 print('Quitting.')
                 break
         else:
@@ -1018,4 +1070,4 @@ def construct_flat(flat_list,*args,**kwargs):
 if __name__=='__main__':
     ''' Run parsing, then main '''
     args,kwargs = parse_cmd_args()
-    construct_flat(*args,**kwargs)
+    inspect_flat(*args,**kwargs)
