@@ -16,9 +16,6 @@ from optparse import OptionParser
 
 import matplotlib
 
-# this backend will catch buttons, but it could
-# cause an issue with tex and/or MNRAS and arXiv?
-# so be careful you copy/paste these imports elsewhere
 matplotlib.use('TkAgg')
 matplotlib.rcParams[u'keymap.yscale'].remove(u'l')
 from matplotlib import pyplot as plt
@@ -26,48 +23,41 @@ import matplotlib.lines as mlines
 import matplotlib.colors as colors
 
 
-
-##########
-#
-# This is the general class for applying corrections to stacked
-# color free pixel flats. The idea is allow the user to flag
-# exclusion regions (e.g. due to telluric bands or chip edge effects), 
-# and then patch them up accordingly.
-#
-# The code flow is:
-#   1. User supplies color free pixel flat as input
-#   2. Plot window/images are displayed
-#   3. User is prompted to mask regions
-#   4. After the regions are masked, the user fits the regions
-#     4a. Program computes the average (median) column which is
-#         essentially the master illumination profile
-#     4b. For each masked column, the master profile is subtracted,
-#         the remaining flux is fit with a spline in order to
-#         create a theoretical sky model for the column. Really,
-#         it's sky+pixel-to-pixel variations, but the spline isn't a
-#         true spline fit in the sense that it does not by definition
-#         pass through every point; there is a parameter 's' which
-#         modulates the number of knots in the fit. The assumption is
-#         that the pixel to pixel variations will be encoded in the
-#         residuals of the fit, while the sky flux (which varies over 
-#         many pixels) will be modeled out. For more info, see the 
-#         documentation on scipy.interpolate.UnivariateSpline.
-#     4c. The residuals between the sky model and the observed data
-#         are computed.
-#     4d. The residuals are added to the master profile and this
-#         quantity is used to replace the masked column.
-#   5. Finally the user can save the corrected flat to a file.
-#         
-##########
-
-
 class fitFlatClass(object):
-    
-    
-    #
-    # Basic class init
-    #
+    '''
+    A class to drive flatfield masking operations
+
+    Attributes
+    ----------
+    rawData : ndarray
+        A 2D array representing a stacked color free flatfield image
+    flatModelData : ndarray
+        A 2D array representing a flatfield model image
+    flatCorrData: ndarray
+        A 2D array representing a masked/corrected flatfield image
+    masterProfile: ndarry
+        A 1D array representing average spatial illumination pattern
+    fig : matplotlib.figure
+        A figure instance displaying the current state of the class
+    splineSmooth: float
+        Parameter used in smoothing when fitting the telluric features
+    regionDict: dictionary
+        A dictionary storing masking regions
+    dummyRegion: dictionary
+        A dictionary representing a prototype masking region
+
+    '''
     def __init__(self,image,fig):
+        ''' 
+        Initialize the object 
+
+        Parameters
+        ----------
+        image : ndarray
+            A 2D array representing a stacked color free flatfield image
+        fig : bool, optional
+            A figure instance displaying the current state of the class
+        '''
         
         # data
         self.rawData = 1.*image # observed
@@ -93,19 +83,13 @@ class fitFlatClass(object):
                             'done': False,
                             'store': False}
         
-    #   
-    # This is the general function for handling clicks on the canvas
-    #
     def skyRegion_onClick(self,event):
-        
-        # don't actually want to do anything for this
+        ''' General function for handling clicks on the canvas '''
         return
         
-    #   
-    # This is the general function for handling key presses on the canvas
-    #   
     def skyRegion_onKeyPress(self,event):
-        
+        ''' General function for handling key presses on the canvas '''
+
         # get the axes for plotting and cursor detection
         ax_list = self.fig.axes
         
@@ -167,15 +151,23 @@ class fitFlatClass(object):
         
         return
         
-    #    
-    # Add a fitting region to the current sky model object
-    #   name - the name of the region (e.g. region1)
-    #   rowLo - the lower row enclosing the region
-    #   rowUp - the upper row enclosing the region
-    #
-    # Updates the sky region dictionary
-    #   
     def add_fit_region(self,name,colLo=-1,colUp=-1):
+        '''
+        Add a fitting region to the current sky model object
+
+        Parameters
+        ----------
+        name : string
+            Name of the fitting region
+        colLo : int
+            Lower column of the fitting region
+        colUp : int
+            Upper column of the fitting region
+
+        Returns
+        -------
+        int : 0, and modifies self.regionDict
+        '''
         
         # reset the dummy region dict
         self.dummyRegion['colLo'] = -1
@@ -263,11 +255,9 @@ class fitFlatClass(object):
         self.refresh_plot()
         
         return 0
-    #
-    # Remove a sky fitting region and update the 
-    # sky region dictionary
-    #
+
     def remove_fit_region(self,name=''):
+        ''' Pops self.regionDict[name] '''
                
         if len(name) > 0:
             trash = self.regionDict.pop(name, None)
@@ -305,11 +295,8 @@ class fitFlatClass(object):
         return 0
         
         
-    #
-    # update the master profile by excluding regions and
-    # averaging (median) across rows
-    #    
     def update_master_profile(self):
+        ''' Updates the master profile '''
         
         maskedData = np.array([])
         colArr = np.array([])
@@ -338,10 +325,8 @@ class fitFlatClass(object):
         
         return 0
         
-    #    
-    # update the plot to reflect current state of the object
-    #   
     def refresh_plot(self):
+        ''' Updates the plot to reflect current state '''
         
         # get the axes for plotting and cursor detection
         ax_list = self.fig.axes
@@ -459,11 +444,9 @@ class fitFlatClass(object):
         
         return 0
         
-    #
-    # Fit the sky flux data column by column and 
-    # update the sky model attribute
-    #    
+
     def fit_sky_background(self,FIT_METHOD='LM'):
+        ''' Fit the sky flux and update the sky model '''
         
         # init
         skyImage = np.array([]) # actual sky data
@@ -543,11 +526,9 @@ class fitFlatClass(object):
         
         
         
-    #   
-    # This is the method for updating the final data product
-    # of this class. Substitutes the model in the masked regions
-    #   
     def subsitute_model_flat(self):
+        ''' Substitutes the model in the masked regions '''
+
         # insert into the full object image (no trasposing needed??)
         for key in self.regionDict.keys():
             region = self.regionDict[key]
@@ -562,6 +543,7 @@ class fitFlatClass(object):
     # This is useful if there is a region of the data that is simply trash
     #
     def hard_mask(self,name=''):
+        ''' Substitutes the master profile in the specified mask region '''
         
         # sub the master profile
         # inefficient, don't care
@@ -609,24 +591,19 @@ class fitFlatClass(object):
         
         
         
-    #
-    # Substitutes the model correct flat for raw data and wipes 
-    # the exclusion regions. This could be useful for iteratively 
-    # improving the flat, but is really just and experiment and
-    # not intended for actual use
-    #    
     def refine(self):
+        ''' 
+        Substitutes the model flat for raw data and wipes 
+        exclusion regions. Use with caution; this is experimental,
+        but could be useful for iteratively improving the flat.
+        '''
         self.rawData = 1.*self.flatCorrData
         self.regionDict = {}
         self.refresh_plot()
         return 0
         
-    #    
-    # Save the model corrected flat
-    # This will overwrite existing files automatically
-    # (i.e. it assumes the user has already confirmed write)
-    #    
     def save_flat(self,outFile,header=None):
+        ''' Save the corrected flat. Assumes overwriting has been verified '''
         
         # clear space
         if os.path.isfile(outFile):
@@ -643,10 +620,9 @@ class fitFlatClass(object):
         return 0
         
         
-#       
-# This is the class used for defining modeling regions
-#       
+
 class flatFitRegion(object):
+    ''' Class representing an exclusion region '''
     def __init__(self,name):
         self.name = name
         self.colLo = 0
@@ -656,6 +632,7 @@ class flatFitRegion(object):
 
 
 def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
+    ''' Stacks images in flat_list, returns a master flat and header '''
 
     # unpack
     outFile = kwargs.get('OUTFILE')
@@ -707,7 +684,8 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
                     if len(median_image_stack) == 0:
                         median_image_stack = np.median(flat_comb_image,axis=2)
                     else:
-                        median_image_stack = np.dstack((median_image_stack,np.median(flat_comb_image,axis=2)))
+                        median_image_stack = np.dstack((median_image_stack,
+                                                        np.median(flat_comb_image,axis=2)))
 
                     # reset the stack
                     flat_comb_image = np.array([])
@@ -796,59 +774,29 @@ def parse_cmd_args():
     return (args,kwargs)
 
 
-
-
-
-
-############################################################################
-
-
-
-#---------------------------------------------------------------------------
-# 
-# inspect_flat - Model a flat field from slitflat data
-#
-# Inputs:
-#    A list of flat field file names
-#
-# Assumes:
-#
-#
-# Returns:
-#    Zero, but writes files to disk
-#
-#
-# Description:
-#   1. User supplies color free pixel flat as input
-#   2. Plot window/images are displayed
-#   3. User is prompted to mask regions
-#   4. After the regions are masked, the user fits the regions
-#     4a. Program computes the average (median) column which is
-#         essentially the master illumination profile
-#     4b. For each masked column, the master profile is subtracted,
-#         the remaining flux is fit with a spline in order to
-#         create a theoretical sky model for the column. Really,
-#         it's sky+pixel-to-pixel variations, but the spline isn't a
-#         true spline fit in the sense that it does not by definition
-#         pass through every point; there is a parameter 's' which
-#         modulates the number of knots in the fit. The assumption is
-#         that the pixel to pixel variations will be encoded in the
-#         residuals of the fit, while the sky flux (which varies over 
-#         many pixels) will be modeled out. For more info, see the 
-#         documentation on scipy.interpolate.UnivariateSpline.
-#     4c. The residuals between the sky model and the observed data
-#         are computed.
-#     4d. The residuals are added to the master profile and this
-#         quantity is used to replace the masked column.
-#   5. Finally the user can save the corrected flat to a file.
-#
-# Author:
-#   J. Brown, UCSC Astronomy Dept
-#   brojonat@ucsc.edu
-#   2018 Nov 14
-#
-
 def inspect_flat(flat_list,*args,**kwargs):
+    '''
+    Model a flat field from slitflat data
+
+    Parameters
+    ----------
+    flat_list : list
+        List of flat field image filenames
+
+    OUTFILE : string, optional
+        If specified, this will automatically be the file location of 
+        the output flat image
+    DISPAXIS : int, optional (Default = 1)
+        Specifies the dispersion axis of the image. DISPAXIS=1
+        corresponds to (spectral, spatial), DISPAXIS=2 corresponds
+        to (spatial, spectral)
+    REMOVE_COLOR: bool, optional (Default = False)
+        If true, remove the color term from the supplied images.
+
+    Returns
+    -------
+    int : 0, and writes files to disk
+    '''
     
     # unpack
     outFile = kwargs.get('OUTFILE',None)
@@ -944,8 +892,10 @@ def inspect_flat(flat_list,*args,**kwargs):
 
     while True:
         
+        # this really should be a dict of key/value pairs
+        # and then the prompt is dynamically generated
         validResps = ['A','R','F','S','U','H',  # standard options
-                      'AHARD','RHARD','REFINE', # hidden options
+                      'AHARD','RHARD','REFINE', # poweruser/hidden options
                       'W','D','Q','Q!']              # stardard ends 
         promptStr = 'Enter (a) to add an exclusion region.\n'
         promptStr += 'Enter (r) to remove a region.\n'
