@@ -1,4 +1,4 @@
-def womcat(hop):
+def womcatfinal(blue_data, red_data):
     """concatenate data with overlapping wavelength regions"""
     import numpy as np
     import logging
@@ -22,36 +22,36 @@ def womcat(hop):
     fig.set_size_inches(9, 6)
     # turns off key stroke interaction
     fig.canvas.mpl_disconnect(fig.canvas.manager.key_press_handler_id)
-    print("\nThis will combine blue and red pieces from two hoppers\n")
-    hopnum1=0
-    hopnum2=0
-    while (hopnum1 < 1) or (hopnum1 > HOPSIZE):
-        hopnum1=inputter('Enter first hopper: ','int',False)
-    while (hopnum2 < 1) or (hopnum2 > HOPSIZE):
-        hopnum2=inputter('Enter second hopper: ','int',False)
-    if (hop[hopnum1].wave[0] > hop[hopnum2].wave[0]):
-        hopnum1,hopnum2=hopnum2,hopnum1
-    wdelt1 = hop[hopnum1].wave[1]-hop[hopnum1].wave[0]
-    wdelt2 = hop[hopnum2].wave[1]-hop[hopnum2].wave[0]
-    # check if wavelength dispersion same
-    if (abs(wdelt1 - wdelt2) > 0.00001):
-        print('Spectra do not have same Angstrom/pixel')
-        print('Blue side: {}'.format(wdelt1))
-        print('Red side: {}'.format(wdelt2))
-        return hop
-    if hop[hopnum1].wave[-1] < hop[hopnum2].wave[0]:
-        print('Spectra do not overlap\n')
-        return hop
-    print("\nOverlap range is {} to {}".format(hop[hopnum2].wave[0],
-                                               hop[hopnum1].wave[-1]))
-    print("\nPlotting blue side as blue, red side as red\n")
+    # print("\nThis will combine blue and red pieces from two hoppers\n")
+    # hopnum1=0
+    # hopnum2=0
+    # while (hopnum1 < 1) or (hopnum1 > HOPSIZE):
+    #     hopnum1=inputter('Enter first hopper: ','int',False)
+    # while (hopnum2 < 1) or (hopnum2 > HOPSIZE):
+    #     hopnum2=inputter('Enter second hopper: ','int',False)
+    # if (hop[hopnum1].wave[0] > hop[hopnum2].wave[0]):
+    #     hopnum1,hopnum2=hopnum2,hopnum1
+    # wdelt1 = hop[hopnum1].wave[1]-hop[hopnum1].wave[0]
+    # wdelt2 = hop[hopnum2].wave[1]-hop[hopnum2].wave[0]
+    # # check if wavelength dispersion same
+    # if (abs(wdelt1 - wdelt2) > 0.00001):
+    #     print('Spectra do not have same Angstrom/pixel')
+    #     print('Blue side: {}'.format(wdelt1))
+    #     print('Red side: {}'.format(wdelt2))
+    #     return hop
+    # if hop[hopnum1].wave[-1] < hop[hopnum2].wave[0]:
+    #     print('Spectra do not overlap\n')
+    #     return hop
+    # print("\nOverlap range is {} to {}".format(hop[hopnum2].wave[0],
+    #                                            hop[hopnum1].wave[-1]))
+    # print("\nPlotting blue side as blue, red side as red\n")
 
-    waveblue=hop[hopnum1].wave.copy()
-    fluxblue=hop[hopnum1].flux.copy()
-    varblue=hop[hopnum1].var.copy()
-    wavered=hop[hopnum2].wave.copy()
-    fluxred=hop[hopnum2].flux.copy()
-    varred=hop[hopnum2].var.copy()
+    waveblue=np.asarray(blue_data[0])
+    fluxblue=np.asarray(blue_data[1])
+    varblue=np.asarray(blue_data[2])
+    wavered=np.asarray(red_data[0])
+    fluxred=np.asarray(red_data[1])
+    varred=np.asarray(red_data[2])
     indexblue=womget_element(waveblue,wavered[0])
     indexred=womget_element(wavered,waveblue[-1])
     fluxcor=1.0
@@ -164,7 +164,7 @@ def womcat(hop):
     overflux = np.average([fluxblue[indexblueb:indexbluer+1], fluxred[indexredb:indexredr+1]], 
                             weights = [1./varblue[indexblueb:indexbluer+1], 1./varred[indexredb:indexredr+1]], axis = 0)
     overvar = np.sum([varblue[indexblueb:indexbluer+1], varred[indexredb:indexredr+1]], axis = 0)
-    logging.info('Cat combined sides with inverse variance weighted average')
+    # logging.info('Cat combined sides with inverse variance weighted average')
     # else:
     #     wei_done = False
     #     while (not wei_done):
@@ -189,10 +189,10 @@ def womcat(hop):
     newwave=np.concatenate([newbluewave, overwave, newredwave])
     newflux=np.concatenate([newblueflux, overflux, newredflux])
     newvar=np.concatenate([newbluevar, overvar, newredvar])
-    logging.info('File {} and'.format(hop[hopnum1].obname))
-    logging.info('File {} concatenated'.format(hop[hopnum2].obname))
-    logging.info('over wavelength range {} to {}'.format(waveblue[indexblueb],
-                                                         waveblue[indexbluer]))
+    # logging.info('File {} and'.format(hop[hopnum1].obname))
+    # logging.info('File {} concatenated'.format(hop[hopnum2].obname))
+    # logging.info('over wavelength range {} to {}'.format(waveblue[indexblueb],
+    #                                                      waveblue[indexbluer]))
     plt.clf()
     axarr=fig.subplots(2)
     
@@ -208,15 +208,17 @@ def womcat(hop):
                   newflux[indexblueb:indexbluer+1],
                   drawstyle='steps-mid',color='r')
     plt.pause(0.01)
-    hopout=0
-    while (hopout < 1) or (hopout > HOPSIZE):
-        hopout=inputter('Enter hopper to store combined spectrum: ','int',False)
-    hop[hopout].wave=newwave
-    hop[hopout].flux=newflux
-    hop[hopout].var=newvar
-    hop[hopout].obname=hop[hopnum1].obname
-    hop[hopout].header=hop[hopnum1].header
-    plt.close()
+    # hopout=0
+    # while (hopout < 1) or (hopout > HOPSIZE):
+    #     hopout=inputter('Enter hopper to store combined spectrum: ','int',False)
+    # hop[hopout].wave=newwave
+    # hop[hopout].flux=newflux
+    # hop[hopout].var=newvar
+    # hop[hopout].obname=hop[hopnum1].obname
+    # hop[hopout].header=hop[hopnum1].header
+    # plt.close()
     #fig.clf()
-    #plt.cla()
-    return hop
+    # #plt.cla()
+    # return hop
+    return newwave, newflux, newvar
+

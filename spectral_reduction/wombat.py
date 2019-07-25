@@ -61,7 +61,7 @@ def main():
     cursor = Cursor(ax, useblit=True, color='k', linewidth=1)
     fig.canvas.manager.window.wm_geometry(screenpos)
     fig.canvas.set_window_title('Wombat')
-    fig.set_size_inches(18, 12)
+    fig.set_size_inches(8, 5)
     # turns off key stroke interaction
     fig.canvas.mpl_disconnect(fig.canvas.manager.key_press_handler_id)
 

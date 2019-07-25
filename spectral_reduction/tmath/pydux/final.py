@@ -13,9 +13,11 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
     from tmath.wombat.getmswave import getmswave
     from tmath.wombat.inputter_single import inputter_single
     from tmath.wombat.inputter import inputter
+    from tmath.wombat.womcatfinal import womcatfinal
     from tmath.pydux.scipyrebinsky import scipyrebinsky
     from tmath.wombat.yesno import yesno
     from tmath.wombat.womashrebin import womashrebin
+    from tmath.wombat.wominterpofluxconserving import interpo_flux_conserving
     from tmath.pydux.getfitsfile import getfitsfile
     from tmath.pydux.pacheck import pacheck
     from tmath.pydux.jdcnv import jdcnv
@@ -36,18 +38,18 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
 
     fig.canvas.manager.window.wm_geometry(screenpos)
     fig.canvas.set_window_title('Final Reductions')
-    fig.set_size_inches(18,12)
+    fig.set_size_inches(8,5)
     # turns off key stroke interaction
     fig.canvas.mpl_disconnect(fig.canvas.manager.key_press_handler_id)
 
     # this should bring the window to the top, but it doesn't
-    wm=plt.get_current_fig_manager()
+    # wm=plt.get_current_fig_manager()
     #fig.canvas.manager.window.attributes('-topmost', 1)
-    blah=wm.window.attributes('-topmost', 1)
+    # blah=wm.window.attributes('-topmost', 1)
 
     #plt.pause(0.2)
     #fig.canvas.manager.window.attributes('-topmost', 0)
-    blah=wm.window.attributes('-topmost', 0)
+    # blah=wm.window.attributes('-topmost', 0)
 
 
     bstarfits=fits.open('bstar'+gratcode+'.fits')
@@ -361,13 +363,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 print('\nPrevious resolution choice: {}'.format(deltsave))
             else:
                 deltsave = 0.0
-            newdelt=0.0
-            while (newdelt <= 0) or (newdelt > wave[-1]):
-                print('Rebin to how many Angstroms per pixel? ')
-                newdelt=inputter('         <CR> selects previous choice: ','float',True,deltsave)
-                if (newdelt <= 0) or (newdelt > wave[-1]):
-                    print('Need positive resoution and smaller than the')
-                    print('entire spectrum.  Try again')
+            newdelt=2
+            # while (newdelt <= 0) or (newdelt > wave[-1]):
+            #     print('Rebin to how many Angstroms per pixel? ')
+            #     newdelt=inputter('         <CR> selects previous choice: ','float',True,deltsave)
+            #     if (newdelt <= 0) or (newdelt > wave[-1]):
+            #         print('Need positive resoution and smaller than the')
+            #         print('entire spectrum.  Try again')
             print('\nCurrent range: {} {}'.format(wave[0],wave[-1]))
             if (secondtime):
                 print('\nPrevious selection was {} {} (marked in red on plot)'.format(wavesave0,wavesaven))
@@ -397,9 +399,18 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             vartmp=bsig*bsig
             olddeltvec=wave-np.roll(wave,1)
             olddelt=np.mean(olddeltvec)
-            finalobj=womashrebin(wave,bobj,nwave)
-            finalvar=womashrebin(wave,vartmp,nwave)
-            finalsig=np.sqrt(finalvar)*np.sqrt(olddelt/newdelt)
+            # finalobj=womashrebin(wave,bobj,nwave)
+            # finalvar=womashrebin(wave,vartmp,nwave)
+            # finalsig=np.sqrt(finalvar)*np.sqrt(olddelt/newdelt)
+
+            #Matt's interpolation algorithm. womashrebin is an unreadable monstrosity.
+            interp_data = interpo_flux_conserving(wave, bobj, 1./vartmp, dw=newdelt, testing=False)
+            nwave = interp_data[0]
+            finalobj = interp_data[1]
+            finalvar = 1./interp_data[2]
+            finalsig = np.sqrt(finalvar)
+
+            #gonna ignore the second order stuff for now
             if (secondord):
                 vartmp2=bsig2*bsig2
                 finalobj2=womashrebin(wave,bobj2,nwave)
@@ -414,6 +425,65 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             plt.xlabel('Wavelength')
             plt.ylabel('Flux')
             plt.title(objectname)
+
+            print('Do you wish to combine with another spectrum? ')
+            answer=yesno('y')
+            if (answer == 'y'):
+                plt.close()
+                done=False
+                while (not done):
+                    inputfile=input('Name of fits file to be combined? (.fits added if necessary) ')
+                    inputfile=inputfile.strip()
+                    if (inputfile == ''):
+                        return hop
+                    if ('.fits' not in inputfile):
+                        inputfile=inputfile+'.fits'
+                    try:
+                        fitsdata=fits.open(inputfile)
+                    except OSError:
+                        print('File {} cannot be opened.'.format(inputfile))
+                    else:
+                        done=True
+
+                crval1=fitsdata[0].header['CRVAL1']
+                try:
+                    wdelt=fitsdata[0].header['CDELT1']
+                except KeyError:
+                    wdelt = 0.0000001
+                if (wdelt < 0.000001):
+                    wdelt=fitsdata[0].header['CD1_1']
+                try:
+                    objectname=fitsdata[0].header['OBJECT']
+                    if (not isinstance(objectname, str)):
+                        objectname=inputfile
+                except KeyError:
+                    objectname = inputfile
+
+                data_new=fitsdata[0].data
+                wave_new=np.arange(1,len(data_new)+1)*wdelt+crval1
+                if (len(data_new.shape) == 2):
+                    var_new=data_new[:,1]
+                    var_new=var_new.astype(float)
+                    var_new=var_new*var_new
+                    flux_new=data_new[:,0]
+                    flux_new=flux_new.astype(float)
+                else:
+                    flux_new=data_new.astype(float)
+                    var_new=np.ones(data_new.shape)
+
+                if 'red' in inputfile:
+                    wavecomb, fluxcomb, varcomb = womcatfinal([nwave, finalobj, finalvar],[wave_new, flux_new, var_new])
+                    nwave = wavecomb
+                    finalobj = fluxcomb
+                    finalsig = np.sqrt(varcomb)
+                elif 'blue' in inputfile:
+                    wavecomb, fluxcomb, varcomb = womcatfinal([wave_new, flux_new, var_new],[nwave, finalobj, finalvar])
+                    nwave = wavecomb
+                    finalobj = fluxcomb
+                    finalsig = np.sqrt(varcomb)
+                else:
+                    print ("Please include 'blue' or 'red' in filename of spectrum to combine")
+
             outputdone = False
             while (not outputdone):
                 print('\nThe file is: {}'.format(inputfile))
@@ -473,5 +543,6 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 
     print('final')        
     print(objectlist,gratcode,secondord,gratcode2)
+    plt.close()
     return
 

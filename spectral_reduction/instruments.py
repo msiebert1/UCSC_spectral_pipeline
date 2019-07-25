@@ -105,10 +105,11 @@ goodman_m1={ 'name': 'goodman_blue',
              'filter': 'temp',
              'slit': 'temp',
              'dispaxis': 1, 
-             #'biassec': '[1:25,100:800]', # RED CAMERA
-             #'trimsec': '[400:2068,84:900]', # RED CAMERA
-             'biassec': '[2060:2070,100:800]', # BLUE CAMERA
-             'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
+             'biassec': '[1:25,100:800]', # RED CAMERA
+             'trimsec': '[400:2068,84:900]', # RED CAMERA
+             # 'biassec': '[2060:2070,100:800]', # BLUE CAMERA
+             # 'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
+             # 'trimsec': '[400:2025,65:775]', # BLUE CAMERA (cuts out flat field artifact)
              'archive_zero_file': path_to_trunk + 'SOAR_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'SOAR_cals/RESP_blue.fits',
              'archive_sens': path_to_trunk + 'SOAR_cals/fluxstarblue.fits',
@@ -116,6 +117,7 @@ goodman_m1={ 'name': 'goodman_blue',
              'archive_arc_extracted': path_to_trunk + 'SOAR_cals/m1_Arc_Ref.ms.fits',
              'archive_arc_extracted_id': path_to_trunk + 'SOAR_cals/id/idm1_Arc_Ref.ms',
              'archive_arc_aperture': path_to_trunk + 'SOAR_cals/apm1_Arc_Ref',
+             'apline': 'INDEF',
              'line_list': path_to_trunk+'SOAR_cals/lines.dat',
              'extinction_file': path_to_trunk + 'lick_extinction.dat', # JB: need to fix
              'observatory': 'soar',
@@ -142,6 +144,7 @@ goodman_m2={ 'name': 'goodman_red',
              'archive_arc_extracted': path_to_trunk + 'SOAR_cals/m2_Arc_Ref.ms.fits',
              'archive_arc_extracted_id': path_to_trunk + 'SOAR_cals/id/idm2_Arc_Ref.ms',
              'archive_arc_aperture': path_to_trunk + 'SOAR_cals/apm2_Arc_Ref',
+             'apline': 500,
              'line_list': path_to_trunk+'SOAR_cals/lines.dat',
              'extinction_file': path_to_trunk + 'SOAR_cals/lick_extinction.dat', # JB: need to fix
              'observatory': 'soar',

@@ -23,18 +23,18 @@ def mkfluxstar(fluxfile,gratcode):
     fig=plt.figure()
     fig.canvas.manager.window.wm_geometry(screenpos)
     fig.canvas.set_window_title('Flux Star')
-    fig.set_size_inches(18,12)
+    fig.set_size_inches(8,5)
     # turns off key stroke interaction
     fig.canvas.mpl_disconnect(fig.canvas.manager.key_press_handler_id)
 
     # this should bring the window to the top, but it doesn't
-    wm=plt.get_current_fig_manager()
+    # wm=plt.get_current_fig_manager()
     #fig.canvas.manager.window.attributes('-topmost', 1)
-    blah=wm.window.attributes('-topmost', 1)
+    # blah=wm.window.attributes('-topmost', 1)
 
     #plt.pause(0.2)
     #fig.canvas.manager.window.attributes('-topmost', 0)
-    blah=wm.window.attributes('-topmost', 0)
+    # blah=wm.window.attributes('-topmost', 0)
 
     #extinction terms from Allen, 3rd edition
     extwave= [2400.,2600.,2800.,3000.,3200.,3400.,3600.,3800., \

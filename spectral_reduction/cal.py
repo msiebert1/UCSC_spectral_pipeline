@@ -32,6 +32,8 @@ CALVERSION = 0.1
 
 
 def main():
+    import headerfix
+    
     secondord = False
     gratcode2 = ''
     # logging straight from docs.python.org cookbook page
@@ -96,8 +98,8 @@ def main():
         else:
             print('No such file')
     print('\nDo you want to fit a flux star?\n')
-    answer = yesno('y')
-    if (answer == 'y'):
+    answer_flux = yesno('y')
+    if (answer_flux == 'y'):
         plt.close()
         fluxfile = getfitsfile('flux star', '.fits')
         pydux.mkfluxstar(fluxfile, gratcode)
@@ -159,7 +161,13 @@ def main():
         plt.close()
         pydux.final(objectlist, gratcode, secondord, gratcode2, user)
 
-    print('\nThere, was that so hard?')
+    if (answer_flux == 'y'):
+        print('\nAre these master calibrations?\n')
+        answer=yesno('y')
+        if (answer == 'y'):
+            os.system('cp ' + 'fluxstar' + gratcode + '.fits' + ' ../../master_files/')
+            os.system('cp ' + 'bstar' + gratcode + '.fits'+ ' ../../master_files/')
+        print('\nThere, was that so hard?')
 
 if __name__ == '__main__':
     main()

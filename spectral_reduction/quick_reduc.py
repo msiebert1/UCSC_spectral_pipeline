@@ -124,7 +124,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 
         _object0 = re.sub(' ', '', _object0)
         _object0 = re.sub('/', '_', _object0)
-        nameout0 = str(_object0) + '_' + inst.get('name') + '_' + str(_date0)
+        # nameout0 = str(_object0) + '_' + inst.get('name') + '_' + str(_date0)
+        nameout0 = str(_object0) + '_' + inst.get('name')
 
         nameout0 = util.name_duplicate(imgs[0], nameout0, '')
         timg = nameout0
@@ -372,12 +373,17 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
 
         os.system('mv ' + 'd'+ imgex + ' ' + _object0 + '_ex/')
 
-        use_sens = raw_input('Use archival flux calibration? [y]/n ')
-        if use_sens != 'no':
-            sensfile = inst.get('archive_sens')
-            os.system('cp ' + sensfile + ' ' + _object0 + '_ex/')
-            bstarfile = inst.get('archive_bstar')
-            os.system('cp ' + bstarfile + ' ' + _object0 + '_ex/')
+        use_master = raw_input('Use master flux calibration? [y]/n ')
+        if use_master != 'n':
+            os.system('cp ' + '../master_files/fluxstar' + inst.get('arm') +  '.fits ' + _object0 + '_ex/')
+            os.system('cp ' + '../master_files/bstar' + inst.get('arm') +  '.fits ' + _object0 + '_ex/')
+        else:
+            use_sens = raw_input('Use archival flux calibration? [y]/n ')
+            if use_sens != 'n':
+                sensfile = inst.get('archive_sens')
+                os.system('cp ' + sensfile + ' ' + _object0 + '_ex/')
+                bstarfile = inst.get('archive_bstar')
+                os.system('cp ' + bstarfile + ' ' + _object0 + '_ex/')
 
     return result
     

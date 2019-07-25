@@ -22,18 +22,18 @@ def mkbstar(bfile,gratcode):
 
     fig.canvas.manager.window.wm_geometry(screenpos)
     fig.canvas.set_window_title('B Star')
-    fig.set_size_inches(18,12)
+    fig.set_size_inches(8,5)
     # turns off key stroke interaction
     fig.canvas.mpl_disconnect(fig.canvas.manager.key_press_handler_id)
 
     # this should bring the window to the top, but it doesn't
-    wm=plt.get_current_fig_manager()
+    # wm=plt.get_current_fig_manager()
     #fig.canvas.manager.window.attributes('-topmost', 1)
-    blah=wm.window.attributes('-topmost', 1)
+    # blah=wm.window.attributes('-topmost', 1)
 
     #plt.pause(0.2)
     #fig.canvas.manager.window.attributes('-topmost', 0)
-    blah=wm.window.attributes('-topmost', 0)
+    # blah=wm.window.attributes('-topmost', 0)
 
     fitsfile=fits.open(bfile)
     rawdata=fitsfile[0].data
