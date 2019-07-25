@@ -156,19 +156,13 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         #raw_input("Press Enter to continue...")
         if _cosmic:
             print('\n### starting cosmic removal')
-            
-            # array, header = cosmics.fromfits(img)
-            # c = cosmics.cosmicsimage(array, 
-            #                          gain=inst.get('gain'), readnoise=inst.get('read_noise'), 
-            #                          sigclip = 5, sigfrac = 0.5, objlim = 2.0)
-            # c.run(maxiter = 5)
-            # cosmics.tofits('cosmic_' + img, c.cleanarray, header)
-            # img='cosmic_' + img
 
             outimg,outmask,header = pyzapspec.pyzapspec(img, 
                                                         outfile='cosmic_{}'.format(img), 
                                                         WRITE_OUTFILE = True,
-                                                        boxsize=inst.get('pyzap_boxsize'))
+                                                        boxsize=inst.get('pyzap_boxsize',7),
+                                                        nsigma=inst.get('pyzap_nsigma',16),
+                                                        subsigma=inst.get('pyzap_subsigma',3))
             img = 'cosmic_{}'.format(img)
 
             print('\n### cosmic removal finished')
@@ -209,7 +203,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             masters = [os.path.basename(x) for x in glob.glob('../master_files/*')]
             if wave_sol_file in masters:
                 wave_sol= raw_input("Use your master wavelength solution? [y]/n: ") or 'y'
-                if wave_sol == 'y':
+                if wave_sol.strip().lower() == 'y':
                     print ('Copying master file')
                     arc_ex=re.sub('.fits', '.ms.fits', arcfile)
                     os.system('cp ' + '../master_files/' + wave_sol_file + ' ./database/')
@@ -219,9 +213,14 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                     print('\n### arcfile : ',arcfile)
                     print('\n### arcfile extraction : ',arc_ex)
                     print(inst.get('line_list'))
+
+                    # remove the file from the extract destination
+                    if os.path.isfile(arc_ex):
+                        os.remove(arc_ex)
+
                     iraf.specred.apall(arcfile, 
                                         output=arc_ex, 
-                                        line = 'INDEF', 
+                                        line = inst.get('approx_extract_line'), 
                                         nsum=10, 
                                         interactive='no', 
                                         extract='yes',
@@ -232,7 +231,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                                         back='no',
                                         recen='no')
                     iraf.longslit.identify(images=arc_ex, 
-                                            section=inst.get('section'),
+                                            section='line {}'.format(inst.get('approx_extract_line')),
                                             coordli='lines.dat',
                                             function = 'spline3',
                                             order=3, 
@@ -265,7 +264,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                 os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')
         else:
             if br == 'blue':
-                    arcfile = 'ARC_blue.fits' #THIS IS A HACK
+                arcfile = 'ARC_blue.fits' #THIS IS A HACK
             elif br == 'red':
                 arcfile = 'ARC_red.fits' #THIS IS A HACK
                 

@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os,sys,pdb,glob,shutil,string,time,datetime
+import os,sys,pdb,argparse,glob,shutil,string,time,datetime
 import numpy as np 
 from astropy.io import fits
 from astropy.convolution import convolve
@@ -51,7 +51,7 @@ def sigclipmedian(datain,sigmahi=3.5,sigmalo=3.5):
 
 
 
-def writefits(image,outFile,header='HEADER',clobber=False):
+def writefits(image,outfile,header='HEADER',CLOBBER=False):
 
     # create hdu for data
     if header == 'HEADER':
@@ -60,14 +60,14 @@ def writefits(image,outFile,header='HEADER',clobber=False):
         hdu = fits.PrimaryHDU(image,header)
 
     # check the output location, clear if necessary
-    if os.path.isfile(outFile):
-        if clobber:
-            os.remove(outFile)
+    if os.path.isfile(outfile):
+        if CLOBBER:
+            os.remove(outfile)
         else:
-            print('File exists, set clobber=True or move the file')
+            print('File exists, set CLOBBER=True or move the file')
             return 1
     #Create HDU list and write in one go  
-    hdu.writeto(outFile,output_verify='ignore')  
+    hdu.writeto(outfile,output_verify='ignore')  
     return 0
 
 
@@ -93,25 +93,78 @@ def compare_images(img1='',img2='',imgOut='',method='divide'):
         pdb.set_trace()
         return 1
 
-    res = writefits(relative,imgOut,clobber=True)
+    res = writefits(relative,imgOut,CLOBBER=True)
 
     return 0
 
+
+def parse_cmd_args():
+    ''' Parse the command line options '''
+
+    # init parser
+    descStr = 'A python verison of pzapspec -- CR removal for LRIS'
+    parser = argparse.ArgumentParser(description=descStr)
+
+    # required args
+    parser.add_argument('infile',type=str,
+                       help='the flat field to inspect/mask')
+
+    # optional
+    parser.add_argument('-v','--verbose',
+                        help='print diagnostic info',action='store_true')
+    parser.add_argument('-c','--clobber',action='store_true',
+                        help='Clobber files already in pre_reduced/ but not subdirs')
+    parser.add_argument('-d','--debug',action='store_true',
+                        help='Debug pyzapspec')
+
+    parser.add_argument('--outfile',
+                        help='Destination of cleaned file')
+    parser.add_argument('--maskfile',
+                        help='Destination of the CR mask file')
+
+    parser.add_argument('--boxsize',type=int,
+                        help='Kernel size (should approximate seeing in pixels, must be odd)')
+    parser.add_argument('--nsigma',type=float,
+                        help='Rejection threshold (recommended >10)')
+    parser.add_argument('--subsigma',type=float,
+                        help='Rejection threshold for neighboring pixels during percolation')
+
+    # parse
+    cmdArgs = parser.parse_args()
+
+    # logic mapping to my args/kwargs
+    args = (cmdArgs.infile,)
+    kwargs = {}
+    kwargs['VERBOSE'] = cmdArgs.verbose
+    kwargs['CLOBBER'] = cmdArgs.clobber
+    kwargs['DEBUG'] = cmdArgs.debug
+    kwargs['outfile'] = cmdArgs.outfile 
+    kwargs['maskfile'] = cmdArgs.maskfile
+    kwargs['boxsize'] = cmdArgs.boxsize
+    kwargs['nsigma'] = cmdArgs.nsigma
+    kwargs['subsigma'] = cmdArgs.subsigma
+
+    return (args,kwargs)
+
 def pyzapspec(infile, 
               outfile='',
-              outmaskname='', 
+              maskfile='', 
               WRITE_OUTFILE=False,
               DEBUG_DIR='../test_data/',DEBUG=False,
               boxsize=7,nsigma=16.,subsigma=2.7,sfactor=1.0,
               nzap=0,mask=0,writemodel=0,verbose=0,skysubtract=0,
-              zero=0,method=0,usamp=0,ybin=0,nan=-999,inmaskname=0):
+              zero=0,method=0,usamp=0,ybin=0,nan=-999,inmaskname=0,**kwargs):
 
     # defaults
     if len(outfile) == 0:
-        outfile = '{}/cr{}'.format('/'.join(infile.split('/')[0:-1]),infile.split('/')[-1])
+        dirpath,infile_base = os.path.split(infile)
+        outfile_base = 'cr{}'.format(infile_base)
+        outfile = os.path.join(dirpath,outfile_base)
 
-    if len(outmaskname) == 0:
-        outmaskname = '{}_mask.fits'.format(outfile.replace('.fits',''))
+    if len(maskfile) == 0:
+        dirpath,infile_base = os.path.split(infile)
+        maskfile_base = 'cr{}_mask.fits'.format(infile_base.split('.')[0])
+        maskfile = os.path.join(dirpath,maskfile_base)
 
     tstart = time.time()
 
@@ -372,69 +425,77 @@ def pyzapspec(infile,
     header.add_history(histStr)
 
     if DEBUG:
-        res = writefits(ymedimage,'{}/ymedimage.fits'.format(DEBUG_DIR),clobber=True)
-        res = writefits(xmedimage,'{}/xmedimage.fits'.format(DEBUG_DIR),clobber=True)
-        res = writefits(ysubimage,'{}/ysubimage.fits'.format(DEBUG_DIR),clobber=True)
-        res = writefits(xsubimage,'{}/xsubimage.fits'.format(DEBUG_DIR),clobber=True)
-        res = writefits(skysubimage,'{}/fullsubimage.fits'.format(DEBUG_DIR),clobber=True)
-        res = writefits(zapimage,'{}/zapimage.fits'.format(DEBUG_DIR),clobber=True)
-        res = writefits(outimg,outfile,header=header,clobber=True)
-        res = writefits(outmask,outmaskname,clobber=True)
+        res = writefits(ymedimage,'{}/ymedimage.fits'.format(DEBUG_DIR),CLOBBER=True)
+        res = writefits(xmedimage,'{}/xmedimage.fits'.format(DEBUG_DIR),CLOBBER=True)
+        res = writefits(ysubimage,'{}/ysubimage.fits'.format(DEBUG_DIR),CLOBBER=True)
+        res = writefits(xsubimage,'{}/xsubimage.fits'.format(DEBUG_DIR),CLOBBER=True)
+        res = writefits(skysubimage,'{}/fullsubimage.fits'.format(DEBUG_DIR),CLOBBER=True)
+        res = writefits(zapimage,'{}/zapimage.fits'.format(DEBUG_DIR),CLOBBER=True)
+        res = writefits(outimg,outfile,header=header,CLOBBER=True)
+        res = writefits(outmask,maskfile,CLOBBER=True)
         pdb.set_trace()
 
     if WRITE_OUTFILE:
-        res = writefits(outimg,outfile,header=header,clobber=True)
+        res = writefits(outimg,outfile,header=header,CLOBBER=True)
 
     return outimg,outmask,header
 
     return 0
 
 
-def main():
+def main(*args,**kwargs):
+    ''' Run the main pyzapspec machinery '''
 
-    # some hacky stuff to let people call this from command line if absolutely necessary
-    if len(sys.argv) == 2 and os.path.isfile(sys.argv[1]):
-        infile = sys.argv[1]
-        outfile = outfile = '{}/cr{}'.format('/'.join(infile.split('/')[0:-1]),infile.split('/')[-1])
-        outmaskname = '{}_mask.fits'.format(outfile.replace('.fits',''))
+    infile = args[0]
 
-    elif len(sys.argv) == 3 and os.path.isfile(sys.argv[1]):
-        infile = sys.argv[1]
-        outfile = sys.argv[2]
-        outmaskname = '{}_mask.fits'.format(outfile.replace('.fits',''))
+    # get rid of NoneTypes in kwargs
+    for key,value in kwargs.items():
+        if value is None:
+            garbage = kwargs.pop(key)
 
-    else:
-        errStr = 'I don\'t understand your calling sequence...try: \n'
-        errStr += '$ pyzapspec infile [outfile]\n'
-        errStr += 'or if you want to run with more config options, just import pyzapspec '
-        errStr += 'to one of your python routines and call it from there.'
-        print(errStr)
-        sys.exit(1)
+    if not kwargs.get('outfile'):
+        dirpath,infile_base = os.path.split(infile)
+        outfile_base = 'cosmic_{}'.format(infile_base)
+        outfile = os.path.join(dirpath,outfile_base)
+        kwargs['outfile'] = outfile
 
 
-    # run the actual machinery
-    outStr = 'Ok, running pyzap on {} and outputting to {}'.format(infile,outfile)
-    print(outStr)
-    outimg,outmask,header = pyzapspec(infile,outfile=outfile,DEBUG=False)
+    if not kwargs.get('maskfile'):
+        dirpath,infile_base = os.path.split(infile)
+        maskfile_base = 'cosmic_{}_mask.fits'.format(infile_base.split('.')[0])
+        maskfile = os.path.join(dirpath,maskfile_base)
+        kwargs['maskfile'] = maskfile
+
+    outfile = kwargs.get('outfile')
+    maskfile = kwargs.get('maskfile')
+    CLOBBER = kwargs.get('CLOBBER',False)
+    VERBOSE = kwargs.get('VERBOSE',False)
+    DEBUG = kwargs.get('DEBUG',False)
+
+    # run it
+    outimg,outmask,header = pyzapspec(infile,**kwargs)
 
     # attempt to output stuff safely
     if not os.path.isfile(outfile):
-        res = writefits(outimg,outfile,header=header,clobber=True)
-        res = writefits(outmask,outmaskname,clobber=True)
+        res = writefits(outimg,outfile,header=header,CLOBBER=CLOBBER)
+        res = writefits(outmask,maskfile,CLOBBER=CLOBBER)
 
-    if os.path.isfile(outfile):
+    elif os.path.isfile(outfile):
         promptStr = 'Output file {} exists...overwrite? y/[n]: '.format(outfile)
-        usrAns = input(promptStr)
+        usrAns = raw_input(promptStr)
         if usrAns.strip().upper()[0] == 'Y':
             print('Overwritting...')
-            res = writefits(outimg,outfile,header=header,clobber=True)
-            res = writefits(outmask,outmaskname,header=header,clobber=True)
+            # set clobber to true since we've cleared it with the user
+            res = writefits(outimg,outfile,header=header,CLOBBER=True)
+            res = writefits(outmask,maskfile,header=header,CLOBBER=True)
         else:
             print('Ok, doing nothing and exiting.')
 
 
     return 0
 
-if __name__ == '__main__':
-    main()
+if __name__=='__main__':
+    ''' Run parsing, then main '''
+    args,kwargs = parse_cmd_args()
+    main(*args,**kwargs)
 

@@ -12,6 +12,8 @@ from astropy.io import fits, ascii
 from pyraf import iraf
 
 matplotlib.use('TkAgg')
+from flat_utils import combine_flats,inspect_flat
+
 description = "> Performs pre-reduction steps"
 usage = "%prog  \t [option] \n Recommended syntax: %prog -i -c"
 
@@ -22,7 +24,10 @@ def main():
     usage = "%prog    \t [option] \n Recommended syntax: %prog -i -c"
   
     parser = OptionParser(usage=usage, description=description, version="0.1" )
+    parser.add_option('-n','--nflats',type=int,default=50,
+                        help='max number of flats to use (to prevent IRAF crash)')
     option, args = parser.parse_args()
+    MAX_N_FLATS = option.nflats
     
     iraf.noao(_doprint=0)
     iraf.imred(_doprint=0)
@@ -94,9 +99,11 @@ def main():
         list_flat_r = []
         for dflats in files_dflat:
             if instruments.blue_or_red(dflats)[0] == 'blue':
-                list_flat_b.append(dflats)
+                if len(list_flat_b) < MAX_N_FLATS:
+                    list_flat_b.append(dflats)
             elif instruments.blue_or_red(dflats)[0] == 'red':
-                list_flat_r.append(dflats)
+                if len(list_flat_r) < MAX_N_FLATS:
+                    list_flat_r.append(dflats)
             else:
                 sys.exit()
                 
@@ -209,55 +216,59 @@ def main():
         # blue flats
         if len(list_flat_b) > 0:
             br, inst = instruments.blue_or_red(list_flat_b[0])
-            iraf.specred.dispaxi = inst.get('dispaxis')
-            if len(list_flat_b) == 1:
-                # Flat_blue = 'pre_reduced/to'+ list_flat_b[0]
-                Flat_blue = list_flat_b[0]
-            else:
-                flat_str = ''
-                for flat in list_flat_b:
-                    flat_str = flat_str + 'pre_reduced/to'+ flat + ','
-                #subsets = 'no'
-                if os.path.isfile('pre_reduced/toFlat_blue'):
-                    os.remove('pre_reduced/toFlat_blue')
-                iraf.flatcombine(flat_str, output='pre_reduced/toFlat_blue', 
-                                 ccdtype='',rdnoise=3.7, subsets='no', process='no')
-                Flat_blue = 'Flat_blue.fits'
-                
-            #What is the output here? Check for overwrite
-            iraf.specred.response('pre_reduced/to'+Flat_blue, 
-                                   normaliz='pre_reduced/to'+Flat_blue, 
+            dispaxis = inst.get('dispaxis')
+            iraf.specred.dispaxi = dispaxis
+            Flat_blue = 'pre_reduced/toFlat_blue.fits'
+
+            flat_list = []
+            for flat in list_flat_b:
+                flat_list.append('pre_reduced/to'+ flat)
+            if os.path.isfile(Flat_blue):
+                os.remove(Flat_blue)
+
+            # first, combine all the flat files into a master flat
+            res = combine_flats(flat_list,OUTFILE=Flat_blue,MEDIAN_COMBINE=True)
+            
+            # run iraf response
+            iraf.specred.response(Flat_blue, 
+                                   normaliz=Flat_blue, 
                                    response='pre_reduced/RESP_blue', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
                                    low_rej=3,high_rej=3, order=60, niterat=20, 
                                    grow=0, graphic='stdgraph')
 
+            # finally, inspect the flat and mask bad regions
+            res = inspect_flat(['pre_reduced/RESP_blue.fits'],DISPAXIS=dispaxis)
+
         # red flats
         if len(list_flat_r) > 0:
             br, inst = instruments.blue_or_red(list_flat_r[0])
-            iraf.specred.dispaxi = inst.get('dispaxis')
-            if len(list_flat_r) == 1:
-                # Flat_red = 'pre_reduced/to' + list_flat_r[0]
-                Flat_red = list_flat_r[0]
-            else:
-                flat_str = ''
-                for flat in list_flat_r:
-                    flat_str = flat_str + 'pre_reduced/to'+ flat + ','
-                if os.path.isfile('pre_reduced/toFlat_red'):
-                    os.remove('pre_reduced/toFlat_red')
-                iraf.flatcombine(flat_str, output='pre_reduced/toFlat_red', 
-                                 ccdtype='', rdnoise=3.8, subsets='yes', process='no')
-                Flat_red = 'Flat_red.fits'
+            dispaxis = inst.get('dispaxis')
+            iraf.specred.dispaxi = dispaxis
+            Flat_red = 'pre_reduced/toFlat_red.fits'
+
+
+            flat_list = []
+            for flat in list_flat_r:
+                flat_list.append('pre_reduced/to'+ flat)
+            if os.path.isfile(Flat_red):
+                os.remove(Flat_red)
+
+            # first, combine all the flat files into a master flat
+            res = combine_flats(flat_list,OUTFILE=Flat_red,MEDIAN_COMBINE=True)
 
             #What is the output here? Check for overwrite
-            iraf.specred.response('pre_reduced/to'+Flat_red, 
-                                  normaliz='pre_reduced/to'+Flat_red, 
+            iraf.specred.response(Flat_red, 
+                                  normaliz=Flat_red, 
                                   response='pre_reduced/RESP_red', 
                                   interac=inter, thresho='INDEF',
                                   sample='*', naverage=2, function='legendre', 
                                   low_rej=3,high_rej=3, order=80, niterat=20, 
                                   grow=0, graphic='stdgraph')
+
+            # finally, inspect the flat and mask bad regions
+            res = inspect_flat(['pre_reduced/RESP_red.fits'],DISPAXIS=dispaxis)
     
 
     # science files should have 't' in front now

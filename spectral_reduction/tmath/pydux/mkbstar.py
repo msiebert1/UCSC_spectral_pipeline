@@ -86,7 +86,11 @@ def mkbstar(bfile,gratcode):
     plt.plot(x1,y1,drawstyle='steps-mid',color='r')
     plt.plot(x1,y0,drawstyle='steps-mid',color='k')
     plt.pause(0.01)
-    plt.ylim([ymin,ymax])
+    try:
+        plt.ylim([ymin,ymax])
+    except ValueError:
+        medValue = np.median(y0)
+        plt.ylim([1.e-2*medValue,1.e2*medValue])
     plt.pause(0.01)
     print('\nPlotting optimal as black, normal as red')
     extract=inputter_single('Do you want to use (n)ormal or (o)ptimal extraction? ','no')

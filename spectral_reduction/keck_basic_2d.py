@@ -1,14 +1,11 @@
 from __future__ import print_function
-import os,sys,pdb,shutil,glob
+import os,sys,pdb,shutil,glob,argparse
 import numpy as np
 
 from astropy.io import fits
 from astropy.io import ascii
 from scipy import signal, ndimage
 
-
-from optparse import OptionParser
-    
 
 def load_sections(string, fmt_iraf=True):
     """
@@ -171,12 +168,12 @@ def read_lris(raw_file, det=None, TRIM=False):
     if len(fil) != 1:
         #msgs.error("Found {:d} files matching {:s}".format(len(fil)))
         errStr = "Found {:d} files matching {:s}".format(len(fil),raw_file)
-        print errStr
+        print(errStr)
         sys.exit()
 
     # Read
     outStr = "Reading LRIS file: {:s}".format(fil[0])
-    print outStr
+    print(outStr)
     hdu = fits.open(fil[0])
     head0 = hdu[0].header
 
@@ -424,14 +421,14 @@ def lris_read_amp(inp, ext, redchip=False, applygain=True):
     if (xdata1-1) != precol:
         #msgs.error("Something wrong in LRIS datasec or precol")
         errStr = 'Something wrong in LRIS datasec or precol'
-        print errStr
+        print(errStr)
         pdb.set_trace()
         sys.exit()
         
     if (xshape+precol+postpix) != temp.shape[0]:
         #msgs.error("Wrong size for in LRIS detector somewhere.  Funny binning?")
         errStr = 'Wrong size for in LRIS detector somewhere.  Funny binning?'
-        print errStr
+        print(errStr)
         pdb.set_trace()
         sys.exit()
                 
@@ -471,7 +468,7 @@ def lris_read_amp(inp, ext, redchip=False, applygain=True):
             #gain = 1.173 # gain page
         else:
             errStr = 'Unsupported extension??? Exiting after debugging.'
-            print errStr
+            print(errStr)
             pdb.set_trace()
             sys.exit()
     else:
@@ -490,7 +487,7 @@ def lris_read_amp(inp, ext, redchip=False, applygain=True):
             #gain = 1.681 # gain page
         else:
             errStr = 'Unsupported extension??? Exiting after debugging.'
-            print errStr
+            print(errStr)
             pdb.set_trace()
             sys.exit()
     gaindata = 0.*data + gain
@@ -577,7 +574,7 @@ def subtract_overscan(rawframe, numamplifiers, datasec, oscansec,gain_image=None
             #           'amplifier {0}'.format(i+1))
             errStr = 'Overscan sections do not match amplifier sections for '
             errStr += 'amplifier {0}'.format(i+1)
-            print errStr
+            print(errStr)
             pdb.set_trace()
             sys.exit()
         compress_axis = 1 if data_shape[0] == overscan.shape[0] else 0
@@ -609,49 +606,99 @@ def subtract_overscan(rawframe, numamplifiers, datasec, oscansec,gain_image=None
     return nobias
 
 
+def parse_cmd_args():
+    ''' Parse the command line options '''
 
-#---------------------------------------------------------------------------
-# 
-# keck_basic_2d - Run basic 2D CCD reduction on Keck LRIS data
-#
-# Inputs:
-#
-# Assumes:
-#  You are in the rawdata directory
-#
-#
-# Returns:
-#   Zero, but writes files to disk
-#
-# Description:
-#   1. Looks in rawdata
-#   2. Compares rawdata files to those in pre_reduced
-#   3. Runs the basic 2D CCD reduction on any files that
-#      haven't been processed and writes them to pre_reduced folder
-#
-#
-#
-# Author:
-#   J. Brown, UCSC Astronomy Dept
-#   brojonat@ucsc.edu
-#   2018 Oct 2
-#
+    # init parser
+    descStr = 'Main driver for the basic Keck CCD reduction. '
+    #descStr += 'Recommended calling sequence: \n \n'
+    #descStr += '$ python keck_basic_2d.py -v -c \n'
+    parser = argparse.ArgumentParser(description=descStr,
+                                     formatter_class=argparse.RawTextHelpFormatter)
 
-def main():
-    
-    ### These can eventually be command line options
-    CLOBBER = True # this will overwrite the individual files in pre_reduced but won't wipe the directory
-    FULL_CLEAN = True # this will completely wipe pre_reduced.
-    BPM = False # no bad pixel mask available (at least for our binning)
-    PIXEL_FLOOR = False # removes negative values
-    REORIENT = True # transposes to wavelength increasing rightward
-    TRIM = True # trims to some hard coded section of the detector
-  
-    description = 'TBD'
-    usage= 'TBD'
-    parser = OptionParser(usage=usage, description=description, version="0.1" )
-    option, args = parser.parse_args()
-  
+    # required args
+    #parser.add_argument('requried_arg',type=str,
+    #                    help='a required arguement')
+
+    # optional
+    parser.add_argument('-v','--verbose',
+                        help='print diagnostic info',action='store_true')
+    parser.add_argument('-c','--clobber',action='store_true',
+                        help='Clobber files already in pre_reduced/ but not subdirs')
+    parser.add_argument('-f','--full_clean',action='store_true',
+                        help='Do a complete wipe of pre_reduced, including subdirs')
+
+    parser.add_argument('--no_reorient',action='store_true',
+                        help='Do not reorient to wavelength increasing rightward')
+    parser.add_argument('--no_trim',action='store_true',
+                        help='Do not trim 2D image to hardcoded section')
+    parser.add_argument('--mask_middle_blue',action='store_true',
+                        help='Mask the middle section of rows on the blue detector')
+    parser.add_argument('--mask_middle_red',action='store_true',
+                        help='Mask the middle section of rows on the red detector')
+
+    # parse
+    cmdArgs = parser.parse_args()
+
+    # package up
+    args = () # no args implemented yet
+    kwargs = {}
+    kwargs['VERBOSE'] = cmdArgs.verbose
+    kwargs['CLOBBER'] = cmdArgs.clobber
+    kwargs['FULL_CLEAN'] = cmdArgs.full_clean
+    kwargs['REORIENT'] = not cmdArgs.no_reorient
+    kwargs['TRIM'] = not cmdArgs.no_trim
+    kwargs['MASK_MIDDLE_BLUE'] = cmdArgs.mask_middle_blue
+    kwargs['MASK_MIDDLE_RED'] = cmdArgs.mask_middle_red
+
+    return (args,kwargs)
+
+
+
+
+def main(*args,**kwargs):
+    '''
+    #---------------------------------------------------------------------------
+    # 
+    # keck_basic_2d - Run basic 2D CCD reduction on Keck LRIS data
+    #
+    # Inputs:
+    #
+    # Assumes:
+    #  You are in the rawdata directory
+    #
+    #
+    # Returns:
+    #   Zero, but writes files to disk
+    #
+    # Description:
+    #   1. Looks in rawdata
+    #   2. Compares rawdata files to those in pre_reduced
+    #   3. Runs the basic 2D CCD reduction on any files that
+    #      haven't been processed and writes them to pre_reduced folder
+    #
+    #
+    #
+    # Author:
+    #   J. Brown, UCSC Astronomy Dept
+    #   brojonat@ucsc.edu
+    #   2018 Oct 2
+    #
+    '''
+
+    # no meaningful args (this is None)
+    #arg = args[0]
+
+    # unpack supported kwargs
+    CLOBBER = kwargs.get('CLOBBER',False) # this will overwrite the individual files in pre_reduced but won't wipe the directory
+    FULL_CLEAN = kwargs.get('FULL_CLEAN',False) # this will completely wipe pre_reduced.
+    BPM = kwargs.get('BPM',False) # no bad pixel mask available (at least for our binning)
+    PIXEL_FLOOR = kwargs.get('PIXEL_FLOOR',False) # removes negative values
+    REORIENT = kwargs.get('REORIENT',True) # transposes to wavelength increasing rightward
+    TRIM = kwargs.get('TRIM',False) # trims to some hard coded section of the detector
+    MASK_MIDDLE_BLUE = kwargs.get('MASK_MIDDLE_BLUE',False)
+    MASK_MIDDLE_RED = kwargs.get('MASK_MIDDLE_RED',False)
+
     # pre_reduced does not exist, needs to be made
     if not os.path.isdir('pre_reduced/'):
         os.mkdir('pre_reduced/')
@@ -704,7 +751,7 @@ def main():
                                           
             # mask bad pixels
             if BPM:
-                print 'Bad pixel masking not yet implemented...'
+                print('Bad pixel masking not yet implemented...')
                 
             # apply floor to pixel values    
             if PIXEL_FLOOR:
@@ -733,7 +780,12 @@ def main():
                         # which is trimmed to longslit by default. The work around is
                         # to just move all the mask data to its own directory and run
                         # this with TRIM=False.
-                        #pass # if red is full frame, we probabaly don't want to bin?       
+                        #pass # if red is full frame, we probabaly don't want to bin?
+
+            if MASK_MIDDLE_RED:
+                # these rows should be chosen programatically
+                # this is much more aggressive than necessary
+                outImg[190:240,:] = np.median(outImg)
                         
             # adjust the header (these keywords aren't present by default)
             head['EXPTIME'] = head['ELAPTIME']
@@ -747,9 +799,12 @@ def main():
                         
         else:
             outStr = 'File exists: {}'.format(oScanFile)
-            print outStr
+            print(outStr)
    
     return 0
   
 if __name__=='__main__':
-    main()
+    ''' Run parsing, then main '''
+    args,kwargs = parse_cmd_args()
+    main(*args,**kwargs)
+
