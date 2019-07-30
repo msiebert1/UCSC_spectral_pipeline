@@ -404,7 +404,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             # finalsig=np.sqrt(finalvar)*np.sqrt(olddelt/newdelt)
 
             #Matt's interpolation algorithm. womashrebin is an unreadable monstrosity.
-            interp_data = interpo_flux_conserving(wave, bobj, 1./vartmp, dw=newdelt, testing=False)
+            interp_data = interpo_flux_conserving(nwave, bobj, 1./vartmp, dw=newdelt, testing=False)
             nwave = interp_data[0]
             finalobj = interp_data[1]
             finalvar = 1./interp_data[2]
@@ -425,6 +425,69 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             plt.xlabel('Wavelength')
             plt.ylabel('Flux')
             plt.title(objectname)
+
+            outputdone = False
+            print (outputdone)
+            while (not outputdone):
+                print('\nThe file is: {}'.format(inputfile))
+                print('The object is: {}'.format(objectname))
+                print('The DATE-OBS is: {}'.format(date))
+                print('The aperture is: {}'.format(i+1))
+                print('The previous name was: {}'.format(objname))
+                print('\nEnter the object name for the final fits file: ')
+                objname=inputter('(UT date and .fits will be added): ','string',False)
+                fname=objname+'-'+printdate+'.fits'
+                sname=objname+'-'+printdate+'-sigma.fits'
+                if (os.path.isfile(fname)):
+                    print('{} already exists!!!!'.format(fname))
+                    print('Do you wish to overwrite it? ')
+                    answer=yesno('y')
+                    if (answer == 'y'):
+                        outputdone = True
+                else:
+                    outputdone = True
+            # add to header
+            mshead.set('CRPIX1', 1)
+            mshead.set('CRVAL1',  nwave[0])
+            mshead.set('CDELT1', nwave[1] - nwave[0])
+            mshead.set('CTYPE1', 'LINEAR')
+            mshead.set('W_RANGE', waverange)
+            mshead.set('BSTAR_Z', bstarairmass)
+            mshead.set('BSTARNUM', bstarnum)
+            mshead.set('BSTAROBJ', bstarname)
+            mshead.set('BARYVEL', v)
+            mshead.set('SKYSHIFT', angshift)
+            mshead.set('ATMSHIFT', bangshift)
+            mshead.set('EXTRACT', extractcode)
+            mshead.set('REDUCER', user)
+            mshead.set('RED_DATE', datetime.now().strftime("%Y-%M-%d %I:%M%p"), 'EPOCH OF REDUCTION')
+            mshead.set('OBJECT', objectname)
+            if (secondord):
+                mshead.set('SECOND', 'yes',  'Second order correction attempted')
+                mshead.set('COMBRANGE',combrange)
+                mshead.set('BSTAR_Z2',bstarairmass2)
+                mshead.set('BSTARNU2', bstarnum2)
+                mshead.set('BSTAROB2', bstarname2)
+                fluxairmass2=mshead2['FLX2_Z']
+                fluxnum2=mshead2['FLX2_NUM']
+                fluxname2=mshead2['FLX2_OBJ']
+                mshead.set('FLX2_Z',fluxairmass2)
+                mshead.set('FLX2_NUM', fluxnum2)
+                mshead.set('FLX2_OBJ', fluxname2)
+            outdata=np.zeros((len(finalobj),2))
+            outdata[:,0]=finalobj.copy()
+            outdata[:,1]=finalsig.copy()
+            outhdu=fits.PrimaryHDU(outdata)
+            hdul=fits.HDUList([outhdu])
+            mshead.set('NAXIS2',2)
+            hdul[0].header=mshead.copy()
+            hdul.writeto(fname,overwrite=True)
+
+            spectxt = objname+'-'+printdate+'.flm'
+            spectxt=spectxt.strip()
+            np.savetxt(spectxt,np.transpose([nwave,finalobj.copy(),finalsig.copy()]))
+
+            hdul.close()
 
             print('Do you wish to combine with another spectrum? ')
             answer=yesno('y')
@@ -484,65 +547,69 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 else:
                     print ("Please include 'blue' or 'red' in filename of spectrum to combine")
 
-            outputdone = False
-            while (not outputdone):
-                print('\nThe file is: {}'.format(inputfile))
-                print('The object is: {}'.format(objectname))
-                print('The DATE-OBS is: {}'.format(date))
-                print('The aperture is: {}'.format(i+1))
-                print('The previous name was: {}'.format(objname))
-                print('\nEnter the object name for the final fits file: ')
-                objname=inputter('(UT date and .fits will be added): ','string',False)
-                fname=objname+'-'+printdate+'.fits'
-                sname=objname+'-'+printdate+'-sigma.fits'
-                if (os.path.isfile(fname)):
-                    print('{} already exists!!!!'.format(fname))
-                    print('Do you wish to overwrite it? ')
-                    answer=yesno('y')
-                    if (answer == 'y'):
+                outputdone = False
+                while (not outputdone):
+                    print('\nThe file is: {}'.format(inputfile))
+                    print('The object is: {}'.format(objectname))
+                    print('The DATE-OBS is: {}'.format(date))
+                    print('The aperture is: {}'.format(i+1))
+                    print('The previous name was: {}'.format(objname))
+                    print('\nEnter the object name for the final fits file: ')
+                    objname=inputter('(UT date and .fits will be added): ','string',False)
+                    fname=objname+'-'+printdate+'.fits'
+                    sname=objname+'-'+printdate+'-sigma.fits'
+                    if (os.path.isfile(fname)):
+                        print('{} already exists!!!!'.format(fname))
+                        print('Do you wish to overwrite it? ')
+                        answer=yesno('y')
+                        if (answer == 'y'):
+                            outputdone = True
+                    else:
                         outputdone = True
-                else:
-                    outputdone = True
-            # add to header
-            mshead.set('CRPIX1', 1)
-            mshead.set('CRVAL1',  nwave[0])
-            mshead.set('CDELT1', nwave[1] - nwave[0])
-            mshead.set('CTYPE1', 'LINEAR')
-            mshead.set('W_RANGE', waverange)
-            mshead.set('BSTAR_Z', bstarairmass)
-            mshead.set('BSTARNUM', bstarnum)
-            mshead.set('BSTAROBJ', bstarname)
-            mshead.set('BARYVEL', v)
-            mshead.set('SKYSHIFT', angshift)
-            mshead.set('ATMSHIFT', bangshift)
-            mshead.set('EXTRACT', extractcode)
-            mshead.set('REDUCER', user)
-            mshead.set('RED_DATE', datetime.now().strftime("%Y-%M-%d %I:%M%p"), 'EPOCH OF REDUCTION')
-            mshead.set('OBJECT', objectname)
-            if (secondord):
-                mshead.set('SECOND', 'yes',  'Second order correction attempted')
-                mshead.set('COMBRANGE',combrange)
-                mshead.set('BSTAR_Z2',bstarairmass2)
-                mshead.set('BSTARNU2', bstarnum2)
-                mshead.set('BSTAROB2', bstarname2)
-                fluxairmass2=mshead2['FLX2_Z']
-                fluxnum2=mshead2['FLX2_NUM']
-                fluxname2=mshead2['FLX2_OBJ']
-                mshead.set('FLX2_Z',fluxairmass2)
-                mshead.set('FLX2_NUM', fluxnum2)
-                mshead.set('FLX2_OBJ', fluxname2)
-            outdata=np.zeros((len(finalobj),2))
-            outdata[:,0]=finalobj.copy()
-            outdata[:,1]=finalsig.copy()
-            outhdu=fits.PrimaryHDU(outdata)
-            hdul=fits.HDUList([outhdu])
-            mshead.set('NAXIS2',2)
-            hdul[0].header=mshead.copy()
-            hdul.writeto(fname,overwrite=True)
-            hdul.close()
+                # add to header
+                mshead.set('CRPIX1', 1)
+                mshead.set('CRVAL1',  nwave[0])
+                mshead.set('CDELT1', nwave[1] - nwave[0])
+                mshead.set('CTYPE1', 'LINEAR')
+                mshead.set('W_RANGE', waverange)
+                mshead.set('BSTAR_Z', bstarairmass)
+                mshead.set('BSTARNUM', bstarnum)
+                mshead.set('BSTAROBJ', bstarname)
+                mshead.set('BARYVEL', v)
+                mshead.set('SKYSHIFT', angshift)
+                mshead.set('ATMSHIFT', bangshift)
+                mshead.set('EXTRACT', extractcode)
+                mshead.set('REDUCER', user)
+                mshead.set('RED_DATE', datetime.now().strftime("%Y-%M-%d %I:%M%p"), 'EPOCH OF REDUCTION')
+                mshead.set('OBJECT', objectname)
+                if (secondord):
+                    mshead.set('SECOND', 'yes',  'Second order correction attempted')
+                    mshead.set('COMBRANGE',combrange)
+                    mshead.set('BSTAR_Z2',bstarairmass2)
+                    mshead.set('BSTARNU2', bstarnum2)
+                    mshead.set('BSTAROB2', bstarname2)
+                    fluxairmass2=mshead2['FLX2_Z']
+                    fluxnum2=mshead2['FLX2_NUM']
+                    fluxname2=mshead2['FLX2_OBJ']
+                    mshead.set('FLX2_Z',fluxairmass2)
+                    mshead.set('FLX2_NUM', fluxnum2)
+                    mshead.set('FLX2_OBJ', fluxname2)
+                outdata=np.zeros((len(finalobj),2))
+                outdata[:,0]=finalobj.copy()
+                outdata[:,1]=finalsig.copy()
+                outhdu=fits.PrimaryHDU(outdata)
+                hdul=fits.HDUList([outhdu])
+                mshead.set('NAXIS2',2)
+                hdul[0].header=mshead.copy()
+                hdul.writeto(fname,overwrite=True)
+                hdul.close()
                 
-    print('final')        
-    print(objectlist,gratcode,secondord,gratcode2)
-    plt.close()
+                spectxt = objname+'-'+printdate+'.flm'
+                spectxt=spectxt.strip()
+                np.savetxt(spectxt,np.transpose([nwave,finalobj.copy(),finalsig.copy()]))
+                    
+        print('final')        
+        print(objectlist,gratcode,secondord,gratcode2)
+        plt.close()
     return
 
