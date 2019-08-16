@@ -117,7 +117,8 @@ def mkfluxstar(fluxfile,gratcode):
     ax=fig.add_subplot(111)
     cursor = Cursor(ax, useblit=True, color='k', linewidth=1 )
     airlimit=1.5
-    splineresult=fitspl_dev(wave,np.log10(fstar),(airmass>airlimit),fig, cal='fluxstar')
+
+    splineresult=fitspl_dev(wave,np.log10(fstar),(airmass>airlimit),fig, cal='fluxstar{}'.format(gratcode))
     splineresult=10**(splineresult)
     plt.cla()
     plt.plot(wave,splineresult,drawstyle='steps-mid')
