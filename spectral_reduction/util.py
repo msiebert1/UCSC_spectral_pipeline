@@ -239,6 +239,22 @@ def readhdr(img):
         hdr = pyfits.open(img)[0].header
     return hdr
 
+###############################################################
+def readhdr2(img):
+    try:
+        hdr = pyfits.open(img)[1].header
+    except:
+        try:
+            correctcard(img)
+        except:
+            import sys
+
+            sys.exit('image ' + str(img) +
+                     ' is corrupted, delete it and start again')
+        # hdr = pyfits.open(img)[0].header
+        hdr = pyfits.open(img)[0].header
+    return hdr
+
 
 def readkey3(hdr, keyword):
 

@@ -404,7 +404,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             # finalsig=np.sqrt(finalvar)*np.sqrt(olddelt/newdelt)
 
             #Matt's interpolation algorithm. womashrebin is an unreadable monstrosity.
-            interp_data = interpo_flux_conserving(nwave, bobj, 1./vartmp, dw=newdelt, testing=False)
+            interp_data = interpo_flux_conserving(wave, bobj, 1./vartmp, dw=newdelt, testing=False)
             nwave = interp_data[0]
             finalobj = interp_data[1]
             finalvar = 1./interp_data[2]
@@ -603,7 +603,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 hdul[0].header=mshead.copy()
                 hdul.writeto(fname,overwrite=True)
                 hdul.close()
-                
+
                 spectxt = objname+'-'+printdate+'.flm'
                 spectxt=spectxt.strip()
                 np.savetxt(spectxt,np.transpose([nwave,finalobj.copy(),finalsig.copy()]))
