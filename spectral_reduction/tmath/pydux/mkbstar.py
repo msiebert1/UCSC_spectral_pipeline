@@ -111,7 +111,7 @@ def mkbstar(bfile,gratcode):
     ax=fig.add_subplot(111)
     cursor = Cursor(ax, useblit=True, color='k', linewidth=1 )
     airlimit=1.5
-    splineresult=fitspl(wave,np.log10(bstar),(airmass>airlimit),fig, cal='bstar')
+    splineresult=fitspl_dev(wave,np.log10(bstar),(airmass>airlimit),fig, cal='bstar{}'.format(gratcode))
     splineresult=10**(splineresult)
     plt.cla()
     plt.plot(wave,splineresult,drawstyle='steps-mid')
