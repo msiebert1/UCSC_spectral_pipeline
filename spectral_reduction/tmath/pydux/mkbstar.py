@@ -10,7 +10,7 @@ def mkbstar(bfile,gratcode):
     from tmath.wombat.yesno import yesno
     from tmath.pydux.obs_extinction import obs_extinction
     from tmath.pydux.wave_telluric import wave_telluric
-    from tmath.pydux.fitspl import fitspl
+    from tmath.pydux.fitspl import fitspl,fitspl_dev
     from tmath.pydux.bblo import bblo
     from tmath.pydux.finalscaler import finalscaler
     from tmath.pydux.pacheck import pacheck
