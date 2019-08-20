@@ -292,8 +292,8 @@ def correctcard(img):
     except:
         aa = ''
 
-    print(aa)
-    print(ww)
+    # print(aa)
+    # print(ww)
     if len(ww) > 0:
         newheader = []
         headername = []

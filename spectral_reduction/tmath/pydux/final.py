@@ -404,10 +404,11 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             # finalsig=np.sqrt(finalvar)*np.sqrt(olddelt/newdelt)
 
             #Matt's interpolation algorithm. womashrebin is an unreadable monstrosity.
-            interp_data = interpo_flux_conserving(wave, bobj, 1./vartmp, dw=newdelt, testing=False)
-            nwave = interp_data[0]
-            finalobj = interp_data[1]
-            finalvar = 1./interp_data[2]
+            interp_data = interpo_flux_conserving(wave, bobj, 1./vartmp, waveb, waver, dw=newdelt, testing=False)
+            trim_range = (interp_data[0] > waveb) & (interp_data[0] < waver)
+            nwave = interp_data[0][trim_range]
+            finalobj = interp_data[1][trim_range]
+            finalvar = 1./interp_data[2][trim_range]
             finalsig = np.sqrt(finalvar)
 
             #gonna ignore the second order stuff for now
@@ -427,7 +428,6 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             plt.title(objectname)
 
             outputdone = False
-            print (outputdone)
             while (not outputdone):
                 print('\nThe file is: {}'.format(inputfile))
                 print('The object is: {}'.format(objectname))

@@ -711,9 +711,11 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
     flat_comb_image *= expTime
 
     if outFile:
-        # clear space
-        if os.path.isfile(outFile):
+        # clear space, move to pre_reduced
+        if os.path.isfile('pre_reduced/' + outFile):
             os.remove(outFile)
+        os.system('mv ' + outFile + ' pre_reduced/')
+
         # write correct flat data
         hdu = fits.PrimaryHDU(flat_comb_image,header)
         hdu.writeto(outFile,output_verify='ignore')  
@@ -969,7 +971,7 @@ def inspect_flat(flat_list,*args,**kwargs):
                     promptStr = 'Write to file {} [y/n]: '.format(outFile)
                     usrResp = raw_input(promptStr).upper().strip()
                     if usrResp == 'Y':
-                        flatFitObj.save_flat(outFile,header=header)
+                        flatFitObj.save_flat('pre_reduced/'+outFile,header=header)
                         break
                     else:
                         outFile = None
@@ -995,7 +997,7 @@ def inspect_flat(flat_list,*args,**kwargs):
                     promptStr = 'Write to file {} [y/n]: '.format(outFile)
                     usrResp = raw_input(promptStr).upper().strip()
                     if usrResp == 'Y':
-                        flatFitObj.save_flat(outFile,header=header)
+                        flatFitObj.save_flat('pre_reduced/'+outFile,header=header)
                         break
                     else:
                         outFile = None
