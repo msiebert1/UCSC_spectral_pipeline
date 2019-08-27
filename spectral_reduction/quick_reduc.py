@@ -128,6 +128,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         nameout0 = str(_object0) + '_' + inst.get('name')
 
         nameout0 = util.name_duplicate(imgs[0], nameout0, '')
+        nameout0 = nameout0.split(':')[0][0:-2] + '.fits'
+        print ('NAMEOUT:', nameout0)
         timg = nameout0
         print('\n### now processing :',timg,' for -> ',inst.get('name'))
         if len(imgs) > 1:
@@ -383,6 +385,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                 os.system('cp ' + sensfile + ' ' + _object0 + '_ex/')
                 bstarfile = inst.get('archive_bstar')
                 os.system('cp ' + bstarfile + ' ' + _object0 + '_ex/')
+
 
     return result
     
