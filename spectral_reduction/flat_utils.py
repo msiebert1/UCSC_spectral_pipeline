@@ -638,6 +638,10 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
     outFile = kwargs.get('OUTFILE')
     clobber = kwargs.get('CLOBBER')
 
+    if outFile:
+        outFile = 'pre_reduced/{}'.format(outFile)
+
+
     # read data
     flat_comb_image = np.array([])
     median_image_stack = np.array([])
@@ -712,9 +716,11 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
     flat_comb_image *= expTime
 
     if outFile:
+        
         # clear space
         if os.path.isfile(outFile) and clobber:
             os.remove(outFile)
+
         # write correct flat data
         hdu = fits.PrimaryHDU(flat_comb_image,header)
         hdu.writeto(outFile,output_verify='ignore')  
@@ -985,7 +991,7 @@ def inspect_flat(flat_list,*args,**kwargs):
                     promptStr = 'Write to file {} [y/n]: '.format(outFile)
                     usrResp = raw_input(promptStr).upper().strip()
                     if usrResp == 'Y':
-                        flatFitObj.save_flat(outFile,header=header)
+                        flatFitObj.save_flat('pre_reduced/'+outFile,header=header)
                         break
                     else:
                         outFile = None
@@ -1011,7 +1017,7 @@ def inspect_flat(flat_list,*args,**kwargs):
                     promptStr = 'Write to file {} [y/n]: '.format(outFile)
                     usrResp = raw_input(promptStr).upper().strip()
                     if usrResp == 'Y':
-                        flatFitObj.save_flat(outFile,header=header)
+                        flatFitObj.save_flat('pre_reduced/'+outFile,header=header)
                         break
                     else:
                         outFile = None

@@ -298,8 +298,9 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None):
     else:
         masterx, mastery = np.genfromtxt('../../master_files/' + cal + '_splpts_master.txt')
         womconfig.nsplinepoints=len(masterx)
-        womconfig.tmpsplptsx=masterx
-        womconfig.tmpsplptsy=mastery
+        womconfig.tmpsplptsx=list(masterx)
+        womconfig.tmpsplptsy=list(mastery)
+        # print (type(womconfig.tmpsplptsx))
         spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
 
     splineresult=splev(wave,spline)

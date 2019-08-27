@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import sys, os, pdb
+import sys, os, pdb, argparse, datetime
 from optparse import OptionParser
 import util
 import quick_reduc
@@ -14,11 +14,13 @@ from pyraf import iraf
 matplotlib.use('TkAgg')
 from flat_utils import combine_flats,inspect_flat
 
-description = "> Performs pre-reduction steps"
-usage = "%prog  \t [option] \n Recommended syntax: %prog -i -c"
+def pre_reduction_dev():
 
 
-def main():
+    return 0
+
+
+def pre_reduction_orig():
 
     description = "> Performs pre-reduction steps"
     usage = "%prog    \t [option] \n Recommended syntax: %prog -i -c"
@@ -70,10 +72,7 @@ def main():
         for img in listfile:
             _type = ''
             hdr0 = util.readhdr(img)
-            # hdr0 = util.readhdr2(img)
-
             _type=util.readkey3(hdr0, 'object')
-
             if 'flat' in _type.lower():
                 files_dflat.append(img)
             elif 'arc' not in _type.lower() and 'arc' not in img.lower():
@@ -122,13 +121,11 @@ def main():
         for file in filenames:
             if file.startswith('to'):
                 pfiles.append(file)
-
     #print(pfiles)
 
     # loop over each image in pre_reduced
     for img in listfile:
         hdr = util.readhdr(img)
-        # hdr = util.readhdr2(img)
         targ=util.readkey3(hdr, 'object')
         
         # if file is not not a processed file, run the overscan+trim code
@@ -278,7 +275,6 @@ def main():
 
     # science files should have 't' in front now
     # this just gets the base name, to prefix assumed below
-    print (new_files)
     if new_files is not None:
         files_science = new_files
 
@@ -293,7 +289,6 @@ def main():
     science_targets = set(science_targets)
     for targ in science_targets:
         if not os.path.isdir('pre_reduced/' + targ + '/'):
-            targ = targ.strip()
             os.mkdir('pre_reduced/'+ targ + '/')
 
     # copy the files into the obj dir
@@ -321,7 +316,72 @@ def main():
     
     
     
-    
-if __name__ == '__main__':
-  main()
+def parse_cmd_args():
+    ''' Parse the command line options '''
 
+    # init parser
+    descStr = 'Pre-reduction for the UCSC Spectroscopic Pipeline'
+    parser = argparse.ArgumentParser(description=descStr)
+    conflictGroup = parser.add_mutually_exclusive_group()
+
+    # optional
+    parser.add_argument('-v','--verbose',
+                        help='print diagnostic info',action='store_true')
+
+    parser.add_argument('-o','--original',
+                        help='print diagnostic info',action='store_true')
+    parser.add_argument('-c','--config-file',
+                        help='config file to use for pre-reduction')
+
+    # parse
+    cmdArgs = parser.parse_args()
+
+    #print cmdArgs to determine what defaults are
+    pdb.set_trace()
+
+    kwargs['VERBOSE'] = cmdArgs.verbose
+    kwargs['ORIGINAL'] = cmdArgs.original
+    kwargs['CONFIG_FILE'] = cmdArgs.config_file
+
+    args = ()
+    kwargs = {}
+
+    return (args,kwargs)
+
+def main(*args,**kwargs):
+    '''
+    Main driver for running pre-reduction versions
+
+    Parameters
+    ----------
+    data : list
+        List to parse for unique values
+
+    IS_TUPLE : bool, optional
+        If True, data is assumed to be a list of tuples
+
+    KEY_INDEX : int, optional
+        If IS_TUPLE, KEY_INDEX is used as the tuple index which
+        holds the values to construct the unique set from
+
+    Returns
+    -------
+    set : A set of unique values in data
+
+    '''
+
+    if kwargs.get('ORIGINAL'):
+        res = pre_reduction_orig()
+
+    else:
+        if kwargs.get('CONFIG_FILE'):
+            res = pre_reduction_dev(config=config)
+        else:
+            res = pre_reduction_dev(config=False)
+
+    return 0
+
+if __name__=='__main__':
+    ''' Run parsing, then main '''
+    args,kwargs = parse_cmd_args()
+    main(*args,**kwargs)
