@@ -3,7 +3,7 @@ import math
 import scipy.interpolate as inter
 import matplotlib.pyplot as plt
 import scipy.optimize as opt
-def interpo_flux_conserving(wave, flux, ivar, dw=2, testing=False):
+def interpo_flux_conserving(wave, flux, ivar, waveb, waver, dw=2, testing=False):
     """This is a an interpolation algorithm that does trapezoidal integration
         to conserve flux. The variance is then propagated correctly. Since 
         interpolation always introduces correlation in the variance spectrum,
@@ -21,7 +21,7 @@ def interpo_flux_conserving(wave, flux, ivar, dw=2, testing=False):
     lower = wave[0]
     upper = wave[-1]
 
-    good_data = np.where((wave >= lower) & (wave <= upper))
+    good_data = np.where((wave >= waveb) & (wave <= waver))
     influx = inter.splrep(wave[good_data], flux[good_data])
     invar = inter.splrep(wave[good_data], var[good_data])
 
@@ -30,7 +30,6 @@ def interpo_flux_conserving(wave, flux, ivar, dw=2, testing=False):
     wave_final = []
     flux_final = []
     var_final = []
-
     for mid_point in wavelength_mids:
         inter_flux_mid_left = float(inter.splev(mid_point, influx, ext = 3))
         inter_var_mid_left = float(inter.splev(mid_point, invar, ext = 3))

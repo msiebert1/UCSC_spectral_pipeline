@@ -170,16 +170,16 @@ goodman_m2={ 'name': 'goodman_red',
 
 
 def blue_or_red(img):
-    hdr = util.readhdr(img)
+    hdr = util.readhdr2(img)
     # kast
     if util.readkey3(hdr, 'VERSION') == 'kastb':
         return 'blue', kast_blue
     elif util.readkey3(hdr, 'VERSION') == 'kastr':
         return 'red', kast_red
     # soar
-    elif util.readkey3(hdr, 'WAVMODE') == '400 m1':
+    elif util.readkey3(hdr, 'WAVMODE') == '400_M1':
         return 'blue', goodman_m1
-    elif util.readkey3(hdr, 'WAVMODE') == '400 m2':
+    elif util.readkey3(hdr, 'WAVMODE') == '400_M2':
         return 'red', goodman_m2
     # lris
     elif util.readkey3(hdr, 'INSTRUME') == 'LRISBLUE':

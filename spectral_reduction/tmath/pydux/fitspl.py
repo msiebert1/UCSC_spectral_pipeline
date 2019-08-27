@@ -1,6 +1,6 @@
 
 
-def fitspl(wave,flux,airlimit,fig):
+def fitspl(wave,flux,airlimit,fig, cal = None):
     """fit spline to spectrum"""
     import numpy as np
     import matplotlib.pyplot as plt
@@ -11,6 +11,7 @@ def fitspl(wave,flux,airlimit,fig):
     from tmath.wombat.yesno import yesno
     from tmath.wombat.onclick import onclick
     from tmath.wombat.onkeypress import onkeypress
+    import glob
 
 #    global nsplinepoints, tmpsplptsx, tmpsplptsy, pflag
     
@@ -49,12 +50,21 @@ def fitspl(wave,flux,airlimit,fig):
     wavetell[loc]=np.nan
     fluxtell[loc]=np.nan
     plt.plot(wavetell,fluxtell,drawstyle='steps-mid',color='violet')
-    womconfig.nsplinepoints=len(useband)
-    womconfig.tmpsplptsx=wave[useband].copy().tolist()
-    womconfig.tmpsplptsy=[]
-    for i,_ in enumerate(useband):
-        womconfig.tmpsplptsy.append(np.mean(flux[useband[i]-2:useband[i]+3]))
-    spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
+
+    if '../../master_files/' + cal + '_splpts_master.txt' not in glob.glob('../../master_files/*'):
+        womconfig.nsplinepoints=len(useband)
+        womconfig.tmpsplptsx=wave[useband].copy().tolist()
+        womconfig.tmpsplptsy=[]
+        for i,_ in enumerate(useband):
+            womconfig.tmpsplptsy.append(np.median(flux[useband[i]-2:useband[i]+3]))
+        spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
+    else:
+        masterx, mastery = np.genfromtxt('../../master_files/' + cal + '_splpts_master.txt')
+        womconfig.nsplinepoints=len(masterx)
+        womconfig.tmpsplptsx=masterx
+        womconfig.tmpsplptsy=mastery
+        spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
+
     splineresult=splev(wave,spline)
     plt.cla()
     plt.plot(wave,flux,drawstyle='steps-mid',color='k')
@@ -72,6 +82,8 @@ def fitspl(wave,flux,airlimit,fig):
     answer=yesno('n')
     if (answer == 'y'):
         done = True
+    splptsy=[z for _,z in sorted(zip(womconfig.tmpsplptsx,womconfig.tmpsplptsy))]
+    splptsx=sorted(womconfig.tmpsplptsx)
     while (not done):
         plotdone=False
         while (not plotdone):
@@ -141,10 +153,12 @@ def fitspl(wave,flux,airlimit,fig):
         if (answer == 'y'):
             done=True
 
+    if cal != None:
+        np.savetxt('../../master_files/' + cal + '_splpts_master.txt', [splptsx,splptsy])
     return splineresult
 
 
-def fitspl_dev(wave,flux,airlimit,fig):
+def fitspl_dev(wave,flux,airlimit,fig, cal=None):
     import numpy as np
     import matplotlib.pyplot as plt
     from scipy.interpolate import splrep,splev
@@ -154,6 +168,7 @@ def fitspl_dev(wave,flux,airlimit,fig):
     from tmath.wombat.yesno import yesno
     from tmath.wombat.onclick import onclick
     from tmath.wombat.onkeypress import onkeypress
+    import glob
     """fit spline to spectrum"""    
     # starting points for spline
     # bandpts = np.array([3000, 3050, 3090, 3200, 3430, 3450, 3500, 3550, 3600, \
@@ -272,12 +287,22 @@ def fitspl_dev(wave,flux,airlimit,fig):
     wavetell[loc]=np.nan
     fluxtell[loc]=np.nan
     plt.plot(wavetell,fluxtell,drawstyle='steps-mid',color='violet')
-    womconfig.nsplinepoints=len(useband)
-    womconfig.tmpsplptsx=wave[useband].copy().tolist()
-    womconfig.tmpsplptsy=[]
-    for i,_ in enumerate(useband):
-        womconfig.tmpsplptsy.append(np.median(flux[useband[i]-2:useband[i]+3]))
-    spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
+
+    if '../../master_files/' + cal + '_splpts_master.txt' not in glob.glob('../../master_files/*'):
+        womconfig.nsplinepoints=len(useband)
+        womconfig.tmpsplptsx=wave[useband].copy().tolist()
+        womconfig.tmpsplptsy=[]
+        for i,_ in enumerate(useband):
+            womconfig.tmpsplptsy.append(np.median(flux[useband[i]-2:useband[i]+3]))
+        spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
+    else:
+        masterx, mastery = np.genfromtxt('../../master_files/' + cal + '_splpts_master.txt')
+        womconfig.nsplinepoints=len(masterx)
+        womconfig.tmpsplptsx=list(masterx)
+        womconfig.tmpsplptsy=list(mastery)
+        # print (type(womconfig.tmpsplptsx))
+        spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
+
     splineresult=splev(wave,spline)
     plt.cla()
     plt.plot(wave,flux,drawstyle='steps-mid',color='k')
@@ -295,6 +320,8 @@ def fitspl_dev(wave,flux,airlimit,fig):
     answer=yesno('n')
     if (answer == 'y'):
         done = True
+    splptsy=[z for _,z in sorted(zip(womconfig.tmpsplptsx,womconfig.tmpsplptsy))]
+    splptsx=sorted(womconfig.tmpsplptsx)
     while (not done):
         plotdone=False
         while (not plotdone):
@@ -364,4 +391,7 @@ def fitspl_dev(wave,flux,airlimit,fig):
         if (answer == 'y'):
             done=True
 
+    if cal != None:
+        np.savetxt('../../master_files/' + cal + '_splpts_master.txt', [splptsx,splptsy])
+        
     return splineresult

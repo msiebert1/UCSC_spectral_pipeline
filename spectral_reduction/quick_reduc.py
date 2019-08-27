@@ -267,8 +267,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         else:
             if br == 'blue':
                 arcfile = 'ARC_blue.fits' #THIS IS A HACK
+                wave_sol_file = 'idARC_blue.ms'
             elif br == 'red':
                 arcfile = 'ARC_red.fits' #THIS IS A HACK
+                wave_sol_file = 'idARC_red.ms'
                 
             os.system('cp ' + '../' + arcfile + ' .')
             arc_ex=re.sub('.fits', '.ms.fits', arcfile)
@@ -328,6 +330,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                                      refit='yes',
                                      overrid='yes',
                                      newaps='no')
+
+            os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')
         util.delete('lines.dat')
                                      
         

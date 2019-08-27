@@ -10,7 +10,7 @@ def mkbstar(bfile,gratcode):
     from tmath.wombat.yesno import yesno
     from tmath.pydux.obs_extinction import obs_extinction
     from tmath.pydux.wave_telluric import wave_telluric
-    from tmath.pydux.fitspl import fitspl
+    from tmath.pydux.fitspl import fitspl,fitspl_dev
     from tmath.pydux.bblo import bblo
     from tmath.pydux.finalscaler import finalscaler
     from tmath.pydux.pacheck import pacheck
@@ -111,7 +111,7 @@ def mkbstar(bfile,gratcode):
     ax=fig.add_subplot(111)
     cursor = Cursor(ax, useblit=True, color='k', linewidth=1 )
     airlimit=1.5
-    splineresult=fitspl(wave,np.log10(bstar),(airmass>airlimit),fig)
+    splineresult=fitspl_dev(wave,np.log10(bstar),(airmass>airlimit),fig, cal='bstar{}'.format(gratcode))
     splineresult=10**(splineresult)
     plt.cla()
     plt.plot(wave,splineresult,drawstyle='steps-mid')

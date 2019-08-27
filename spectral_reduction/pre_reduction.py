@@ -70,7 +70,10 @@ def main():
         for img in listfile:
             _type = ''
             hdr0 = util.readhdr(img)
+            # hdr0 = util.readhdr2(img)
+
             _type=util.readkey3(hdr0, 'object')
+
             if 'flat' in _type.lower():
                 files_dflat.append(img)
             elif 'arc' not in _type.lower() and 'arc' not in img.lower():
@@ -125,6 +128,7 @@ def main():
     # loop over each image in pre_reduced
     for img in listfile:
         hdr = util.readhdr(img)
+        # hdr = util.readhdr2(img)
         targ=util.readkey3(hdr, 'object')
         
         # if file is not not a processed file, run the overscan+trim code
