@@ -297,22 +297,33 @@ def pre_reduction_dev(*args,**kwargs):
             configDict = json.load(fin)
     else:
         configDict = {
-        'SCI': {'BLUE': {}, 
-                'RED': {}
+        'SCI': {'BLUE': {'ExampleTarget':['img1b.fits']}, 
+                'RED': {'ExampleTarget':['img1r']}
                 },
-        'STD': {'BLUE': {}, 
-                'RED': {}
+        'STD': {'BLUE': {'ExampleStandard':['img2b.fits']}, 
+                'RED': {'ExampleStandard':['img2r.fits']}
                 },
+        'CAL_ARC': {'BLUE': {'CALIBRATION_ARC':[]}, 
+                    'RED': {'CALIBRATION_ARC':[]}
+                },
+        'CAL_FLAT': {'BLUE': {'CALIBRATION_FLAT':[]}, 
+                     'RED': {'CALIBRATION_FLAT':[]}
+                },
+        # this last key is a garbage collector; not used
         'CAL': {'BLUE': {}, 
                 'RED': {}
-                },
-        'CAL_ARC': {'BLUE': {}, 
-                    'RED': {}
-                },
-        'CAL_FLAT': {'BLUE': {}, 
-                     'RED': {}
                 }
         }
+
+        with open('custom_config.json','w') as fout:
+            fout.write(json.dumps(configDict,indent=4))
+
+        outStr = '\n\nOk, not config supplied, so I wrote a boilerplate to custom_config.json\n'
+        outStr += 'You can manually add files to the appropriate lists and rerun.\n'
+        outStr += 'WARNING: make sure you rename your config file, or it could get overwritten!\n\n'
+        print(outStr)
+
+        sys.exit(1)
 
     if not FAST:
         # do visual inspection of frames via ds9 windows
