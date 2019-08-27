@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import sys, os, pdb, argparse, datetime
+import sys, os, shutil, pdb, argparse, datetime, json
 from optparse import OptionParser
 import util
 import quick_reduc
@@ -10,11 +10,523 @@ import matplotlib
 import instruments
 from astropy.io import fits, ascii
 from pyraf import iraf
+import pyds9 as pyds9
 
 matplotlib.use('TkAgg')
 from flat_utils import combine_flats,inspect_flat
 
-def pre_reduction_dev():
+
+def show_ds9_listfile(listFile,instanceName='default'):
+    ''' reads list of images from a file, displays in a DS9 instance '''
+    
+    imgList = []
+    
+    # read in the filenames
+    with open(listFile,'r') as fin:
+        for line in fin:
+            if line[0] != '#':
+                fileName = line.split()[0]
+                imgList.append(fileName)
+    disp = show_ds9_list(imgList,instanceName=instanceName)
+    return disp
+
+def show_ds9_list(imgList,instanceName='default'):
+    ''' display a list of images in a DS9 instance '''
+    
+    #Setup the DS9 instance
+    disp = pyds9.DS9(instanceName)
+    disp.set("frame delete all")
+    disp.set("view image no")
+    disp.set("view colorbar no")
+    disp.set("view panner no")
+    disp.set("view info yes")
+    disp.set("view magnifier no")
+    disp.set("view buttons no")
+    disp.set("tile yes")
+    disp.set("tile column")
+    disp.set("width 1200")
+    disp.set("height 275")
+      
+    #Display the images
+    for i,img in enumerate(imgList):
+        disp.set("frame {}".format(i))
+        ds9cmd = "file fits {}".format(img)
+        disp.set(ds9cmd)
+        disp.set("scale mode minmax")
+        disp.set("regions delete all")
+        disp.set("scale log")
+        disp.set("cmap invert yes")  
+        disp.set(ds9cmd)
+    return disp
+
+
+def config_to_pretty_str(configDict):
+    ''' Dummy function for reformatting configDicts '''
+    return json.dumps(configDict,indent=4)
+
+
+
+def user_adjust_config(configDict,operation=''):
+    ''' Allow user to make adjustments to their reduction config interactively '''
+
+    if operation == 'REMOVE':
+
+        usrResp = ''
+        while usrResp.upper() not in ['C','Q']:
+            configStr = config_to_pretty_str(configDict)
+
+            promptStr = '\n\n\n You\'ve chosen to remove some file(s) from the config.\n'
+            promptStr += 'Here\'s the current state:\n'
+            promptStr += configStr
+            promptStr += '\n\nAt this point you may:\n\n'
+            promptStr += '  Enter the filename you wish to remove, or\n'
+            promptStr += '  (C)ontinue with these files as is\nCommand: '
+            usrRespOrig = raw_input(promptStr)
+
+
+            try:
+                usrResp = usrRespOrig.strip()
+            except Exception as e:
+                errStr = 'I had some problem with that input: {}'.format(e)
+                print(errStr)
+
+            if usrResp.upper() not in ['C','Q']:
+                try:
+                    removeFilename = usrResp
+                    REMOVED = False
+                    for imgType,typeDict in configDict.items():
+                        for chan,objDict in typeDict.items():
+                            for obj,fileList in objDict.items():
+                                if removeFilename in fileList:
+                                    configDict[imgType][chan][obj].remove(removeFilename)
+                                    REMOVED = True
+                                    print('i removed {}'.format(removeFilename))
+                    if not REMOVED:
+                        raise ValueError('Couldn\'t locate {} in config'.format(removeFilename))
+
+                except (Exception,ValueError) as e:
+                    errStr = 'I had some problem: {}'.format(str(e))
+                    print(errStr)
+
+
+
+    if operation == 'ADD':
+
+        usrResp = ''
+        while usrResp.upper() not in ['C','Q']:
+            configStr = config_to_pretty_str(configDict)
+
+            promptStr = '\n\n\n You\'ve chosen to add some file(s) from the config.\n'
+            promptStr += 'Here\'s the current state:\n'
+            promptStr += configStr
+            promptStr += '\n\nAt this point you may:\n\n'
+            promptStr += '  (C)ontinue with these files as is, or\n'
+            promptStr += '  Enter the filename you wish to add, \n'
+            promptStr += '  according to the format TYPE CHAN OBJECT FILENAME\n\n'
+            promptStr += '  (e.g., CAL_ARC BLUE CALIBRATION_ARC r1021.fits)\n'
+            promptStr += '  (e.g., CAL_FLAT RED CALIBRATION_FLAT r1022.fits)\n'
+            promptStr += '  (e.g., STD BLUE BD28411 b1054.fits)\n'
+            promptStr += '  (e.g., SCI BLUE 2019ltw b1055.fits)\n\n'
+            promptStr += '  Make sure your input is accurately formatted; this program\n'
+            promptStr += '  performs conservative validation and may not add your\n'
+            promptStr += '  file if the input is not formatted correctly. In that case\n'
+            promptStr += '  quit and just add the file(s) the config file by hand.\nCommand: '
+            usrRespOrig = raw_input(promptStr)
+
+
+            try:
+                usrResp = usrRespOrig.strip()
+            except Exception as e:
+                errStr = 'I had some problem with that input: {}'.format(e)
+                print(errStr)
+
+            if usrResp.upper() not in ['C','Q']:
+                try:
+                    ADDED = False
+                    inputList = usrResp.split()
+                    imgType = inputList[0]
+                    chan = inputList[1]
+                    obj = inputList[2]
+                    filename = inputList[3]
+
+                    # check if file is available
+                    availableFiles = [os.path.basename(file) for file in glob.glob('*.fits')]
+                    if filename not in availableFiles:
+                        raise ValueError('Couldn\'t find file {}'.format(filename))
+
+                    # try to add
+                    if imgType not in ['CAL_ARC','CAL_FLAT','STD','SCI']:
+                        raise ValueError('Bad image type supplied!')
+                    if chan not in ['BLUE','RED']:
+                        raise ValueError('Bad channel supplied!')
+
+                    if obj not in configDict[imgType][chan].keys():
+                        configDict[imgType][chan][obj] = [filename]
+                        ADDED = True
+                    else:
+                        if filename not in configDict[imgType][chan][obj]:
+                            configDict[imgType][chan][obj].append(filename)
+                            ADDED = True
+
+                    if not ADDED:
+                        raise ValueError('Couldn\'t add {} to config'.format(filename))
+
+                except Exception as e:
+                    errStr = 'I had some problem: {}'.format(str(e))
+                    print(errStr)
+
+
+    return configDict
+
+
+def basic_2d_proc(rawFile,CLOBBER=False):
+
+    # set up file names based on our convention
+    oScanFile = 'pre_reduced/o{}'.format(rawFile)
+    toScanFile = 'pre_reduced/to{}'.format(rawFile)
+
+    # run the basic 2D stuff on this image if necessary
+    if (not os.path.isfile(oScanFile)) or CLOBBER:
+
+        # get the instrument configuration
+        inst = instruments.blue_or_red(rawFile)[1]
+        iraf.specred.dispaxi = inst.get('dispaxis')
+        iraf.longslit.dispaxi = inst.get('dispaxis')
+        _biassec0 = inst.get('biassec')
+        _trimsec0 = inst.get('trimsec')
+
+        # remove destination files
+        for file in [oScanFile,toScanFile]:
+            if os.path.isfile(file) and CLOBBER:
+                os.remove(file)
+
+        # check the ultimate desination file, since intermediates get deleted
+        if not os.path.isfile(toScanFile):
+            if inst.get('observatory')=='lick':
+
+                # do Lick specific bias operations
+                util.kastbias(rawFile,oScanFile)
+
+            # do general (IRAF is in such a sorry state I'm not even sure if this works)
+            else:
+                iraf.ccdproc(rawFile, output=oScanFile, 
+                             overscan='yes', trim='yes', 
+                             zerocor="no", flatcor="no",readaxi='line',
+                             trimsec=str(_trimsec0), biassec=str(_biassec0), 
+                             Stdout=1)
+
+            # trim (same trimming operation for all telescopes)
+            iraf.ccdproc(oScanFile, output=toScanFile, 
+                        overscan='no', trim='yes', zerocor="no", flatcor="no", 
+                        readaxi='line',trimsec=str(_trimsec0), Stdout=1)
+
+            # clean up intermediate files
+            os.remove(oScanFile)
+
+    return 0
+
+
+
+def reorg_files(configDict,CLOBBER=False):
+    ''' Move files into their appropriate subdirectories '''
+    
+    for imgType,typeDict in configDict.items():
+        if imgType in ['STD','SCI']:
+            for chan,objDict in typeDict.items():
+                for obj,fileList in objDict.items():
+
+                    destDir = 'pre_reduced/{}'.format(obj)
+                    if not os.path.isdir(destDir):
+                        os.mkdir(destDir)
+
+                    for rawFile in fileList:
+                        procFile = 'pre_reduced/to{}'.format(rawFile)
+                        destFile = '{}/{}'.format(destDir,os.path.basename(procFile))
+
+                        if os.path.isfile(destFile) and CLOBBER:
+                            print('Clobbering {}'.format(destFile))
+                            os.remove(destFile)
+
+                        if not os.path.isfile(destFile):
+                            shutil.copy(procFile,destFile)
+
+    return 0
+
+
+
+
+
+
+
+def pre_reduction_dev(*args,**kwargs):
+
+    # parse kwargs
+    VERBOSE = kwargs.get('VERBOSE')
+    CLOBBER = kwargs.get('CLOBBER')
+    FULL_CLEAN = kwargs.get('FULL_CLEAN')
+    FAST = kwargs.get('FAST')
+    CONFIG_FILE = kwargs.get('CONFIG_FILE')
+    MAKE_ARCS = kwargs.get('MAKE_ARCS')
+    MAKE_FLATS = kwargs.get('MAKE_FLATS')
+
+    # init iraf stuff
+    iraf.noao(_doprint=0)
+    iraf.imred(_doprint=0)
+    iraf.ccdred(_doprint=0)
+    iraf.twodspec(_doprint=0)
+    iraf.longslit(_doprint=0)
+    iraf.onedspec(_doprint=0)
+    iraf.specred(_doprint=0)
+
+    iraf.ccdred.verbose = 'no'
+    iraf.specred.verbose = 'no'
+    iraf.ccdproc.darkcor = 'no'
+    iraf.ccdproc.fixpix = 'no'
+    iraf.ccdproc.flatcor = 'no'
+    iraf.ccdproc.zerocor = 'no'
+    iraf.ccdproc.ccdtype = ''
+
+    iraf.longslit.mode = 'h'
+    iraf.specred.mode = 'h'
+    iraf.noao.mode = 'h'
+    iraf.ccdred.instrument = "ccddb$kpno/camera.dat"
+
+    # set up config
+    if CONFIG_FILE:
+        with open(CONFIG_FILE,'r') as fin:
+            configDict = json.load(fin)
+    else:
+        configDict = {
+        'SCI': {'BLUE': {}, 
+                'RED': {}
+                },
+        'STD': {'BLUE': {}, 
+                'RED': {}
+                },
+        'CAL': {'BLUE': {}, 
+                'RED': {}
+                },
+        'CAL_ARC': {'BLUE': {}, 
+                    'RED': {}
+                },
+        'CAL_FLAT': {'BLUE': {}, 
+                     'RED': {}
+                }
+        }
+
+    if not FAST:
+        # do visual inspection of frames via ds9 windows
+        usrResp = ''
+        while usrResp != 'C':
+            promptStr = '\nYou\'ve opted to display images before kicking off the reduction.\n'
+            promptStr += 'At this point you may:\n'
+            promptStr += '  (D)isplay the current state of the reduction config\n'
+            promptStr += '  (C)ontinue with these files as is\n'
+            promptStr += '  (R)emove a file from the current config\n'
+            promptStr += '  (A)dd a file to the current config\n'
+            promptStr += '  (Q)uit the whole thing. \n'
+            promptStr += 'I recommend you (D)isplay and remove unwanted frames from your config file,\n'
+            promptStr += '(Q)uit, and then rerun with the updated config file.\nCommand: '
+            usrRespOrig = raw_input(promptStr)
+
+
+            try:
+                usrResp = usrRespOrig.strip().upper()
+            except Exception as e:
+                usrResp = 'nothing'
+
+            # (D)isplay all the images in the lists
+            if usrResp == 'D':
+
+                blueArcList = configDict['CAL_ARC']['BLUE']['CALIBRATION_ARC']
+                redArcList = configDict['CAL_ARC']['RED']['CALIBRATION_ARC']
+
+                blueFlatList = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
+                redFlatList = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
+
+                blueStdList = []
+                redStdList = []
+
+                blueSciList = []
+                redSciList = []
+
+                for targ,imgList in configDict['STD']['BLUE'].items():
+                    for file in imgList:
+                        blueStdList.append(file)
+                for targ,imgList in configDict['STD']['RED'].items():
+                    for file in imgList:
+                        redStdList.append(file)
+                for targ,imgList in configDict['SCI']['BLUE'].items():
+                    for file in imgList:
+                        blueSciList.append(file)
+                for targ,imgList in configDict['SCI']['RED'].items():
+                    for file in imgList:
+                        redSciList.append(file)
+
+                blueArcDS9 = show_ds9_list(blueArcList,instanceName='BlueArcs')
+                redArcDS9 = show_ds9_list(redArcList,instanceName='RedArcs')
+
+                blueFlatDS9 = show_ds9_list(blueFlatList,instanceName='BlueFlats')
+                redFlatDS9 = show_ds9_list(redFlatList,instanceName='RedFlats')
+
+                blueStdDS9 = show_ds9_list(blueStdList,instanceName='BlueStandards')
+                redStdDS9 = show_ds9_list(redStdList,instanceName='RedStandards')
+
+                blueSciDS9 = show_ds9_list(blueSciList,instanceName='BlueScience')
+                redSciDS9 = show_ds9_list(redSciList,instanceName='RedScience')
+
+            if usrResp == 'R':
+                configDict = user_adjust_config(configDict,operation='REMOVE')
+            if usrResp == 'A':
+                configDict = user_adjust_config(configDict,operation='ADD')
+            if usrResp == 'Q':
+                print('Okay, quitting pre_reduction...')
+                sys.exit(1)
+
+
+    # pre_reduced does not exist, needs to be made
+    if not os.path.isdir('pre_reduced/'):
+        os.mkdir('pre_reduced/')
+
+    # pre_reduced exists, but we want to clobber/do a clean reduction
+    elif FULL_CLEAN:
+        
+        promptStr = 'Do you really want to wipe pre_reduced? [y/n]: '
+        usrRespOrig = raw_input(promptStr)
+        if usrRespOrig and usrRespOrig[0].strip().upper() == 'Y':
+
+            # remove all pre_reduced files
+            shutil.rmtree('pre_reduced')
+            os.mkdir('pre_reduced/')
+      
+    # pre_reduced exists, need to document what is there
+    else:
+        
+        # get existing pre_reduced files
+        preRedFiles = glob.glob('pre_reduced/*.fits')
+
+    # loop over raw files in configDict, if the destination exists, do nothing
+    # otherwise, do the bias/reorient/trim/output/etc
+    for imgType,typeDict in configDict.items():
+        for chan,objDict in typeDict.items():
+            for obj,fileList in objDict.items():
+                for rawFile in fileList:
+                    try:
+                        res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
+                        if res != 0:
+                            raise ValueError('Something bad happened in basic_2d_proc on {}'.format(rawFile))
+                    except (Exception,ValueError) as e:
+                        print('Exception: {}'.format(e))
+
+    # move the std and sci files into their appropriate directories
+    try:
+        res = reorg_files(configDict,CLOBBER=CLOBBER)
+        if res != 0:
+            raise ValueError('Something bad happened in reorg_files')
+    except (Exception,ValueError) as e:
+        print('Exception: {}'.format(e))
+
+
+    ### some blocks of code from the original pre_reduction ###
+    # combine the arcs
+    if MAKE_ARCS:
+        list_arc_b = configDict['CAL_ARC']['BLUE']['CALIBRATION_ARC']
+        list_arc_r = configDict['CAL_ARC']['RED']['CALIBRATION_ARC']
+        
+        # blue arcs
+        if len(list_arc_b) > 0:
+            if len(list_arc_b) == 1:
+                arc_blue = list_arc_b[0]
+                originFile = 'pre_reduced/to{}'.format(arc_blue)
+                destFile = 'pre_reduced/ARC_blue.fits'
+                shutil.copy(originFile,destFile)
+            else:
+                arc_str = ''
+                for arc in list_arc_b:
+                    arc_str += 'pre_reduced/to{},'.format(arc)
+                if os.path.isfile('pre_reduced/ARC_blue.fits'):
+                    os.remove('pre_reduced/ARC_blue.fits')
+                iraf.imcombine(arc_str, output='pre_reduced/ARC_blue.fits')
+
+        # red arcs
+        if len(list_arc_r) > 0:
+            if len(list_arc_r) == 1:
+                arc_red = list_arc_r[0]
+                originFile = 'pre_reduced/to{}'.format(arc_red)
+                destFile = 'pre_reduced/ARC_red.fits'
+                shutil.copy(originFile,destFile)
+            else:
+                arc_str = ''
+                for arc in list_arc_r:
+                    arc_str += 'pre_reduced/to{},'.format(arc)
+                if os.path.isfile('pre_reduced/ARC_red.fits'):
+                    os.remove('pre_reduced/ARC_red.fits')
+                iraf.imcombine(arc_str, output='pre_reduced/ARC_red.fits')
+
+
+    # combine the flats
+    if MAKE_FLATS:
+
+        list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
+        list_flat_r = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
+        inter = 'yes'
+        
+        # blue flats
+        if len(list_flat_b) > 0:
+            br, inst = instruments.blue_or_red(list_flat_b[0])
+            dispaxis = inst.get('dispaxis')
+            iraf.specred.dispaxi = dispaxis
+            Flat_blue = 'pre_reduced/toFlat_blue.fits'
+
+            flat_list = []
+            for flat in list_flat_b:
+                flat_list.append('pre_reduced/to'+ flat)
+            if os.path.isfile(Flat_blue):
+                os.remove(Flat_blue)
+
+            # first, combine all the flat files into a master flat
+            res = combine_flats(flat_list,OUTFILE=Flat_blue,MEDIAN_COMBINE=True)
+            
+            # run iraf response
+            iraf.specred.response(Flat_blue, 
+                                   normaliz=Flat_blue, 
+                                   response='pre_reduced/RESP_blue', 
+                                   interac=inter, thresho='INDEF',
+                                   sample='*', naverage=2, function='legendre', 
+                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   grow=0, graphic='stdgraph')
+
+            # finally, inspect the flat and mask bad regions
+            res = inspect_flat(['pre_reduced/RESP_blue.fits'],DISPAXIS=dispaxis)
+
+        # red flats
+        if len(list_flat_r) > 0:
+            br, inst = instruments.blue_or_red(list_flat_r[0])
+            dispaxis = inst.get('dispaxis')
+            iraf.specred.dispaxi = dispaxis
+            Flat_red = 'pre_reduced/toFlat_red.fits'
+
+
+            flat_list = []
+            for flat in list_flat_r:
+                flat_list.append('pre_reduced/to'+ flat)
+            if os.path.isfile(Flat_red):
+                os.remove(Flat_red)
+
+            # first, combine all the flat files into a master flat
+            res = combine_flats(flat_list,OUTFILE=Flat_red,MEDIAN_COMBINE=True)
+
+            #What is the output here? Check for overwrite
+            iraf.specred.response(Flat_red, 
+                                  normaliz=Flat_red, 
+                                  response='pre_reduced/RESP_red', 
+                                  interac=inter, thresho='INDEF',
+                                  sample='*', naverage=2, function='legendre', 
+                                  low_rej=3,high_rej=3, order=80, niterat=20, 
+                                  grow=0, graphic='stdgraph')
+
+            # finally, inspect the flat and mask bad regions
+            res = inspect_flat(['pre_reduced/RESP_red.fits'],DISPAXIS=dispaxis)
 
 
     return 0
@@ -182,6 +694,9 @@ def pre_reduction_orig():
             pass 
             # 'to'+img exists, so do nothing, 
 
+
+
+
     # combine the arcs
     if mkarc != 'n':
         
@@ -210,6 +725,9 @@ def pre_reduction_orig():
                 if os.path.isfile('pre_reduced/ARC_red.fits'):
                     os.remove('pre_reduced/ARC_red.fits')
                 iraf.imcombine(arc_str, output='pre_reduced/ARC_red.fits')
+
+
+
 
     # combine the flats
     if mkflat != 'n':
@@ -273,6 +791,14 @@ def pre_reduction_orig():
             res = inspect_flat(['pre_reduced/RESP_red.fits'],DISPAXIS=dispaxis)
     
 
+
+
+
+
+
+
+
+
     # science files should have 't' in front now
     # this just gets the base name, to prefix assumed below
     if new_files is not None:
@@ -326,25 +852,43 @@ def parse_cmd_args():
 
     # optional
     parser.add_argument('-v','--verbose',
-                        help='print diagnostic info',action='store_true')
+                        help='Print diagnostic info',action='store_true')
+    parser.add_argument('-k','--clobber',
+                        help='Clobber existing files/dirs',action='store_true')
+    parser.add_argument('-f','--fast',
+                        help='Use config as is, don\'t prompt user for anything',action='store_true')
 
-    parser.add_argument('-o','--original',
-                        help='print diagnostic info',action='store_true')
-    parser.add_argument('-c','--config-file',
-                        help='config file to use for pre-reduction')
+    parser.add_argument('--full-clean',
+                        help='Completely wipe pre_reduction (USE WITH CAUTION)', action='store_true')
+    parser.add_argument('--make-arcs',
+                        help='Combine arcs into master arc images', action='store_true')
+    parser.add_argument('--make-flats',
+                        help='Combine flats into master flat images', action='store_true')
+
+
+
+    conflictGroup.add_argument('-o','--original',
+                    help='Run the original pre_reduction',action='store_true')
+    conflictGroup.add_argument('-c','--config-file',
+                    help='Config file to use for pre-reduction')
+
+
 
     # parse
     cmdArgs = parser.parse_args()
 
-    #print cmdArgs to determine what defaults are
-    pdb.set_trace()
-
-    kwargs['VERBOSE'] = cmdArgs.verbose
-    kwargs['ORIGINAL'] = cmdArgs.original
-    kwargs['CONFIG_FILE'] = cmdArgs.config_file
 
     args = ()
     kwargs = {}
+
+    kwargs['VERBOSE'] = cmdArgs.verbose
+    kwargs['CLOBBER'] = cmdArgs.clobber
+    kwargs['FULL_CLEAN'] = cmdArgs.full_clean
+    kwargs['FAST'] = cmdArgs.fast
+    kwargs['ORIGINAL'] = cmdArgs.original
+    kwargs['CONFIG_FILE'] = cmdArgs.config_file
+    kwargs['MAKE_ARCS'] = cmdArgs.make_arcs
+    kwargs['MAKE_FLATS'] = cmdArgs.make_flats
 
     return (args,kwargs)
 
@@ -374,10 +918,7 @@ def main(*args,**kwargs):
         res = pre_reduction_orig()
 
     else:
-        if kwargs.get('CONFIG_FILE'):
-            res = pre_reduction_dev(config=config)
-        else:
-            res = pre_reduction_dev(config=False)
+        res = pre_reduction_dev(**kwargs)
 
     return 0
 

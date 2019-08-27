@@ -635,7 +635,7 @@ def parse_cmd_args():
     parser.add_argument('--mask_middle_blue',action='store_true',
                         help='Mask the middle section of rows on the blue detector')
     parser.add_argument('--mask_middle_red',action='store_true',
-                        help='Mask the middle section of rows on the red detector')
+                        help='Mask the middle section of rows on the red detector (recommended)')
 
     # parse
     cmdArgs = parser.parse_args()
@@ -658,44 +658,44 @@ def parse_cmd_args():
 
 def main(*args,**kwargs):
     '''
-    #---------------------------------------------------------------------------
-    # 
-    # keck_basic_2d - Run basic 2D CCD reduction on Keck LRIS data
-    #
-    # Inputs:
-    #
-    # Assumes:
-    #  You are in the rawdata directory
-    #
-    #
-    # Returns:
-    #   Zero, but writes files to disk
-    #
-    # Description:
-    #   1. Looks in rawdata
-    #   2. Compares rawdata files to those in pre_reduced
-    #   3. Runs the basic 2D CCD reduction on any files that
-    #      haven't been processed and writes them to pre_reduced folder
-    #
-    #
-    #
-    # Author:
-    #   J. Brown, UCSC Astronomy Dept
-    #   brojonat@ucsc.edu
-    #   2018 Oct 2
-    #
+    Run basic 2D CCD reduction on Keck LRIS data
+
+    Parameters
+    ----------
+    CLOBBER : bool, optional (default=False)
+        Overwrite the individual files in pre_reduced, but
+        do not wipe subdirectories
+    FULL_CLEAN : bool, optional (default=False)
+        Completely wipe pre_reduced and all subdirectories
+    BPM : bool, optional (default=False)
+        Mask bad pixels (not currently implemented)
+    PIXEL_FLOOR : bool, optional (default=False)
+        Removes negative pixel values
+    REORIENT : bool, optional (default=True)
+        Transposes to wavelength increasing rightward. LRIS images
+        are by default (spatial, spectral), and in general should
+        be transposed to (spectral, spatial).
+    TRIM : bool, optional (default=True)
+        Trim to some hard coded section of the detector
+    MASK_MIDDLE_BLUE : bool (default=False)
+        Mask the middle section of the blue images
+    MASK_MIDDLE_RED : bool (default=False)
+        Mask the middle section of the red images (useful if
+        there's wildly disparate values that make the iraf
+        windowing tedious)
+        
+    Returns
+    -------
+    int : 0, and writes files to disk
     '''
 
-    # no meaningful args (this is None)
-    #arg = args[0]
-
     # unpack supported kwargs
-    CLOBBER = kwargs.get('CLOBBER',False) # this will overwrite the individual files in pre_reduced but won't wipe the directory
+    CLOBBER = kwargs.get('CLOBBER',False) # 
     FULL_CLEAN = kwargs.get('FULL_CLEAN',False) # this will completely wipe pre_reduced.
     BPM = kwargs.get('BPM',False) # no bad pixel mask available (at least for our binning)
-    PIXEL_FLOOR = kwargs.get('PIXEL_FLOOR',False) # removes negative values
-    REORIENT = kwargs.get('REORIENT',True) # transposes to wavelength increasing rightward
-    TRIM = kwargs.get('TRIM',False) # trims to some hard coded section of the detector
+    PIXEL_FLOOR = kwargs.get('PIXEL_FLOOR',False) 
+    REORIENT = kwargs.get('REORIENT',True) 
+    TRIM = kwargs.get('TRIM',False) 
     MASK_MIDDLE_BLUE = kwargs.get('MASK_MIDDLE_BLUE',False)
     MASK_MIDDLE_RED = kwargs.get('MASK_MIDDLE_RED',False)
 
@@ -704,7 +704,7 @@ def main(*args,**kwargs):
         os.mkdir('pre_reduced/')
         
     # pre_reduced exists, but we want to clobber/do a clean reduction
-    elif os.path.isdir('pre_reduced') and CLOBBER and FULL_CLEAN:
+    elif FULL_CLEAN:
         
         promptStr = 'Do you really want to wipe pre_reduced? [y/n]: '
         usrRespOrig = raw_input(promptStr)
@@ -782,10 +782,14 @@ def main(*args,**kwargs):
                         # this with TRIM=False.
                         #pass # if red is full frame, we probabaly don't want to bin?
 
-            if MASK_MIDDLE_RED:
+            if MASK_MIDDLE_RED and rawFile[0] == 'r':
                 # these rows should be chosen programatically
                 # this is much more aggressive than necessary
                 outImg[190:240,:] = np.median(outImg)
+            if MASK_MIDDLE_BLUE and rawFile[0] == 'b':
+                # these rows should be chosen programatically
+                # this is much more aggressive than necessary
+                outImg[380:480,:] = np.median(outImg)
                         
             # adjust the header (these keywords aren't present by default)
             head['EXPTIME'] = head['ELAPTIME']
