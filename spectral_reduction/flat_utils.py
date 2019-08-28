@@ -636,6 +636,11 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
 
     # unpack
     outFile = kwargs.get('OUTFILE')
+    clobber = kwargs.get('CLOBBER')
+
+    if outFile:
+        outFile = 'pre_reduced/{}'.format(outFile)
+
 
     # read data
     flat_comb_image = np.array([])
@@ -711,17 +716,16 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
     flat_comb_image *= expTime
 
     if outFile:
-        # clear space, move to pre_reduced
-        if os.path.isfile('pre_reduced/' + outFile):
+        
+        # clear space
+        if os.path.isfile(outFile) and clobber:
             os.remove(outFile)
-        os.system('mv ' + outFile + ' pre_reduced/')
 
         # write correct flat data
         hdu = fits.PrimaryHDU(flat_comb_image,header)
         hdu.writeto(outFile,output_verify='ignore')  
-        return 0
-    else:
-        return (flat_comb_image,header)
+
+    return (flat_comb_image,header)
 
 
 
@@ -743,6 +747,8 @@ def parse_cmd_args():
                         help='Print diagnostic info',action='store_true')
     parser.add_argument('-c','--clobber',action='store_true',
                         help='Clobber files already in pre_reduced/ but not subdirs')
+    parser.add_argument('-f','--read_from_file',action='store_true',
+                        help='flat_list is a file containing a list of flat files to read')
     parser.add_argument('-r','--remove_color',
                         help='Remove color term from flat',action='store_true')
 
@@ -759,15 +765,17 @@ def parse_cmd_args():
     FLAT_LIST = cmdArgs.flat_list
     VERBOSE = cmdArgs.verbose
     CLOBBER = cmdArgs.clobber
+    READ_FROM_FILE = cmdArgs.read_from_file
     REMOVE_COLOR = cmdArgs.remove_color
     OUTFILE = cmdArgs.outfile
     DISPAXIS = cmdArgs.dispaxis
 
     # package up
-    args = (FLAT_LIST,) # no args implemented yet
+    args = (FLAT_LIST,)
     kwargs = {}
     kwargs['VERBOSE'] = VERBOSE
     kwargs['CLOBBER'] = CLOBBER
+    kwargs['READ_FROM_FILE'] = READ_FROM_FILE
     kwargs['REMOVE_COLOR'] = REMOVE_COLOR
     kwargs['OUTFILE'] = OUTFILE
     kwargs['DISPAXIS'] = DISPAXIS
@@ -804,6 +812,18 @@ def inspect_flat(flat_list,*args,**kwargs):
     outFile = kwargs.get('OUTFILE',None)
     dispaxis = kwargs.get('DISPAXIS',1)
     remove_color = kwargs.get('REMOVE_COLOR',False)
+    read_from_file = kwargs.get('READ_FROM_FILE',False)
+
+    # if user specified a file containing a list, read into flat_list
+    if read_from_file:
+        flat_list_tmp = []
+        with open(flat_list,'r') as fin:
+            for line in fin:
+                if len(line.split()) > 0 and line.split()[0] != '#':
+                    flat_list_tmp.append(line.split()[0].strip())
+
+        # assign to flat_list, then proceed as usual
+        flat_list = flat_list_tmp
 
     # if user passed multiple files, combine them, otherwise, just read in the single file
     if len(flat_list) > 1:

@@ -122,6 +122,7 @@ def main():
         for file in filenames:
             if file.startswith('to'):
                 pfiles.append(file)
+
     #print(pfiles)
 
     # loop over each image in pre_reduced
@@ -277,6 +278,7 @@ def main():
 
     # science files should have 't' in front now
     # this just gets the base name, to prefix assumed below
+    print (new_files)
     if new_files is not None:
         files_science = new_files
 
@@ -291,6 +293,7 @@ def main():
     science_targets = set(science_targets)
     for targ in science_targets:
         if not os.path.isdir('pre_reduced/' + targ + '/'):
+            targ = targ.strip()
             os.mkdir('pre_reduced/'+ targ + '/')
 
     # copy the files into the obj dir
