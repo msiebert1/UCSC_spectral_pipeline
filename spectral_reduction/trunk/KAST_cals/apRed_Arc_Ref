@@ -1,17 +1,17 @@
-# Thu 11:14:37 22-Aug-2019
-begin	aperture Red_Arc_Ref 1 58.98613 1297.
+# Tue 14:28:53 27-Aug-2019
+begin	aperture Red_Arc_Ref 1 51.71255 1297.
 	image	Red_Arc_Ref
 	aperture	1
 	beam	1
-	center	58.98613 1297.
-	low	-0.1493187 -1296.
-	high	0.07181549 1297.
+	center	51.71255 1297.
+	low	-3.484913 -1296.
+	high	2.908314 1297.
 	background
-		xmin -11.42048
-		xmax 9.946678
+		xmin -10.
+		xmax 10.
 		function chebyshev
 		order 1
-		sample -11.42048:-9.106837 7.360844:9.946678
+		sample -10:-6,6:10
 		naverage -3
 		niterate 0
 		low_reject 3.
@@ -23,8 +23,8 @@ begin	aperture Red_Arc_Ref 1 58.98613 1297.
 		4.
 		7.
 		2587.
-		0.7513506
-		3.249734
-		1.556928
-		-0.1571897
+		0.6272472
+		4.798846
+		1.287664
+		-0.07435266
 
