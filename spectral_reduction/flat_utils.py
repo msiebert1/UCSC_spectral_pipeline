@@ -992,7 +992,7 @@ def inspect_flat(flat_list,*args,**kwargs):
                     flatFitObj.flatCorrData = flatFitObj.flatCorrData.T
                 if outFile is None:
                     promptStr = 'Enter name of save file '
-                    promptStr += '(e.g. pre_reduced/RESP_blue.fits): '
+                    promptStr += '(e.g. RESP_blue.fits): '
                     outFile = raw_input(promptStr).strip()
                     promptStr = 'Write to file {} [y/n]: '.format(outFile)
                     usrResp = raw_input(promptStr).upper().strip()
