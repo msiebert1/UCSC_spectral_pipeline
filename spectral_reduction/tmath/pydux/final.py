@@ -291,7 +291,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             msky=scipyrebinsky(mskywave,mskydata,wave)
             xfactor=10
             maxlag=200
-            shift=xcor(msky[100:-100],sky[100:-100],xfactor,maxlag) #temporary fix, works with kast data
+            shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag) #temporary fix, works with kast data
             # shift=xcor(msky,sky,xfactor,maxlag)
             angshift=shift*wdelt
             print('wdeltf',wdelt)
