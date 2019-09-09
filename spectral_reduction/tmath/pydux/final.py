@@ -427,6 +427,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             plt.xlabel('Wavelength')
             plt.ylabel('Flux')
             plt.title(objectname)
+            plt.savefig(objectname + '-' + gratcode + '.png')
 
             outputdone = False
             while (not outputdone):
@@ -548,6 +549,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 else:
                     print ("Please include 'blue' or 'red' in filename of spectrum to combine")
 
+                plt.clf()
+                plt.plot(nwave,finalobj,drawstyle='steps-mid')
+                plt.xlabel('Wavelength')
+                plt.ylabel('Flux')
+                plt.title(objectname)
+                plt.savefig(objectname + '_combined.png')
+                
                 outputdone = False
                 while (not outputdone):
                     print('\nThe file is: {}'.format(inputfile))
