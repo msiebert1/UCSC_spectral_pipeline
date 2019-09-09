@@ -638,10 +638,6 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
     outFile = kwargs.get('OUTFILE')
     clobber = kwargs.get('CLOBBER')
 
-    if outFile:
-        outFile = 'pre_reduced/{}'.format(outFile)
-
-
     # read data
     flat_comb_image = np.array([])
     median_image_stack = np.array([])
