@@ -632,9 +632,9 @@ def parse_cmd_args():
                         help='Do not reorient to wavelength increasing rightward')
     parser.add_argument('--no_trim',action='store_true',
                         help='Do not trim 2D image to hardcoded section')
-    parser.add_argument('--mask_middle_blue',action='store_true',
+    parser.add_argument('--mask-middle-blue',action='store_true',
                         help='Mask the middle section of rows on the blue detector')
-    parser.add_argument('--mask_middle_red',action='store_true',
+    parser.add_argument('--mask-middle-red',action='store_true',
                         help='Mask the middle section of rows on the red detector')
 
     # parse
