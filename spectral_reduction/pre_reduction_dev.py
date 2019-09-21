@@ -263,6 +263,7 @@ def pre_reduction_dev(*args,**kwargs):
     # parse kwargs
     VERBOSE = kwargs.get('VERBOSE')
     CLOBBER = kwargs.get('CLOBBER')
+    FAKE_BASIC_2D = kwargs.get('FAKE_BASIC_2D')
     FULL_CLEAN = kwargs.get('FULL_CLEAN')
     FAST = kwargs.get('FAST')
     CONFIG_FILE = kwargs.get('CONFIG_FILE')
@@ -428,7 +429,13 @@ def pre_reduction_dev(*args,**kwargs):
                     #         raise ValueError('Something bad happened in basic_2d_proc on {}'.format(rawFile))
                     # except (Exception,ValueError) as e:
                     #     print('Exception (basic_2d): {}'.format(e))
-                    res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
+
+                    if not FAKE_BASIC_2D:
+                        res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
+                    else:
+                        # here we're faking the basic 2D reduction because we've done
+                        # specialized 2D reduction (e.g., keck_basic_2d)
+                        res = 0
                     if res != 0:
                         raise ValueError('Something bad happened in basic_2d_proc on {}'.format(rawFile))
                     
@@ -862,7 +869,8 @@ def parse_cmd_args():
     # init parser
     descStr = 'Pre-reduction for the UCSC Spectroscopic Pipeline'
     parser = argparse.ArgumentParser(description=descStr)
-    conflictGroup = parser.add_mutually_exclusive_group()
+    configCG = parser.add_mutually_exclusive_group()
+    basicProcCG = parser.add_mutually_exclusive_group()
 
     # optional
     parser.add_argument('-v','--verbose',
@@ -872,18 +880,20 @@ def parse_cmd_args():
     parser.add_argument('-f','--fast',
                         help='Use config as is, don\'t prompt user for anything',action='store_true')
 
-    parser.add_argument('--full-clean',
-                        help='Completely wipe pre_reduction (USE WITH CAUTION)', action='store_true')
+
     parser.add_argument('--make-arcs',
                         help='Combine arcs into master arc images', action='store_true')
     parser.add_argument('--make-flats',
                         help='Combine flats into master flat images', action='store_true')
 
+    basicProcCG.add_argument('--fake-basic-2d',
+                        help='Fake the basic 2D reductions', action='store_true')
+    basicProcCG.add_argument('--full-clean',
+                        help='Completely wipe pre_reduction (USE WITH CAUTION)', action='store_true')
 
-
-    conflictGroup.add_argument('-o','--original',
+    configCG.add_argument('-o','--original',
                     help='Run the original pre_reduction',action='store_true')
-    conflictGroup.add_argument('-c','--config-file',
+    configCG.add_argument('-c','--config-file',
                     help='Config file to use for pre-reduction')
 
 
@@ -898,6 +908,7 @@ def parse_cmd_args():
     kwargs['VERBOSE'] = cmdArgs.verbose
     kwargs['CLOBBER'] = cmdArgs.clobber
     kwargs['FULL_CLEAN'] = cmdArgs.full_clean
+    kwargs['FAKE_BASIC_2D'] = cmdArgs.fake_basic_2d
     kwargs['FAST'] = cmdArgs.fast
     kwargs['ORIGINAL'] = cmdArgs.original
     kwargs['CONFIG_FILE'] = cmdArgs.config_file
