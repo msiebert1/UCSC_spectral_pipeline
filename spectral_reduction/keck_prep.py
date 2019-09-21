@@ -276,29 +276,29 @@ def parse_cmd_args():
                         help='print diagnostic info',action='store_true')
     parser.add_argument('-c','--clobber',action='store_true',
                         help='Clobber files already in pre_reduced/ but not subdirs')
-    parser.add_argument('-f','--full_clean',action='store_true',
+    parser.add_argument('-f','--full-clean',action='store_true',
                         help='Do a complete wipe of pre_reduced, including subdirs')
     parser.add_argument('-i', '--inspect', action='store_true',
                         help='Inspect the frames in the file lists (launches DS9 instances)')
 
-    parser.add_argument('--regenerate_all', action='store_true',
+    parser.add_argument('--regenerate-all', action='store_true',
                         help='Regenerate allList.txt file list')
-    parser.add_argument('--regenerate_arc', action='store_true',
+    parser.add_argument('--regenerate-arc', action='store_true',
                         help='Regenerate (blue & red)ArcList.txt file lists')
-    parser.add_argument('--regenerate_flat', action='store_true',
+    parser.add_argument('--regenerate-flat', action='store_true',
                         help='Regenerate (blue & red)FlatList.txt file lists')
-    parser.add_argument('--regenerate_std', action='store_true',
+    parser.add_argument('--regenerate-std', action='store_true',
                         help='Regenerate (blue & red)StdList.txt file lists')
-    parser.add_argument('--regenerate_sci', action='store_true',
+    parser.add_argument('--regenerate-sci', action='store_true',
                         help='Regenerate (blue & red)SciList.txt file lists')
 
 
     # mutually exclusives boolean flags
-    add_boolean_arg(parser,'reorganize_std', default=True,
+    add_boolean_arg(parser,'reorganize-std', default=True,
                     help_string='Move standard star files into their directories')
-    add_boolean_arg(parser,'reorganize_sci', default=True,
+    add_boolean_arg(parser,'reorganize-sci', default=True,
                     help_string='Move science files into their directories')
-    add_boolean_arg(parser,'stack_cals', default=True,
+    add_boolean_arg(parser,'stack-cals', default=True,
                     help_string='Stack calibration frames (arcs and flats)')
 
     # parse
