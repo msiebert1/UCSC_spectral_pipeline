@@ -15,6 +15,10 @@ from scipy import optimize
 from scipy import signal, ndimage
 
 from pyraf import iraf
+import pyds9 as pyds9
+
+from flat_utils import combine_flats,inspect_flat
+
 iraf.noao(_doprint=0)
 iraf.imred(_doprint=0)
 iraf.ccdred(_doprint=0)
@@ -22,8 +26,7 @@ iraf.twodspec(_doprint=0)
 iraf.longslit(_doprint=0)
 iraf.onedspec(_doprint=0)
 iraf.specred(_doprint=0)
-import pyds9 as pyds9
-#from pyds9 import *
+
 
 
 class StandardStar():
@@ -118,6 +121,7 @@ def get_image_channel(header):
 
 
 def determine_image_type(header,STANDARD_STAR_LIBRARY):
+    ''' Determine image type from LRIS specific header key/values '''
 
     # init
     nullHeaderEntry = 'UNKNOWN'
@@ -178,6 +182,7 @@ def determine_image_type(header,STANDARD_STAR_LIBRARY):
 
 
 def stack_cal_frames(file_list,outfile='stacked.fits',CLOBBER=False,DISPAXIS=1):
+    ''' Stack calibration frames '''
     stackCalFrame = np.array([])
     commentStr = 'keck_prep: stacked files '
     header = {}
@@ -211,6 +216,7 @@ def stack_cal_frames(file_list,outfile='stacked.fits',CLOBBER=False,DISPAXIS=1):
     return 0
 
 def reorg_file_list(file_list,obj_list,CLOBBER=False,FULL_CLEAN=False):
+    ''' Move files into their appropriate subdirectories '''
     for i,obj in enumerate(obj_list):
     
         if not os.path.isdir(obj):
@@ -249,6 +255,7 @@ def reorg_file_list(file_list,obj_list,CLOBBER=False,FULL_CLEAN=False):
     return 0
 
 def add_boolean_arg(parser,name,default=False,help_string=''):
+    ''' Add a boolean arg to command line options '''
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument('--' + name, dest=name, action='store_true',
                         help=help_string)
@@ -340,43 +347,48 @@ def parse_cmd_args():
 
 def main(*args,**kwargs):
     '''
-    #---------------------------------------------------------------------------
-    # 
-    # keck_prep - Run basic file prep for Keck/LRIS longslit reductions
-    #
-    # Inputs:
-    #
-    # Assumes:
-    #  1. You are in the RAWDATA/pre_reduced directory
-    #
-    #
-    # Returns:
-    #   Zero, but writes files to disk
-    #
-    # Description:
-    #   1. Looks in pre_reduced, finds all the files
-    #   2. Parses the headers, IDs the arcs, flats, science, and std star files
-    #   3. Writes the files names to 4 text files and pauses:
-    #        arc_list.txt
-    #        flat_list.txt
-    #        sci_list.txt
-    #        std_list.txt
-    #        all_list.txt
-    #   4. The user can edit the list files to exclude files from the analysis
-    #      (e.g., if several flats were saturated) and then continue
-    #   5. The flats and arcs are stacked, and the science and std star scripts
-    #      are moved to the object directory. 
-    #
-    #   NOTE: the object name recognition will be improved and refactored to
-    #         match the implementation for used in specBrowser; the current
-    #         implementation is pretty hacky.
-    #
-    # Author:
-    #   J. Brown, UCSC Astronomy Dept
-    #   brojonat@ucsc.edu
-    #   2018 Oct 10
-    #
+    Run basic 2D CCD reduction on Keck LRIS data
+
+    Parameters
+    ----------
+    CLOBBER : bool, optional (default=False)
+        Overwrite the individual files in pre_reduced, but
+        do not wipe subdirectories
+    FULL_CLEAN : bool, optional (default=False)
+        Completely wipe pre_reduced and all subdirectories
+    REGENERATE_ARC_LIST : bool, optional (default=False)
+        Regenerate the list of arc files used for wavelength calibration
+    REGENERATE_FLAT_LIST : bool, optional (default=False)
+        Regenerate the list of flat field files used for flat fielding
+    REGENERATE_SCI_LIST : bool, optional (default=False)
+        Regenerate the list of science files to be processed
+    REGENERATE_STD_LIST : bool, optional (default=False)
+        Regenerate the list of standard star files to be processed
+    REGENERATE_ALL_LIST : bool, optional (default=False)
+        Regenerate the master list of all files in the working directory
+    INSPECT_FRAMES : bool, optional (default=False)
+        Automatically display (via DS9) the images in the file lists
+    STACK_CAL_FRAMES : bool, optional (default=False)
+        Stack the calibration frames
+    REORG_STANDARDS : bool, optional (default=False)
+        Move the standard star files into their respective directories
+    REORG_SCIENCE : bool, optional (default=False)
+        Move the science files into their respective directories
+    TRIM : bool, optional (default=True)
+        Trim to some hard coded section of the detector
+    MASK_MIDDLE_BLUE : bool (default=False)
+        Mask the middle section of the blue images
+    MASK_MIDDLE_RED : bool (default=False)
+        Mask the middle section of the red images (useful if
+        there's wildly disparate values that make the iraf
+        windowing tedious)
+    
+    Returns
+    -------
+    int : 0, and writes files to disk
     '''
+
+
     
     CLOBBER = kwargs.get('CLOBBER',False)
     FULL_CLEAN = kwargs.get('FULL_CLEAN',False)
@@ -389,12 +401,16 @@ def main(*args,**kwargs):
     STACK_CAL_FRAMES = kwargs.get('STACK_CAL_FRAMES',False)
     REORG_STANDARDS = kwargs.get('REORG_STANDARDS',False)
     REORG_SCIENCE = kwargs.get('REORG_SCIENCE',False)
-    SKYSUB_STANDARD = kwargs.get('SKYSUB_STANDARD',False)
-    SKYSUB_SCIENCE = kwargs.get('SKYSUB_SCIENCE',False)
 
         
     # This is a dictionary of standard star objects
     STANDARD_STAR_LIBRARY = construct_standard_star_library()
+
+    manifest_file_list = ['blueArcList.txt','redArcList.txt',
+                          'blueFlatList.txt','redFlatList.txt',
+                          'blueStdList.txt','redStdList.txt',
+                          'blueSciList.txt','redSciList.txt',
+                          'allList.txt']
     
     cwd = os.getcwd()
     if cwd.split('/')[-1] != 'pre_reduced':
@@ -419,11 +435,6 @@ def main(*args,**kwargs):
                         outStr = 'Removed {}'.format(directory)
                         print(outStr)
                     for filename in filenames:
-                        manifest_file_list = ['blueArcList.txt','redArcList.txt',
-                                              'blueFlatList.txt','redFlatList.txt',
-                                              'blueStdList.txt','redStdList.txt',
-                                              'blueSciList.txt','redSciList.txt',
-                                              'allList.txt']
                         if filename in manifest_file_list:
                             os.remove(filename)
                             outStr = 'Removed {}'.format(filename)
@@ -652,11 +663,15 @@ def main(*args,**kwargs):
     # the lists are set, now construct the master cal frames
     if STACK_CAL_FRAMES:
 
+        # combine arcs into master arcs
         res = stack_cal_frames('blueArcList.txt',outfile='ARC_blue.fits',CLOBBER=CLOBBER)
         res = stack_cal_frames('redArcList.txt',outfile='ARC_red.fits',CLOBBER=CLOBBER)
-        res = stack_cal_frames('blueFlatList.txt',outfile='FLAT_blue.fits',CLOBBER=CLOBBER)
-        res = stack_cal_frames('redFlatList.txt',outfile='FLAT_red.fits',CLOBBER=CLOBBER)
 
+        # combine flats into master flats
+        res = combine_flats('blueFlatList.txt',READ_FROM_LIST=True,
+                            OUTFILE='FLAT_blue.fits',MEDIAN_COMBINE=True)
+        res = combine_flats('redFlatList.txt',READ_FROM_LIST=True,
+                            OUTFILE='FLAT_red.fits',MEDIAN_COMBINE=True)
 
         # now do the response curve if the file exists
         if os.path.isfile('FLAT_blue.fits'):
@@ -667,6 +682,8 @@ def main(*args,**kwargs):
                                    sample='*', naverage=2, function='legendre', 
                                    low_rej=3,high_rej=3, order=60, niterat=20, 
                                    grow=0, graphic='stdgraph')
+            # finally, inspect the flat and mask bad regions
+            res = inspect_flat(['RESP_blue.fits'])
 
         # now do the response curve if the file exists
         if os.path.isfile('FLAT_red.fits'):
@@ -677,6 +694,9 @@ def main(*args,**kwargs):
                                    sample='*', naverage=2, function='legendre', 
                                    low_rej=3,high_rej=3, order=60, niterat=20, 
                                    grow=0, graphic='stdgraph')
+
+            # finally, inspect the flat and mask bad regions
+            res = inspect_flat(['RESP_red.fits'])
             
     # calibration frames are all set, now move the std/sci files to their directory
     if REORG_STANDARDS:
