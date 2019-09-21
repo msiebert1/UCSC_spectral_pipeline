@@ -242,6 +242,7 @@ def readhdr(img):
 ###############################################################
 def readhdr2(img):
     try:
+        # hdr = pyfits.open(img)[0].header
         hdr = pyfits.open(img)[1].header
     except:
         try:

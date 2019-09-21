@@ -189,3 +189,8 @@ def blue_or_red(img):
     else:
         print(util.readkey3(hdr, 'VERSION') + 'not in database')
         return None, None
+
+
+
+
+        

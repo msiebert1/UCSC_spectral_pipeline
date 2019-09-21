@@ -422,20 +422,23 @@ def pre_reduction_dev(*args,**kwargs):
         for chan,objDict in typeDict.items():
             for obj,fileList in objDict.items():
                 for rawFile in fileList:
-                    try:
-                        res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
-                        if res != 0:
-                            raise ValueError('Something bad happened in basic_2d_proc on {}'.format(rawFile))
-                    except (Exception,ValueError) as e:
-                        print('Exception: {}'.format(e))
-
+                    # try:
+                    #     res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
+                    #     if res != 0:
+                    #         raise ValueError('Something bad happened in basic_2d_proc on {}'.format(rawFile))
+                    # except (Exception,ValueError) as e:
+                    #     print('Exception (basic_2d): {}'.format(e))
+                    res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
+                    if res != 0:
+                        raise ValueError('Something bad happened in basic_2d_proc on {}'.format(rawFile))
+                    
     # move the std and sci files into their appropriate directories
     try:
         res = reorg_files(configDict,CLOBBER=CLOBBER)
         if res != 0:
             raise ValueError('Something bad happened in reorg_files')
     except (Exception,ValueError) as e:
-        print('Exception: {}'.format(e))
+        print('Exception (reorg): {}'.format(e))
 
 
     ### some blocks of code from the original pre_reduction ###

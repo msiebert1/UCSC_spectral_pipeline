@@ -64,7 +64,11 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
     
     for arcs in files_arc:
         hdr = util.readhdr(arcs)
-        br, inst = instruments.blue_or_red(arcs)
+        # br, inst = instruments.blue_or_red(arcs)
+        if 'blue' in arcs:
+            br = 'blue'
+        elif 'red' in arcs:
+            br = 'red'
         
         if br == 'blue':
             list_arc_b.append(arcs)
