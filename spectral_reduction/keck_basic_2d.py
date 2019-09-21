@@ -626,12 +626,12 @@ def parse_cmd_args():
                         help='print diagnostic info',action='store_true')
     parser.add_argument('-c','--clobber',action='store_true',
                         help='Clobber files already in pre_reduced/ but not subdirs')
-    parser.add_argument('-f','--full_clean',action='store_true',
+    parser.add_argument('-f','--full-clean',action='store_true',
                         help='Do a complete wipe of pre_reduced, including subdirs')
 
-    parser.add_argument('--no_reorient',action='store_true',
+    parser.add_argument('--no-reorient',action='store_true',
                         help='Do not reorient to wavelength increasing rightward')
-    parser.add_argument('--no_trim',action='store_true',
+    parser.add_argument('--no-trim',action='store_true',
                         help='Do not trim 2D image to hardcoded section')
     parser.add_argument('--mask-middle-blue',action='store_true',
                         help='Mask the middle section of rows on the blue detector')
