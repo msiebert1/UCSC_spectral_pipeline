@@ -174,12 +174,12 @@ def main():
             elif not img.startswith('t')and inst.get('observatory')!='lick':
                 if os.path.isfile('pre_reduced/to'+img):
                     os.remove('pre_reduced/to'+img)
-                # iraf.ccdproc('pre_reduced/'+img, output='pre_reduced/to'+img, 
-                #              overscan='yes', trim='yes', zerocor="no", flatcor="no", 
-                #              readaxi='line',trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
                 iraf.ccdproc('pre_reduced/'+img, output='pre_reduced/to'+img, 
-                             overscan='no', trim='yes', zerocor="no", flatcor="no", 
+                             overscan='yes', trim='yes', zerocor="no", flatcor="no", 
                              readaxi='line',trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
+                # iraf.ccdproc('pre_reduced/'+img, output='pre_reduced/to'+img, 
+                #              overscan='no', trim='yes', zerocor="no", flatcor="no", 
+                #              readaxi='line',trimsec=str(_trimsec0), biassec=str(_biassec0), Stdout=1)
 
         else:
             pass 
@@ -235,12 +235,19 @@ def main():
             res = combine_flats(flat_list,OUTFILE=Flat_blue,MEDIAN_COMBINE=True)
             
             # run iraf response
+            # iraf.specred.response(Flat_blue, 
+            #                        normaliz=Flat_blue, 
+            #                        response='pre_reduced/RESP_blue', 
+            #                        interac=inter, thresho='INDEF',
+            #                        sample='*', naverage=2, function='legendre', 
+            #                        low_rej=3,high_rej=3, order=60, niterat=20, 
+            #                        grow=0, graphic='stdgraph')
             iraf.specred.response(Flat_blue, 
                                    normaliz=Flat_blue, 
                                    response='pre_reduced/RESP_blue', 
                                    interac=inter, thresho='INDEF',
-                                   sample='*', naverage=2, function='legendre', 
-                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   sample='*', naverage=1, function='spline3', 
+                                   low_rej=0,high_rej=0, order=9, niterat=1, 
                                    grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
@@ -264,13 +271,20 @@ def main():
             res = combine_flats(flat_list,OUTFILE=Flat_red,MEDIAN_COMBINE=True)
 
             #What is the output here? Check for overwrite
+            # iraf.specred.response(Flat_red, 
+            #                       normaliz=Flat_red, 
+            #                       response='pre_reduced/RESP_red', 
+            #                       interac=inter, thresho='INDEF',
+            #                       sample naverage=2, function='legendre', 
+            #                       low_rej=3,high_rej=3, order=80, niterat=20, 
+            #                       grow=0, graphic='stdgraph')
             iraf.specred.response(Flat_red, 
-                                  normaliz=Flat_red, 
-                                  response='pre_reduced/RESP_red', 
-                                  interac=inter, thresho='INDEF',
-                                  sample='*', naverage=2, function='legendre', 
-                                  low_rej=3,high_rej=3, order=80, niterat=20, 
-                                  grow=0, graphic='stdgraph')
+                                   normaliz=Flat_red, 
+                                   response='pre_reduced/RESP_red', 
+                                   interac=inter, thresho='INDEF',
+                                   sample='*', naverage=1, function='spline3', 
+                                   low_rej=0,high_rej=0, order=9, niterat=1, 
+                                   grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
             res = inspect_flat(['pre_reduced/RESP_red.fits'],DISPAXIS=dispaxis)

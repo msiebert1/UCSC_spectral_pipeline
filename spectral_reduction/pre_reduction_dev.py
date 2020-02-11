@@ -11,6 +11,8 @@ import instruments
 from astropy.io import fits, ascii
 from pyraf import iraf
 import pyds9 as pyds9
+import keck_basic_2d
+import manifest_utils as mu
 
 matplotlib.use('TkAgg')
 from flat_utils import combine_flats,inspect_flat
@@ -255,9 +257,6 @@ def reorg_files(configDict,CLOBBER=False):
 
 
 
-
-
-
 def pre_reduction_dev(*args,**kwargs):
 
     # parse kwargs
@@ -297,12 +296,13 @@ def pre_reduction_dev(*args,**kwargs):
         with open(CONFIG_FILE,'r') as fin:
             configDict = json.load(fin)
     else:
+        #TODO: Make a better first pass at config file, std have exptime < 250s(?)
         configDict = {
-        'SCI': {'BLUE': {'ExampleTarget':['img1b.fits']}, 
-                'RED': {'ExampleTarget':['img1r']}
+        'SCI': {'BLUE': {}, 
+                'RED': {}
                 },
-        'STD': {'BLUE': {'ExampleStandard':['img2b.fits']}, 
-                'RED': {'ExampleStandard':['img2r.fits']}
+        'STD': {'BLUE': {}, 
+                'RED': {}
                 },
         'CAL_ARC': {'BLUE': {'CALIBRATION_ARC':[]}, 
                     'RED': {'CALIBRATION_ARC':[]}
@@ -316,10 +316,39 @@ def pre_reduction_dev(*args,**kwargs):
                 }
         }
 
+
+        STANDARD_STAR_LIBRARY = mu.construct_standard_star_library()
+        observations = sorted(glob.glob('*.fits'))
+        arm, inst_dict = instruments.blue_or_red(observations[0])
+        if 'lris' in inst_dict.get('name'):
+            inst = 'LRIS'
+        elif 'kast' in inst_dict.get('name'):
+            inst = 'KAST'
+        elif 'goodman' in inst_dict.get('name'):
+            inst = 'GOODMAN'
+
+        for obsfile in observations:
+            header = fits.open(obsfile)[0].header
+            imageType = mu.determine_image_type(header, inst, STANDARD_STAR_LIBRARY)
+
+            channel, inst_dict = instruments.blue_or_red(obsfile)
+            obj = header.get('OBJECT').strip()
+            if imageType == 'SCI' or imageType == 'STD':
+                if obj in configDict[imageType][channel.upper()].keys():
+                    configDict[imageType][channel.upper()][obj].append(obsfile)
+                else:
+                    configDict[imageType][channel.upper()][obj] = [obsfile]
+            if imageType == 'CAL_ARC' and 'foc' not in obsfile:
+                configDict[imageType][channel.upper()]['CALIBRATION_ARC'].append(obsfile)
+            if imageType == 'CAL_FLAT':
+                configDict[imageType][channel.upper()]['CALIBRATION_FLAT'].append(obsfile)
+
+
         with open('custom_config.json','w') as fout:
             fout.write(json.dumps(configDict,indent=4))
 
-        outStr = '\n\nOk, not config supplied, so I wrote a boilerplate to custom_config.json\n'
+        outStr = '\n\nOk, not config supplied, so I wrote a first pass custom_config.json\n'
+        outStr += 'Use at your own risk! Manually edit if needed and run again with -c custom_config.json\n'
         outStr += 'You can manually add files to the appropriate lists and rerun.\n'
         outStr += 'WARNING: make sure you rename your config file, or it could get overwritten!\n\n'
         print(outStr)
@@ -418,7 +447,7 @@ def pre_reduction_dev(*args,**kwargs):
         preRedFiles = glob.glob('pre_reduced/*.fits')
 
     # loop over raw files in configDict, if the destination exists, do nothing
-    # otherwise, do the bias/reorient/trim/output/etc
+    # # otherwise, do the bias/reorient/trim/output/etc
     for imgType,typeDict in configDict.items():
         for chan,objDict in typeDict.items():
             for obj,fileList in objDict.items():
@@ -431,7 +460,12 @@ def pre_reduction_dev(*args,**kwargs):
                     #     print('Exception (basic_2d): {}'.format(e))
 
                     if not FAKE_BASIC_2D:
-                        res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
+                        inst = instruments.blue_or_red(rawFile)[1]
+                        if inst['name'] == 'lris_blue' or inst['name'] == 'lris_red':
+                            # res = keck_basic_2d.main([rawFile])
+                            res = keck_basic_2d.main([rawFile], TRIM=True)
+                        else:
+                            res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
                     else:
                         # here we're faking the basic 2D reduction because we've done
                         # specialized 2D reduction (e.g., keck_basic_2d)
@@ -494,7 +528,8 @@ def pre_reduction_dev(*args,**kwargs):
         
         # blue flats
         if len(list_flat_b) > 0:
-            br, inst = instruments.blue_or_red(list_flat_b[0])
+            # br, inst = instruments.blue_or_red(list_flat_b[0])
+            br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(list_flat_b[0]))
             dispaxis = inst.get('dispaxis')
             iraf.specred.dispaxi = dispaxis
             Flat_blue = 'pre_reduced/toFlat_blue.fits'
@@ -522,7 +557,8 @@ def pre_reduction_dev(*args,**kwargs):
 
         # red flats
         if len(list_flat_r) > 0:
-            br, inst = instruments.blue_or_red(list_flat_r[0])
+            # br, inst = instruments.blue_or_red(list_flat_r[0])
+            br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(list_flat_r[0]))
             dispaxis = inst.get('dispaxis')
             iraf.specred.dispaxi = dispaxis
             Flat_red = 'pre_reduced/toFlat_red.fits'

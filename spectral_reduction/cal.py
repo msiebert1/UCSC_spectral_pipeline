@@ -101,7 +101,7 @@ def main():
     answer_flux = yesno('y')
     if (answer_flux == 'y'):
         plt.close()
-        fluxfile = getfitsfile('flux star', '.fits')
+        fluxfile = getfitsfile('flux star', '.fits', gratcode=gratcode)
         pydux.mkfluxstar(fluxfile, gratcode)
         if (secondord):
             print(' ')
@@ -165,8 +165,8 @@ def main():
         print('\nAre these master calibrations?\n')
         answer=yesno('y')
         if (answer == 'y'):
-            os.system('cp ' + 'fluxstar' + gratcode + '.fits' + ' ../../master_files/')
-            os.system('cp ' + 'bstar' + gratcode + '.fits'+ ' ../../master_files/')
+            os.system('mv ' + 'fluxstar' + gratcode + '.fits' + ' ../../master_files/')
+            os.system('mv ' + 'bstar' + gratcode + '.fits'+ ' ../../master_files/')
         print('\nThere, was that so hard?')
 
 if __name__ == '__main__':

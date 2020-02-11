@@ -156,19 +156,29 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                            readaxi='line',
                            flat=flat_file, 
                            Stdout=1)
+        # iraf.ccdproc(timg, output='', 
+        #                    overscan='no', 
+        #                    trim='no', 
+        #                    zerocor="no", 
+        #                    flatcor="no", 
+        #                    readaxi='line',
+        #                    flat=flat_file, 
+        #                    Stdout=1)
 
         img = timg
 
         #raw_input("Press Enter to continue...")
         if _cosmic:
             print('\n### starting cosmic removal')
+            files = glob.glob('*.fits')
+            if 'cosmic_{}'.format(img) not in glob.glob('*.fits'):
 
-            outimg,outmask,header = pyzapspec.pyzapspec(img, 
-                                                        outfile='cosmic_{}'.format(img), 
-                                                        WRITE_OUTFILE = True,
-                                                        boxsize=inst.get('pyzap_boxsize',7),
-                                                        nsigma=inst.get('pyzap_nsigma',16),
-                                                        subsigma=inst.get('pyzap_subsigma',3))
+                outimg,outmask,header = pyzapspec.pyzapspec(img, 
+                                                            outfile='cosmic_{}'.format(img), 
+                                                            WRITE_OUTFILE = True,
+                                                            boxsize=inst.get('pyzap_boxsize',7),
+                                                            nsigma=inst.get('pyzap_nsigma',16),
+                                                            subsigma=inst.get('pyzap_subsigma',3))
             img = 'cosmic_{}'.format(img)
 
             print('\n### cosmic removal finished')

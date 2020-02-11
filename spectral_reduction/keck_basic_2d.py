@@ -496,7 +496,7 @@ def lris_read_amp(inp, ext, redchip=False, applygain=True):
     return data, gaindata, predata, postdata, x1, y1
     
     
-def subtract_overscan(rawframe, numamplifiers, datasec, oscansec,gain_image=None,
+def subtract_overscan(rawframe, numamplifiers, datasec, oscansec, gain_image=None,
                       method='savgol', params=[5, 65]):
     """
     Modified from pypeit.core.procimg.subtract_overscan -- Jon Brown
@@ -582,7 +582,8 @@ def subtract_overscan(rawframe, numamplifiers, datasec, oscansec,gain_image=None
         
         # Fit/Model the overscan region
         osfit = np.median(overscan) if method.lower() == 'median' \
-                        else np.median(overscan, axis=compress_axis) 
+                        else np.median(overscan, axis=compress_axis)
+
         if method.lower() == 'polynomial':
             # TODO: Use np.polynomial.polynomial.polyfit instead?
             c = np.polyfit(np.arange(osfit.size), osfit, params[0])
@@ -657,7 +658,7 @@ def parse_cmd_args():
 
 
 
-def main(*args,**kwargs):
+def main(rawFiles,*args,**kwargs):
     '''
     Run basic 2D CCD reduction on Keck LRIS data
 
@@ -723,8 +724,8 @@ def main(*args,**kwargs):
     
   
     # get all raw files, sort them
-    rawFiles = sorted(glob.glob('???????_????.fits'))
-        
+    # rawFiles = sorted(glob.glob('???????_????.fits'))
+
     # loop over raw files, if the destination exists, do nothing
     # otherwise, do the bias/reorient/trim/output
     for i in xrange(len(rawFiles)):
@@ -736,6 +737,8 @@ def main(*args,**kwargs):
             
             # read file
             img,gain_img,head,secs = read_lris(rawFile)
+            # img,gain_img,head,secs = read_lris(rawFile, TRIM=TRIM)
+            print (secs)
             dsec,osec = np.array(secs[0]),np.array(secs[1])
             xbin, ybin = [int(ibin) for ibin in head['BINNING'].split(',')]
                         
@@ -744,10 +747,15 @@ def main(*args,**kwargs):
             nAmps = len(tmpHDU) - 1
             
             # perform oscan/bias subtraction
+            # noBiasImg = subtract_overscan(img,nAmps,
+            #                               dsec,osec,
+            #                               gain_image=gain_img,
+            #                               method='median',    # median should be fine
+            #                               params=[5,65])       # default savgol params
             noBiasImg = subtract_overscan(img,nAmps,
                                           dsec,osec,
                                           gain_image=gain_img,
-                                          method='median',    # median should be fine
+                                          method='polynomial',    # median should be fine
                                           params=[5,65])       # default savgol params
                                           
             # mask bad pixels
@@ -766,10 +774,12 @@ def main(*args,**kwargs):
             # trim
             if TRIM:
                 if rawFile[0] == 'b':
-                    outImg = outImg[1800//xbin:2800//xbin,:] # blue shouldn't be binned
+                    # outImg = outImg[1800//xbin:2800//xbin,:] # blue shouldn't be binned
+                    outImg = outImg[2260//xbin:2800//xbin,:]
                 else:
                     if nAmps == 2:
-                        outImg = outImg[100//xbin:1100//xbin,:] # trimming for windowed
+                        outImg = outImg[290:575,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
+                        # outImg = outImg[600//xbin:1100//xbin,:]
                     else:
                         outImg = outImg[1600//xbin:2600//xbin,:]
                         # This is a weird case. Red is being read out in full frame
@@ -795,6 +805,7 @@ def main(*args,**kwargs):
             # adjust the header (these keywords aren't present by default)
             head['EXPTIME'] = head['ELAPTIME']
             head['DATE-OBS'] = head['DATE_BEG']
+            head['BASIC-2D'] = 'DONE'
                 
             # write the image          
             hdu = fits.PrimaryHDU(outImg,head)

@@ -1,6 +1,7 @@
 from __future__    import print_function
 import os
 import util
+from astropy.io import fits, ascii
 
 path_to_trunk = os.path.expandvars('$UCSC_SPECPIPE/spectral_reduction/trunk/')
 if not os.path.exists(path_to_trunk):
@@ -15,8 +16,9 @@ kast_blue = {'name': 'kast_blue',
              'slit': 'temp',
              'dispaxis': 1,
              'biassec': '[1:2048,318:350]',
-             #'trimsec': '[50:2010,7:287]',
-             'trimsec': '[26:1976,22:302]', # temporary
+             # 'trimsec': '[50:2010,7:287]',
+             'trimsec': '[50:1775,7:287]',
+             # 'trimsec': '[26:1976,22:302]', # temporary
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_blue_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_blue.fits',
              'archive_sens': path_to_trunk + 'KAST_cals/fluxstarblue.fits',
@@ -45,8 +47,8 @@ kast_red = { 'name': 'kast_red',
              'slit': 'temp',
              'dispaxis': 2, 
              'biassec': '[360:405,1:2725]',
-             #'trimsec': '[66:346,110:2500]',
-             'trimsec': '[18:298,139:2457]', # temporary
+             'trimsec': '[66:346,110:2500]',
+             # 'trimsec': '[18:298,139:2457]', # temporary
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
              'archive_sens': path_to_trunk + 'KAST_cals/fluxstarred.fits',
@@ -170,7 +172,8 @@ goodman_m2={ 'name': 'goodman_red',
 
 
 def blue_or_red(img):
-    hdr = util.readhdr2(img)
+    hdr = fits.open(img)[0].header
+
     # kast
     if util.readkey3(hdr, 'VERSION') == 'kastb':
         return 'blue', kast_blue

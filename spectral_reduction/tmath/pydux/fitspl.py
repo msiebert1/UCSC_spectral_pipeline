@@ -179,7 +179,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None):
     #            6700, 6750, 6800, 7450, 7500, 7550, 8420, 8460, 8520, \
     #            8570, 8600, 8725, 8770, 9910, 10000, 10200, 10300, \
     #            10400, 10500, 10600, 10700])
-    binWidth = 20
+    binWidth = 60
     bandpts = np.arange(3000,11000,binWidth)
     locsinrange=np.logical_and((bandpts > wave[10]),(bandpts < wave[-10]))
     #useband=bandpts[locsinrange]

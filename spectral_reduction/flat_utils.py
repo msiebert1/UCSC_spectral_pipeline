@@ -351,16 +351,18 @@ class fitFlatClass(object):
         modColArr = modColArr.astype(int)
 
         # ax1 data
-        bsd_col_lo = 100
-        bsd_col_up = bsd_col_lo + 200
+        bsd_col_lo = 0
+        bsd_col_up = bsd_col_lo + 500
         
         # ax2 data
-        msd_col_lo = self.rawData.shape[1] // 2
-        msd_col_up = msd_col_lo + 200
+        # msd_col_lo = self.rawData.shape[1] // 2
+        msd_col_lo = 1800
+        msd_col_up = msd_col_lo + 300
         
         # ax3 data
-        rsd_col_lo = self.rawData.shape[1] - 500
-        rsd_col_up = rsd_col_lo + 200
+        # rsd_col_lo = self.rawData.shape[1] - 500
+        rsd_col_lo = 3200
+        rsd_col_up = rsd_col_lo + 400
         
         # ax1 data
         blueSkyData = np.median(self.rawData[:,bsd_col_lo:bsd_col_up],axis=0)
@@ -851,21 +853,23 @@ def inspect_flat(flat_list,*args,**kwargs):
     ax5 = plt.subplot2grid((36,36), (24,0), rowspan=12, colspan=36)
     
     # ax1 data
-    bsd_col_lo = 100
-    bsd_col_up = bsd_col_lo + 200
+    bsd_col_lo = 0
+    bsd_col_up = bsd_col_lo + 500
     blueSkyData = np.median(flat_comb_image[:,bsd_col_lo:bsd_col_up],axis=0)
     blueSkyX = np.arange(bsd_col_lo,bsd_col_up,1)
     
     
     # ax2 data
-    msd_col_lo = flat_comb_image.shape[1] // 2
-    msd_col_up = msd_col_lo + 200
+    # msd_col_lo = flat_comb_image.shape[1] // 2
+    msd_col_lo = 1800
+    msd_col_up = msd_col_lo + 300
     midSkyData = np.median(flat_comb_image[:,msd_col_lo:msd_col_up],axis=0)
     midSkyX = np.arange(msd_col_lo,msd_col_up,1)
     
     # ax3 data
-    rsd_col_lo = flat_comb_image.shape[1] - 500
-    rsd_col_up = rsd_col_lo + 200
+    # rsd_col_lo = flat_comb_image.shape[1] - 500
+    rsd_col_lo = 3200
+    rsd_col_up = rsd_col_lo + 400
     redSkyData = np.median(flat_comb_image[:,rsd_col_lo:rsd_col_up],axis=0)
     redSkyX = np.arange(rsd_col_lo,rsd_col_up,1)
 
@@ -1001,6 +1005,10 @@ def inspect_flat(flat_list,*args,**kwargs):
                 pdb.set_trace()
             # quit
             if usrResp == 'Q':
+
+                #mask problematic pixels
+                print (flatFitObj.flatCorrData[flatFitObj.flatCorrData <= 0.001])
+                flatFitObj.flatCorrData[flatFitObj.flatCorrData <= 0.001] = 1.
 
                 print('Saving and quitting.')
                 # if cols x rows, transpose before writting
