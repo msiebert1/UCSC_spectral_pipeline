@@ -396,11 +396,11 @@ class fitFlatClass(object):
             pdb.set_trace()
 
         #plot profile
-        ax2.plot(midSkyX,midSkyData,c='k',ls='-',lw=3.)
+        # ax2.plot(midSkyX,midSkyData,c='k',ls='-',lw=3.)
         
-        #plot red sky
-        ax3.plot(redSkyX,redSkyData,c='k',ls='-',lw=3.)
-        ax3.plot(redSkyX,redSkyModel,c='r',ls='--',lw=3.)
+        # #plot red sky
+        # ax3.plot(redSkyX,redSkyData,c='k',ls='-',lw=3.)
+        # ax3.plot(redSkyX,redSkyModel,c='r',ls='--',lw=3.)
 
         # grab the values of the 10 and 90 percentile pixels
         rawData_ravel = np.ravel(self.rawData)
@@ -873,9 +873,9 @@ def inspect_flat(flat_list,*args,**kwargs):
     redSkyData = np.median(flat_comb_image[:,rsd_col_lo:rsd_col_up],axis=0)
     redSkyX = np.arange(rsd_col_lo,rsd_col_up,1)
 
-    ax1.plot(blueSkyX,blueSkyData,c='k',ls='-',lw=3.)
-    ax2.plot(midSkyX, midSkyData,c='k',ls='-',lw=3.)
-    ax3.plot(redSkyX,redSkyData,c='k',ls='-',lw=3.)
+    # ax1.plot(blueSkyX,blueSkyData,c='k',ls='-',lw=3.)
+    # ax2.plot(midSkyX, midSkyData,c='k',ls='-',lw=3.)
+    # ax3.plot(redSkyX,redSkyData,c='k',ls='-',lw=3.)
 
     # grab the values of the 10 and 90 percentile pixels
     flat_comb_image_ravel = np.ravel(flat_comb_image)

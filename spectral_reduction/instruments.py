@@ -47,7 +47,7 @@ kast_red = { 'name': 'kast_red',
              'slit': 'temp',
              'dispaxis': 2, 
              'biassec': '[360:405,1:2725]',
-             'trimsec': '[66:346,110:2500]',
+             'trimsec': '[66:346,97:2296]',
              # 'trimsec': '[18:298,139:2457]', # temporary
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
