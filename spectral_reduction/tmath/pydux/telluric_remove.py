@@ -44,6 +44,7 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance)
         print('The shift at the B band is {} angstroms'.format(lag[1]*wdelt))
     if (wmin < 7500) and (wmax > 8000):
         indblue=womget_element(wave,7500)
+        # indblue=womget_element(wave,7000)
         indred=womget_element(wave,8000)
         lag[2]=xcor(object[indblue:indred+1],bstartmp[indblue:indred+1],xfactor,maxlag)
         print('The shift at the A band is {} angstroms'.format(lag[2]*wdelt))

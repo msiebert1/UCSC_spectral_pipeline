@@ -17,7 +17,7 @@ kast_blue = {'name': 'kast_blue',
              'dispaxis': 1,
              'biassec': '[1:2048,318:350]',
              # 'trimsec': '[50:2010,7:287]',
-             'trimsec': '[50:1775,7:287]',
+             'trimsec': '[80:1850,7:287]',
              # 'trimsec': '[26:1976,22:302]', # temporary
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_blue_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_blue.fits',
@@ -34,7 +34,7 @@ kast_blue = {'name': 'kast_blue',
              'pyzap_boxsize': 5, # approximate seeing in pixels
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 2.8,
-             'approx_extract_line': 200,
+             'approx_extract_line': 145,
              'approx_extract_column': 1000}
 
 
@@ -47,7 +47,7 @@ kast_red = { 'name': 'kast_red',
              'slit': 'temp',
              'dispaxis': 2, 
              'biassec': '[360:405,1:2725]',
-             'trimsec': '[66:346,90:2296]',
+             'trimsec': '[66:346,80:2296]',
              # 'trimsec': '[18:298,139:2457]', # temporary
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
@@ -64,7 +64,7 @@ kast_red = { 'name': 'kast_red',
              'pyzap_boxsize': 5,
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 2.8,
-             'approx_extract_line': 200,
+             'approx_extract_line': 150,
              'approx_extract_column': 1000}
 
 lris_blue = {'name': 'lris_blue',
@@ -89,7 +89,8 @@ lris_blue = {'name': 'lris_blue',
              'pyzap_boxsize': 5,
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 8,
-             'approx_extract_line': 740}
+             # 'approx_extract_line': 740, jon old
+             'approx_extract_line': 200}
              
 lris_red = { 'name': 'lris_red',
              'arm': 'red',
@@ -113,7 +114,8 @@ lris_red = { 'name': 'lris_red',
              'pyzap_boxsize': 5,
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 8,
-             'approx_extract_line': 370}
+             # 'approx_extract_line': 370, jon old
+             'approx_extract_line': 69}
              
 goodman_m1={ 'name': 'goodman_blue',
              'arm': 'blue',
