@@ -162,7 +162,6 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         #                    zerocor="no", 
         #                    flatcor="no", 
         #                    readaxi='line',
-        #                    flat=flat_file, 
         #                    Stdout=1)
 
         img = timg

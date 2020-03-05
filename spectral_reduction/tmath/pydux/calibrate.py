@@ -1,8 +1,13 @@
 def calibrate(objectlist,gratcode,secondord,gratcode2):
     from astropy.io import fits
     import numpy as np
+    import inspect
+    from tmath.pydux.xcor import xcor
+    from tmath.pydux.envelope import envelope
+    from tmath.pydux.congrid import congrid
     from tmath.wombat.getmswave import getmswave
     from tmath.wombat.womscipyrebin import womscipyrebin
+    from tmath.pydux.scipyrebinsky import scipyrebinsky
     from tmath.pydux.obs_extinction import obs_extinction
     #extinction terms from Allen, 3rd edition
     extwave= [2400.,2600.,2800.,3000.,3200.,3400.,3600.,3800., \
@@ -65,6 +70,53 @@ def calibrate(objectlist,gratcode,secondord,gratcode2):
             extfactor=np.exp(extinction*sitefactor*airmass)
             fluxstartmp=womscipyrebin(fluxwave,fluxstar,wave)
             wdelt=wave[1]-wave[0]
+
+            #TESTING applying shift before flux cal
+            reduxdir=inspect.getfile(xcor)
+            reduxdir=reduxdir.rsplit('/',1)[0]+'/'
+            kecksky=['keck','gemini-north','gemini-n','gemini-south','gemini-s', \
+             'soar','ctio','vlt','lco','lco-imacs','lapalma']
+            licksky=['lick','kpno','flwo','mmto','sso']
+            if (observat in kecksky):
+                mskyfile=reduxdir+'kecksky.fits'
+            elif (observat in licksky):
+                mskyfile=reduxdir+'licksky.fits'
+            else:
+                print('\nCannot find mastersky file and observatory unknown\n')
+                mskyfile=getfitsfile('master sky','.fits')
+            print('Using {} as PRELIMINARY master sky'.format(mskyfile))
+            mskyfits=fits.open(mskyfile)
+            mskydata=mskyfits[0].data
+            mskyhead=mskyfits[0].header
+            mskywavezero=float(mskyhead['CRVAL1'])
+            mskywavedelt=float(mskyhead['CDELT1'])
+            mskywave=np.arange(len(mskydata))*mskywavedelt+mskywavezero
+            if (np.abs(np.mean(mskydata)) < 1e-7):
+                mskydata=mskydata*1e15
+
+            num_bands=multispec.shape[0]
+            skyband=2
+            if (num_bands == 2):
+                skyband=1
+            sky=multispec[skyband,i,:]
+            envelope_size=25
+            mx,mn=envelope(sky,envelope_size)
+            skycont=congrid(mn,(len(sky),),minusone=True)
+            sky=sky-skycont
+            if (np.abs(np.mean(sky)) < 1.e-7):
+                sky=sky*1.e15
+            print(len(mskywave),len(mskydata))
+            msky=scipyrebinsky(mskywave,mskydata,wave)
+
+            xfactor=10
+            maxlag=200
+            shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag)
+            angshift=shift*wdelt
+            print ('Preliminary shift is {} angstroms'.format(angshift))
+            fluxwave=fluxwave-angshift
+            fluxstartmp=womscipyrebin(fluxwave,fluxstar,wave)
+            ########################################
+
             for j in range(0,num_bands):
                 multispec[j,i,:]=multispec[j,i,:]*extfactor       #extinction
                 multispec[j,i,:]=multispec[j,i,:]/fluxstartmp     #flux
