@@ -1,6 +1,6 @@
 from __future__    import print_function
 
-def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc):
+def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc, _fast):
     import string
     import os
     import re
@@ -59,9 +59,9 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
     iraf.noao.mode = 'h'
     iraf.ccdred.instrument = "ccddb$kpno/camera.dat"
 
+
     list_arc_b = []
     list_arc_r = []
-    
     for arcs in files_arc:
         hdr = util.readhdr(arcs)
         # br, inst = instruments.blue_or_red(arcs)
@@ -196,7 +196,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             arcfile=arcfile+'.fits'
 
         if not os.path.isdir('database/'):
-                os.mkdir('database/')
+            os.mkdir('database/')
         
         #There is a bug in identify when the path to the coordlist is too long
         #This is my hacky workaround for now, the file  is deleted later

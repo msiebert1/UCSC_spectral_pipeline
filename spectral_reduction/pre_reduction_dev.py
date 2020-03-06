@@ -268,6 +268,7 @@ def pre_reduction_dev(*args,**kwargs):
     CONFIG_FILE = kwargs.get('CONFIG_FILE')
     MAKE_ARCS = kwargs.get('MAKE_ARCS')
     MAKE_FLATS = kwargs.get('MAKE_FLATS')
+    QUICK = kwargs.get('QUICK')
 
     # init iraf stuff
     iraf.noao(_doprint=0)
@@ -428,6 +429,31 @@ def pre_reduction_dev(*args,**kwargs):
     # pre_reduced does not exist, needs to be made
     if not os.path.isdir('pre_reduced/'):
         os.mkdir('pre_reduced/')
+
+    if QUICK:
+        file =glob.glob('*.fits')[0]
+        inst = instruments.blue_or_red(file)[1]
+        if 'kast' in inst['name']:
+            b_inst = instruments.kast_blue
+            r_inst = instruments.kast_red
+        if 'lris' in inst['name']:
+            b_inst = instruments.lris_blue
+            r_inst = instruments.lris_red
+        if 'goodman' in inst['name']:
+            b_inst = instruments.goodman_blue
+            r_inst = instruments.goodman_red
+        if not os.path.isdir('pre_reduced/master_files/'):
+            os.mkdir('pre_reduced/master_files/')
+        b_arcsol = b_inst.get('archive_arc_extracted_id')
+        b_resp = b_inst.get('archive_flat_file')
+        r_arcsol = r_inst.get('archive_arc_extracted_id')
+        r_resp = r_inst.get('archive_flat_file')
+        if os.path.isdir('pre_reduced/master_files/'):
+            os.system('cp ' + b_arcsol + ' ' + 'pre_reduced/master_files/')
+            os.system('cp ' + b_resp + ' ' + 'pre_reduced/')
+            os.system('cp ' + r_arcsol + ' ' + 'pre_reduced/master_files/')
+            os.system('cp ' + r_resp + ' ' + 'pre_reduced/')
+
 
     # pre_reduced exists, but we want to clobber/do a clean reduction
     elif FULL_CLEAN:
@@ -909,6 +935,8 @@ def parse_cmd_args():
     basicProcCG = parser.add_mutually_exclusive_group()
 
     # optional
+    parser.add_argument('-q','--quicklook',
+                        help='Move archival calibrations to enable quicker reductions', action='store_true')
     parser.add_argument('-v','--verbose',
                         help='Print diagnostic info',action='store_true')
     parser.add_argument('-k','--clobber',
@@ -950,6 +978,7 @@ def parse_cmd_args():
     kwargs['CONFIG_FILE'] = cmdArgs.config_file
     kwargs['MAKE_ARCS'] = cmdArgs.make_arcs
     kwargs['MAKE_FLATS'] = cmdArgs.make_flats
+    kwargs['QUICK'] = cmdArgs.quicklook
 
     return (args,kwargs)
 
