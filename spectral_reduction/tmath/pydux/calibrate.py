@@ -110,7 +110,8 @@ def calibrate(objectlist,gratcode,secondord,gratcode2):
 
             xfactor=10
             maxlag=200
-            shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag)
+            # shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag)
+            shift=xcor(msky,sky,xfactor,maxlag)
             angshift=shift*wdelt
             print ('Preliminary shift is {} angstroms'.format(angshift))
             fluxwave=fluxwave-angshift

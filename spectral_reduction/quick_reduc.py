@@ -525,6 +525,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         else:
             imgex = util.extractspectrum(
                 img, dv, inst, _interactive, 'obj')
+            create_master_ap = raw_input('Use master flux calibration? [y]/n ')
+            if create_master_ap != 'n':
+                os.system('cp ' + 'database/ap' + img + ' ../master_files/apstd'+inst.get('arm'))
+
             print('\n### applying wavelength solution')
             print (arc_ex)
             iraf.disp(inlist=imgex, reference=arc_ex)    

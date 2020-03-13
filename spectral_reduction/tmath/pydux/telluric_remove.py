@@ -1,4 +1,4 @@
-def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance):
+def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance, spectrum):
     import numpy as np
     import pdb
     import matplotlib.pyplot as plt
@@ -63,12 +63,16 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance)
         tmp=womscipyrebin(wave+angshift,bstartmp,wave)
         bstartmp=tmp.copy()
         bstartmp=bstartmp**((airmass/bairmass)**0.55)
-        newobject=object/bstartmp
+        # newobject=object/bstartmp
+        newobject=spectrum/bstartmp
         bvar=variance/bstartmp
         print('\nPlotting before and after atmospheric band correction\n')
         plt.cla()
-        ymin,ymax=finalscaler(object)
-        plt.plot(wave,object,drawstyle='steps-mid',color='r')
+        # ymin,ymax=finalscaler(object)
+        # plt.plot(wave,object,drawstyle='steps-mid',color='r')
+        # plt.plot(wave,newobject,drawstyle='steps-mid',color='k')
+        ymin,ymax=finalscaler(spectrum)
+        plt.plot(wave,spectrum,drawstyle='steps-mid',color='r')
         plt.plot(wave,newobject,drawstyle='steps-mid',color='k')
         plt.pause(0.01)
         print('Is this OK?')

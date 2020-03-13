@@ -284,6 +284,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             envelope_size=25
             mx,mn=envelope(sky,envelope_size)
             skycont=congrid(mn,(len(sky),),minusone=True)
+            test_sky=sky
             sky=sky-skycont
             if (np.abs(np.mean(sky)) < 1.e-7):
                 sky=sky*1.e15
@@ -292,8 +293,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             xfactor=10
             maxlag=200
             # I think this messes up the telluric correction later on(?)
-            shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag) #temporary fix, works with kast data
-            # shift=xcor(msky,sky,xfactor,maxlag)
+            # shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag) #temporary fix, works with kast data
+            shift=xcor(msky,sky,xfactor,maxlag)
             angshift=shift*wdelt
             print('wdeltf',wdelt)
             print('The x-cor shift in Angstroms is {}'.format(angshift))
@@ -326,8 +327,10 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     skyshiftdone = True
             # B star removal
             bstarpass=bstarstar
+            # bobj, bsig, bangshift=telluric_remove(bstarwave,bstarpass, bstarairmass, wave, \
+            #                            object, airmass, sigma)
             bobj, bsig, bangshift=telluric_remove(bstarwave,bstarpass, bstarairmass, wave, \
-                                       object, airmass, sigma)
+                                       test_sky, airmass, sigma, object)
             if (secondord):
                 bobj2, bsig2, bangshift2 =telluric_remove(bstarwave2,bstarpass2, bstarairmass2, \
                                              wave, object2, airmass, sigma2)
