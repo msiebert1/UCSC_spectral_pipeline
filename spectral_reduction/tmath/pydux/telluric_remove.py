@@ -37,18 +37,46 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
     if (wmin < 6800) and (wmax > 6500):
         indblue=womget_element(wave,6800)
         indred=womget_element(wave,6950)
-        obb=object[indblue:indred+1]
+        scale = 1./np.max(object[indblue:indred+1])
+        obb=scale*object[indblue:indred+1]
         bb=bstartmp[indblue:indred+1]
         lag[1]=xcor(obb,bb,xfactor,maxlag)
         lagflag[1]=True
         print('The shift at the B band is {} angstroms'.format(lag[1]*wdelt))
+
+        plt.cla()
+        # ymin,ymax=finalscaler(object)
+        # plt.plot(wave,object,drawstyle='steps-mid',color='r')
+        # plt.plot(wave,newobject,drawstyle='steps-mid',color='k')
+        ymin,ymax=finalscaler(bstartmp[indblue:indred+1])
+        plt.plot(wave[indblue:indred+1], scale*object[indblue:indred+1],drawstyle='steps-mid',color='r')
+        plt.plot(wave[indblue:indred+1], bstartmp[indblue:indred+1],drawstyle='steps-mid',color='k')
+        plt.plot(wave[indblue:indred+1]+lag[1]*wdelt, bstartmp[indblue:indred+1],drawstyle='steps-mid',color='g')
+        plt.pause(0.01)
+        print('Check plot')
+        answer=yesno('y')
+
     if (wmin < 7500) and (wmax > 8000):
+        
         indblue=womget_element(wave,7500)
-        # indblue=womget_element(wave,7000)
         indred=womget_element(wave,8000)
-        lag[2]=xcor(object[indblue:indred+1],bstartmp[indblue:indred+1],xfactor,maxlag)
+        scale = 1./np.max(object[indblue:indred+1])
+        lag[2]=xcor(scale*object[indblue:indred+1],bstartmp[indblue:indred+1],xfactor,maxlag)
         print('The shift at the A band is {} angstroms'.format(lag[2]*wdelt))
         lagflag[2]=True
+
+        plt.cla()
+        # ymin,ymax=finalscaler(object)
+        # plt.plot(wave,object,drawstyle='steps-mid',color='r')
+        # plt.plot(wave,newobject,drawstyle='steps-mid',color='k')
+        ymin,ymax=finalscaler(bstartmp[indblue:indred+1])
+        plt.plot(wave[indblue:indred+1], scale*object[indblue:indred+1],drawstyle='steps-mid',color='r')
+        plt.plot(wave[indblue:indred+1], bstartmp[indblue:indred+1],drawstyle='steps-mid',color='k')
+        plt.plot(wave[indblue:indred+1]+lag[2]*wdelt, bstartmp[indblue:indred+1],drawstyle='steps-mid',color='g')
+        plt.pause(0.01)
+        print('Check plot')
+        answer=yesno('y')
+
     if (sum(lagflag) > 0):
         avglag=np.sum(lag)/sum(lagflag)
         angshift=avglag*wdelt
@@ -62,7 +90,7 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
         bstartmp=bstartmpcopy.copy()
         tmp=womscipyrebin(wave+angshift,bstartmp,wave)
         bstartmp=tmp.copy()
-        bstartmp=bstartmp**((airmass/bairmass)**0.55)
+        bstartmp=*bstartmp*((airmass/bairmass)**0.55)
         # newobject=object/bstartmp
         newobject=spectrum/bstartmp
         bvar=variance/bstartmp

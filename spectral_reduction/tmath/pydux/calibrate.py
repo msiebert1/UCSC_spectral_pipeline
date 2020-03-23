@@ -9,6 +9,8 @@ def calibrate(objectlist,gratcode,secondord,gratcode2):
     from tmath.wombat.womscipyrebin import womscipyrebin
     from tmath.pydux.scipyrebinsky import scipyrebinsky
     from tmath.pydux.obs_extinction import obs_extinction
+    from tmath.wombat.yesno import yesno
+    from tmath.wombat.inputter import inputter
     #extinction terms from Allen, 3rd edition
     extwave= [2400.,2600.,2800.,3000.,3200.,3400.,3600.,3800., \
               4000.,4500.,5000.,5500.,6000.,6500.,7000.,8000., \
@@ -110,11 +112,31 @@ def calibrate(objectlist,gratcode,secondord,gratcode2):
 
             xfactor=10
             maxlag=200
-            # shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag)
-            shift=xcor(msky,sky,xfactor,maxlag)
+            shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag)
+            # shift=xcor(msky,sky,xfactor,maxlag)
             angshift=shift*wdelt
             print ('Preliminary shift is {} angstroms'.format(angshift))
-            fluxwave=fluxwave-angshift
+            fluxwave=fluxwave+angshift
+
+            print (wave[0])
+            wave = wave+angshift
+            print (wave[0])
+            mshead.set('CRVAL1',  wave[0])
+            mshead.set('CDELT1', wave[1] - wave[0])
+
+            #georgios
+            skyshiftdone=False
+            while (not skyshiftdone):
+                print('Is this ok?')
+                answer=yesno('y')
+                if (answer == 'n'):
+                    fluxwave=fluxwave+ angshift
+                    angshift=inputter('Enter desired shift in Angstroms: ','float',False)
+                    fluxwave=fluxwave-angshift
+                else:
+                    skyshiftdone = True
+            ###
+
             fluxstartmp=womscipyrebin(fluxwave,fluxstar,wave)
             ########################################
 

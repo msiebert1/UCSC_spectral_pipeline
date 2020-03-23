@@ -136,16 +136,51 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         print ('NAMEOUT:', nameout0)
         timg = nameout0
         print('\n### now processing :',timg,' for -> ',inst.get('name'))
+
         if len(imgs) > 1:
             img_str = ''
             for i in imgs:
-                img_str = img_str + i + ','
+                if _cosmic:
+                    print('\n### starting cosmic removal')
+                    files = glob.glob('*.fits')
+                    if 'cosmic_{}'.format(i) not in glob.glob('*.fits'):
+
+                        outimg,outmask,header = pyzapspec.pyzapspec(i, 
+                                                                    outfile='cosmic_{}'.format(i), 
+                                                                    WRITE_OUTFILE = True,
+                                                                    boxsize=inst.get('pyzap_boxsize',7),
+                                                                    nsigma=inst.get('pyzap_nsigma',16),
+                                                                    subsigma=inst.get('pyzap_subsigma',3))
+                    img = 'cosmic_{}'.format(i)
+
+                    print('\n### cosmic removal finished')
+                else:
+                    print('\n### No cosmic removal, saving normalized image for inspection???')
+
+                img_str = img_str + img + ','
             iraf.imcombine(img_str, output=timg)
         else:
-            img = imgs[0]
+            i = imgs[0]
+            if _cosmic:
+                print('\n### starting cosmic removal')
+                files = glob.glob('*.fits')
+                if 'cosmic_{}'.format(i) not in glob.glob('*.fits'):
+
+                    outimg,outmask,header = pyzapspec.pyzapspec(i, 
+                                                                outfile='cosmic_{}'.format(i), 
+                                                                WRITE_OUTFILE = True,
+                                                                boxsize=inst.get('pyzap_boxsize',7),
+                                                                nsigma=inst.get('pyzap_nsigma',16),
+                                                                subsigma=inst.get('pyzap_subsigma',3))
+                img = 'cosmic_{}'.format(i)
+
+                print('\n### cosmic removal finished')
+            else:
+                print('\n### No cosmic removal, saving normalized image for inspection???')
+
             if os.path.isfile(timg):
                 os.system('rm -rf ' + timg)
-            iraf.imcopy(img, output=timg)
+            iraf.imcopy(i, output=timg)
         
         # should just do this by hand
         iraf.ccdproc(timg, output='', 
@@ -165,24 +200,6 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         #                    Stdout=1)
 
         img = timg
-
-        #raw_input("Press Enter to continue...")
-        if _cosmic:
-            print('\n### starting cosmic removal')
-            files = glob.glob('*.fits')
-            if 'cosmic_{}'.format(img) not in glob.glob('*.fits'):
-
-                outimg,outmask,header = pyzapspec.pyzapspec(img, 
-                                                            outfile='cosmic_{}'.format(img), 
-                                                            WRITE_OUTFILE = True,
-                                                            boxsize=inst.get('pyzap_boxsize',7),
-                                                            nsigma=inst.get('pyzap_nsigma',16),
-                                                            subsigma=inst.get('pyzap_subsigma',3))
-            img = 'cosmic_{}'.format(img)
-
-            print('\n### cosmic removal finished')
-        else:
-            print('\n### No cosmic removal, saving normalized image for inspection???')
             
 
         if inst.get('arm') == 'blue' and len(list_arc_b)>0:
