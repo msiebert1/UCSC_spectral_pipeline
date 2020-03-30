@@ -1,6 +1,7 @@
-def calibrate(objectlist,gratcode,secondord,gratcode2):
+def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
     from astropy.io import fits
     import numpy as np
+    import matplotlib.pyplot as plt
     import inspect
     from tmath.pydux.xcor import xcor
     from tmath.pydux.envelope import envelope
@@ -11,6 +12,7 @@ def calibrate(objectlist,gratcode,secondord,gratcode2):
     from tmath.pydux.obs_extinction import obs_extinction
     from tmath.wombat.yesno import yesno
     from tmath.wombat.inputter import inputter
+    from tmath.wombat.womget_element import womget_element
     #extinction terms from Allen, 3rd edition
     extwave= [2400.,2600.,2800.,3000.,3200.,3400.,3600.,3800., \
               4000.,4500.,5000.,5500.,6000.,6500.,7000.,8000., \
@@ -22,6 +24,7 @@ def calibrate(objectlist,gratcode,secondord,gratcode2):
     fluxstar=fluxfits[0].data
     fluxhead=fluxfits[0].header
     fluxwavezero=float(fluxhead['CRVAL1'])
+    print ('ZERO', fluxwavezero)
     fluxwavedelt=float(fluxhead['CDELT1'])
     fluxwave=np.arange(len(fluxstar))*fluxwavedelt+fluxwavezero
     fluxairmass=float(fluxhead['AIRMASS'])
@@ -110,19 +113,20 @@ def calibrate(objectlist,gratcode,secondord,gratcode2):
             print(len(mskywave),len(mskydata))
             msky=scipyrebinsky(mskywave,mskydata,wave)
 
+
             xfactor=10
             maxlag=200
             shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag)
             # shift=xcor(msky,sky,xfactor,maxlag)
             angshift=shift*wdelt
             print ('Preliminary shift is {} angstroms'.format(angshift))
-            fluxwave=fluxwave+angshift
 
-            print (wave[0])
+            if answer_flux == 'y':
+                fluxwave=fluxwave+angshift
+
+            print ('Obj wave without shift: ', wave[0])
             wave = wave+angshift
-            print (wave[0])
-            mshead.set('CRVAL1',  wave[0])
-            mshead.set('CDELT1', wave[1] - wave[0])
+
 
             #georgios
             skyshiftdone=False
@@ -130,15 +134,65 @@ def calibrate(objectlist,gratcode,secondord,gratcode2):
                 print('Is this ok?')
                 answer=yesno('y')
                 if (answer == 'n'):
-                    fluxwave=fluxwave+ angshift
+                    #undo shifts
+                    if answer_flux == 'y':
+                        fluxwave=fluxwave-angshift
+                    wave = wave-angshift
                     angshift=inputter('Enter desired shift in Angstroms: ','float',False)
-                    fluxwave=fluxwave-angshift
+                    if answer_flux == 'y':
+                        fluxwave=fluxwave+angshift
+                    wave = wave+angshift
                 else:
                     skyshiftdone = True
             ###
+            print ('Obj wave with shift: ', wave[0])
+            mshead.set('CRVAL1',  wave[0])
+            mshead.set('CDELT1', wave[1] - wave[0])
+
+
+            print ('Fluxwave start', fluxwave[0])
+            if answer_flux == 'y':
+                fluxhead.set('CRVAL1',  fluxwave[0])
+                fluxhead.set('CDELT1', fluxwave[1] - fluxwave[0])
+                outfile='fluxstar'+gratcode+'.fits'
+                print('Updating wavelength data to {}'.format(outfile))
+                outhdu=fits.PrimaryHDU(fluxstar)
+                hdul=fits.HDUList([outhdu])
+                hdul[0].header=fluxhead.copy()
+                hdul.writeto(outfile,overwrite=True)
+                # fluxfits=fits.open(outfile)
+                # fluxstar=fluxfits[0].data
+                # fluxhead=fluxfits[0].header
+                # fluxwavezero=float(fluxhead['CRVAL1'])
+                # print (fluxwavezero)
 
             fluxstartmp=womscipyrebin(fluxwave,fluxstar,wave)
             ########################################
+
+            # #testing 
+            # # mx1=womget_element(wave,5500)
+            # # mx2=womget_element(wave,5850)
+            # # fx1=womget_element(fluxwave,5500)
+            # # fx2=womget_element(fluxwave,5850)
+            # mx1=0
+            # mx2=200
+            # fx1=0
+            # fx2=200
+            # # mx1=-1000
+            # # mx2=-50
+            # # fx1=-1000
+            # # fx2=-50
+            # scale1 = 1./np.median(multispec[0,i,:][mx1:mx2])
+            # scale2 = 1./np.median(fluxstartmp[fx1:fx2])
+            # # print (xcor(scale1*multispec[0,i,:][mx1:mx2],scale2*fluxstar[fx1:fx2],10,200))
+            # plt.cla()
+            # plt.plot(wave[mx1:mx2], scale1*multispec[0,i,:][mx1:mx2],drawstyle='steps-mid',color='r')
+            # plt.plot(fluxwave[fx1:fx2], scale2*fluxstar[fx1:fx2],drawstyle='steps-mid',color='k')
+            # plt.pause(0.01)
+            # print('Check plot')
+            # answer=yesno('y')
+            # ##
+            
 
             for j in range(0,num_bands):
                 multispec[j,i,:]=multispec[j,i,:]*extfactor       #extinction
@@ -154,6 +208,7 @@ def calibrate(objectlist,gratcode,secondord,gratcode2):
                     multispec2[j,i,:]=multispec2[j,i,:]/exptime         #adjust to time
                     multispec2[j,i,:]=multispec2[j,i,:]*10**(-19.44)    #AB->fnu
                     multispec2[j,i,:]=multispec2[j,i,:]*2.99792458e18/wave/wave #fnu->flm
+
         msfile='c'+gratcode+msfile
         mshead.set('FLUX_Z',fluxairmass,'airmass of flux standard')
         mshead.set('FLUX_NUM',fluxnum,'obsnum of flux standard')

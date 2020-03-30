@@ -137,6 +137,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         timg = nameout0
         print('\n### now processing :',timg,' for -> ',inst.get('name'))
 
+        print ('IMAGES: ', imgs)
         if len(imgs) > 1:
             img_str = ''
             for i in imgs:
@@ -152,12 +153,14 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                                                                     nsigma=inst.get('pyzap_nsigma',16),
                                                                     subsigma=inst.get('pyzap_subsigma',3))
                     img = 'cosmic_{}'.format(i)
+                    img_str = img_str + img + ','
 
                     print('\n### cosmic removal finished')
                 else:
                     print('\n### No cosmic removal, saving normalized image for inspection???')
 
-                img_str = img_str + img + ','
+                    img_str = img_str + i + ','
+            print (img_str)
             iraf.imcombine(img_str, output=timg)
         else:
             i = imgs[0]
@@ -542,9 +545,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         else:
             imgex = util.extractspectrum(
                 img, dv, inst, _interactive, 'obj')
-            create_master_ap = raw_input('Use master flux calibration? [y]/n ')
-            if create_master_ap != 'n':
-                os.system('cp ' + 'database/ap' + img + ' ../master_files/apstd'+inst.get('arm'))
+            #TODO: Use same aperture
+            # create_master_ap = raw_input('Use master aperture ? [y]/n ')
+            # if create_master_ap != 'n':
+            #     os.system('cp ' + 'database/ap' + img + ' ../master_files/apstd'+inst.get('arm'))
 
             print('\n### applying wavelength solution')
             print (arc_ex)

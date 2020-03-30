@@ -127,7 +127,7 @@ def main():
     print('\nDo you want to apply the flux star(s) to the data?\n')
     answer = yesno('y')
     if (answer == 'y'):
-        pydux.calibrate(objectlist, gratcode, secondord, gratcode2)
+        pydux.calibrate(objectlist, gratcode, secondord, gratcode2, answer_flux=answer_flux)
 
 
     print('\nDo you want to fit a b-star?\n')

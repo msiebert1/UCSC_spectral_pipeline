@@ -146,15 +146,23 @@ def parse_cmd_args():
 
     return (args,kwargs)
 
+# def pyzapspec(infile, 
+#               outfile='',
+#               maskfile='', 
+#               WRITE_OUTFILE=False,
+#               DEBUG_DIR='../test_data/',DEBUG=False,
+#               boxsize=7,nsigma=16.,subsigma=2.7,sfactor=1.0,
+#               nzap=0,mask=0,writemodel=0,verbose=0,skysubtract=0,
+#               zero=0,method=0,usamp=0,ybin=0,nan=-999,inmaskname=0,**kwargs):
+
 def pyzapspec(infile, 
               outfile='',
               maskfile='', 
               WRITE_OUTFILE=False,
               DEBUG_DIR='../test_data/',DEBUG=False,
-              boxsize=7,nsigma=16.,subsigma=2.7,sfactor=1.0,
+              boxsize=9,nsigma=15.,subsigma=2.8,sfactor=1.0,
               nzap=0,mask=0,writemodel=0,verbose=0,skysubtract=0,
               zero=0,method=0,usamp=0,ybin=0,nan=-999,inmaskname=0,**kwargs):
-
     # defaults
     if len(outfile) == 0:
         dirpath,infile_base = os.path.split(infile)

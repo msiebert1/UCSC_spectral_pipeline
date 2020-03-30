@@ -90,7 +90,7 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
         bstartmp=bstartmpcopy.copy()
         tmp=womscipyrebin(wave+angshift,bstartmp,wave)
         bstartmp=tmp.copy()
-        bstartmp=*bstartmp*((airmass/bairmass)**0.55)
+        bstartmp=bstartmp**((airmass/bairmass)**0.55)
         # newobject=object/bstartmp
         newobject=spectrum/bstartmp
         bvar=variance/bstartmp
