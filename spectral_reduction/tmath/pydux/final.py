@@ -293,7 +293,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             msky=scipyrebinsky(mskywave,mskydata,wave)
             xfactor=10
             maxlag=200
-            if 'kast' in fluxhead.get('VERSION',''): 
+            if 'kast' in mshead.get('VERSION',''): 
                 shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag)
             else:
                 shift=xcor(msky,sky,xfactor,maxlag)
@@ -376,13 +376,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 print('\nPrevious resolution choice: {}'.format(deltsave))
             else:
                 deltsave = 0.0
-            newdelt=2
-            # while (newdelt <= 0) or (newdelt > wave[-1]):
-            #     print('Rebin to how many Angstroms per pixel? ')
-            #     newdelt=inputter('         <CR> selects previous choice: ','float',True,deltsave)
-            #     if (newdelt <= 0) or (newdelt > wave[-1]):
-            #         print('Need positive resoution and smaller than the')
-            #         print('entire spectrum.  Try again')
+            # newdelt=2
+            while (newdelt <= 0) or (newdelt > wave[-1]):
+                print('Rebin to how many Angstroms per pixel? ')
+                newdelt=inputter('         <CR> selects previous choice: ','float',True,deltsave)
+                if (newdelt <= 0) or (newdelt > wave[-1]):
+                    print('Need positive resoution and smaller than the')
+                    print('entire spectrum.  Try again')
             print('\nCurrent range: {} {}'.format(wave[0],wave[-1]))
             if (secondtime):
                 print('\nPrevious selection was {} {} (marked in red on plot)'.format(wavesave0,wavesaven))
