@@ -293,9 +293,10 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             msky=scipyrebinsky(mskywave,mskydata,wave)
             xfactor=10
             maxlag=200
-            # I think this messes up the telluric correction later on(?)
-            # shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag) #temporary fix, works with kast data
-            shift=xcor(msky,sky,xfactor,maxlag)
+            if 'kast' in fluxhead.get('VERSION',''): 
+                shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag)
+            else:
+                shift=xcor(msky,sky,xfactor,maxlag)
             angshift=shift*wdelt
             print('wdeltf',wdelt)
             print('The x-cor shift in Angstroms is {}'.format(angshift))

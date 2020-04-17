@@ -26,7 +26,6 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
     fluxstar=fluxfits[0].data
     fluxhead=fluxfits[0].header
     fluxwavezero=float(fluxhead['CRVAL1'])
-    print ('ZERO', fluxwavezero)
     fluxwavedelt=float(fluxhead['CDELT1'])
     fluxwave=np.arange(len(fluxstar))*fluxwavedelt+fluxwavezero
     fluxairmass=float(fluxhead['AIRMASS'])
@@ -119,7 +118,10 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             xfactor=10
             maxlag=200
             # shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag)
-            shift=xcor(msky,sky,xfactor,maxlag)
+            if 'kast' in fluxhead.get('VERSION',''): 
+                shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag)
+            else:
+                shift=xcor(msky,sky,xfactor,maxlag)
             angshift=shift*wdelt
             print ('Potential preliminary shift of {} angstroms'.format(angshift))
 
