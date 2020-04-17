@@ -545,10 +545,12 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
         else:
             imgex = util.extractspectrum(
                 img, dv, inst, _interactive, 'obj')
-            #TODO: Use same aperture
-            # create_master_ap = raw_input('Use master aperture ? [y]/n ')
-            # if create_master_ap != 'n':
-            #     os.system('cp ' + 'database/ap' + img + ' ../master_files/apstd'+inst.get('arm'))
+
+            save_ap = 'n'
+            save_ap = raw_input('Save as a master aperture ? y/[n]: ')
+            if save_ap == 'y':
+                os.system('cp ' + 'database/ap' + img[0:-5] + ' ../master_files/ap'+img[0:-5])
+            #TODO: Generate blue/red aperture
 
             print('\n### applying wavelength solution')
             print (arc_ex)

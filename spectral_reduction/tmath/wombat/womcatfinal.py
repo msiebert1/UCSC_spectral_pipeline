@@ -208,6 +208,7 @@ def womcatfinal(blue_data, red_data):
                   newflux[indexblueb:indexbluer+1],
                   drawstyle='steps-mid',color='r')
     plt.pause(0.01)
+    check=inputter('Check plot [enter when done]: ','string',False)
     # hopout=0
     # while (hopout < 1) or (hopout > HOPSIZE):
     #     hopout=inputter('Enter hopper to store combined spectrum: ','int',False)

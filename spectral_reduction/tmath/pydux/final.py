@@ -5,6 +5,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
     from datetime import datetime
     import os, pdb
     import inspect
+    import glob
     from astropy.io import fits
     from astropy import units as u
     from astropy.coordinates import SkyCoord
@@ -228,7 +229,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             wdelt=wave[1]-wave[0]
             mean=np.mean(multispec[0,i,:])
             ymin,ymax=finalscaler(multispec[0,i,:])
-            plt.clf()
+            # plt.clf()
             gs=gridspec.GridSpec(2,1,height_ratios=[4,1])
             ax0=plt.subplot(gs[0])
             ax1=plt.subplot(gs[1])
@@ -293,24 +294,28 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             xfactor=10
             maxlag=200
             # I think this messes up the telluric correction later on(?)
-            shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag) #temporary fix, works with kast data
-            # shift=xcor(msky,sky,xfactor,maxlag)
+            # shift=xcor(msky[50:-50],sky[50:-50],xfactor,maxlag) #temporary fix, works with kast data
+            shift=xcor(msky,sky,xfactor,maxlag)
             angshift=shift*wdelt
             print('wdeltf',wdelt)
             print('The x-cor shift in Angstroms is {}'.format(angshift))
             wave=wave+angshift #check to make sure signs are right
             skyshiftdone=False
             npixsky2=len(sky)//2
+            # plt.close()
+            msky_max = np.max(msky[npixsky2-1:])
+            sky_max = np.max(sky[npixsky2-1:])
+            scale = sky_max/msky_max
             while (not skyshiftdone):
                 plt.clf()
                 axarr=fig.subplots(2)
                 fig.subplots_adjust(hspace=0)
                 waveplus=wave-angshift
-                axarr[0].plot(waveplus[0:npixsky2],msky[0:npixsky2], \
+                axarr[0].plot(waveplus[0:npixsky2],scale*msky[0:npixsky2], \
                               drawstyle='steps-mid',color='k')
                 axarr[0].plot(wave[0:npixsky2],sky[0:npixsky2], \
                               drawstyle='steps-mid',color='r')
-                axarr[1].plot(waveplus[npixsky2-1:],msky[npixsky2-1:], \
+                axarr[1].plot(waveplus[npixsky2-1:],scale*msky[npixsky2-1:], \
                               drawstyle='steps-mid',color='k')
                 axarr[1].plot(wave[npixsky2-1:],sky[npixsky2-1:], \
                               drawstyle='steps-mid',color='r')
@@ -320,11 +325,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 print('Is this ok?')
                 answer=yesno('y')
                 if (answer == 'n'):
-                    wave=wave- angshift
+                    wave=wave-angshift
                     angshift=inputter('Enter desired shift in Angstroms: ','float',False)
                     wave=wave+angshift
                 else:
                     skyshiftdone = True
+
+            plt.close()
             # B star removal
             bstarpass=bstarstar
             bobj, bsig, bangshift=telluric_remove(bstarwave,bstarpass, bstarairmass, wave, \
@@ -339,7 +346,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             z=-1*v/2.99792458e5
             wave=wave/(1+z)
             # rebin
-            plt.clf()
+            fig=plt.figure()
             axarr=fig.subplots(1,2)
             ymin,ymax=finalscaler(bobj[0:100])
             axarr[0].plot(wave[0:100],bobj[0:100],drawstyle='steps-mid')
@@ -502,7 +509,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 plt.close()
                 done=False
                 while (not done):
-                    inputfile=input('Name of fits file to be combined? (.fits added if necessary) ')
+                    files = glob.glob(objname.split('-')[0]+'*.fits')
+                    print (files)
+                    for f in files:
+                        if objname not in f and ('red' in f or 'blue' in f):
+                            inputfile = f
+                    inputfile=input('Name of fits file to be combined? [{}]: '.format(inputfile)) or inputfile
+                    print (inputfile)
                     inputfile=inputfile.strip()
                     if (inputfile == ''):
                         return hop

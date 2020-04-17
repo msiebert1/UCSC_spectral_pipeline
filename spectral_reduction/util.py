@@ -2,6 +2,7 @@ from __future__    import print_function
 try:      from astropy.io import fits as pyfits
 except:   import pyfits
 import numpy as np
+import glob
 
 #---------------------------------------------------------------------------
 # 
@@ -713,13 +714,79 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
         _fittrace = 'no'
         _review = 'yes'
 
+        _lower=dv[_type]['_lower']
+        _upper=dv[_type]['_upper']
+        _b_sample = dv[_type]['_b_sample']
+
+        match_aperture = raw_input('Match aperture? y/[n]: ') or 'n'
+        if match_aperture == 'y':
+
+            aps = glob.glob('database/ap*')
+            for ap in aps:
+                print (ap.split('/')[-1])
+            ap_select = raw_input('Choose image to match apertures: ')
+            ap = open('database/'+ap_select)
+            ap_data = ap.readlines()
+            # print (ap_data[6].split()[2], ap_data[7].split()[2], ap_data[13].split('sample')[1].split('\n')[0])
+
+            #TODO: change to allow for any binning 
+            #I don't think this works when tracing on a different source
+            _lower = float(ap_data[6].split()[2])
+            _upper = float(ap_data[7].split()[2])
+            _b_sample = ap_data[13].split('sample')[1].split('\n')[0]
+            if ',' in _b_sample:
+                b1 = float(_b_sample.split(',')[0].split(':')[0])
+                b2 = float(_b_sample.split(',')[0].split(':')[1])
+                b3 = float(_b_sample.split(',')[1].split(':')[0])
+                b4 = float(_b_sample.split(',')[1].split(':')[1])
+            else:
+                b1 = float(_b_sample.split()[0].split(':')[0])
+                b2 = float(_b_sample.split()[0].split(':')[1])
+                b3 = float(_b_sample.split()[1].split(':')[0])
+                b4 = float(_b_sample.split()[1].split(':')[1])
+
+            img_binning = hdr.get('BINNING', None).strip()
+            if img_binning != None:
+                img_binning = float(img_binning.split(',')[0])
+            ap_binning = raw_input('Enter aperture spatial binning [1]: ') or 1
+            ap_binning = float(ap_binning)
+            _lower = _lower*(ap_binning/img_binning)
+            _upper = _upper*(ap_binning/img_binning)
+            b1 = b1*(ap_binning/img_binning)
+            b2 = b2*(ap_binning/img_binning)
+            b3 = b3*(ap_binning/img_binning)
+            b4 = b4*(ap_binning/img_binning)
+            _b_sample = str(b1)+':'+str(b2)+' '+str(b3)+':'+str(b4)
+            _find = 'yes'
+
+        use_diff_aperture = raw_input('Trace different aperture? y/[n]: ')
+        if use_diff_aperture == 'y':
+            aps = glob.glob('../master_files/ap*')
+            for ap in aps:
+                print (ap.split('/')[-1])
+            ap_select = raw_input('Choose ref image from list above: ')
+            os.system('cp ' + ' ../master_files/' + ap_select + ' database/'+ap_select)
+            # _fittrac = 'no'
+            # _find = 'no'
+            # _trace = 'yes'
+            # _interactive = 'yes'
+            # _edit = 'yes'
+            # _recenter='no'
+            # _review = 'yes'
+            # _resize = 'no'
+            _reference = ap_select[2:]
+            _fittrac = 'no'
+            _trace = 'no'
+            # iraf.specred.apall(img, output=imgex, references=ap_select[2:], trace=_trace, fittrac=_fittrac, find=_find,
+            #                    recenter=_recenter, edit=_edit, review=_review, resize=_resize,
+            #                    interactive=_interactive)
+
         iraf.specred.apall(img, output=imgex, referen=_reference, trace=_trace, fittrac=_fittrac, find=_find,
                            recenter=_recenter, edit=_edit,
-                           nfind=1, backgro='fit', lsigma=3, usigma=3,
+                           nfind=1, backgro='fit', lsigma=3, usigma=3, b_order=dv[_type]['_b_order'],
                            format='multispec', extras='yes',
-                           b_function='chebyshev', b_sample=dv[_type]['_b_sample'], clean='yes', pfit='fit1d',
-                           lower=dv[_type]['_lower'], upper=dv[_type][
-                               '_upper'], t_niter=dv[_type]['_t_niter'],
+                           b_function='chebyshev', b_sample=_b_sample, clean='yes', pfit='fit1d',
+                           lower=_lower, upper=_upper, t_niter=dv[_type]['_t_niter'],
                            width=dv[_type]['_width'],
                            radius=dv[_type]['_radius'], 
                            line=inst.get('approx_extract_column','INDEF'), nsum=dv[_type]['_nsum'], 

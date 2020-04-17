@@ -28,6 +28,8 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
     xfactor=10
     maxlag=200
     print('\nCross-correlating object with B-star spectrum\n')
+    fig=plt.figure()
+    axarr=fig.subplots(2,1)
     if (wmin < 6200) and (wmax > 6400) and (wmax < 6900):
         indblue=womget_element(wave,6200)
         indred=womget_element(wave,6400)
@@ -49,12 +51,10 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
         # plt.plot(wave,object,drawstyle='steps-mid',color='r')
         # plt.plot(wave,newobject,drawstyle='steps-mid',color='k')
         ymin,ymax=finalscaler(bstartmp[indblue:indred+1])
-        plt.plot(wave[indblue:indred+1], scale*object[indblue:indred+1],drawstyle='steps-mid',color='r')
-        plt.plot(wave[indblue:indred+1], bstartmp[indblue:indred+1],drawstyle='steps-mid',color='k')
-        plt.plot(wave[indblue:indred+1]+lag[1]*wdelt, bstartmp[indblue:indred+1],drawstyle='steps-mid',color='g')
+        axarr[0].plot(wave[indblue:indred+1], scale*object[indblue:indred+1],drawstyle='steps-mid',color='r')
+        axarr[0].plot(wave[indblue:indred+1], bstartmp[indblue:indred+1],drawstyle='steps-mid',color='k')
+        axarr[0].plot(wave[indblue:indred+1]+lag[1]*wdelt, bstartmp[indblue:indred+1],drawstyle='steps-mid',color='g')
         plt.pause(0.01)
-        print('Check plot')
-        answer=yesno('y')
 
     if (wmin < 7500) and (wmax > 8000):
         
@@ -64,15 +64,13 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
         lag[2]=xcor(scale*object[indblue:indred+1],bstartmp[indblue:indred+1],xfactor,maxlag)
         print('The shift at the A band is {} angstroms'.format(lag[2]*wdelt))
         lagflag[2]=True
-
-        plt.cla()
         # ymin,ymax=finalscaler(object)
         # plt.plot(wave,object,drawstyle='steps-mid',color='r')
         # plt.plot(wave,newobject,drawstyle='steps-mid',color='k')
         ymin,ymax=finalscaler(bstartmp[indblue:indred+1])
-        plt.plot(wave[indblue:indred+1], scale*object[indblue:indred+1],drawstyle='steps-mid',color='r')
-        plt.plot(wave[indblue:indred+1], bstartmp[indblue:indred+1],drawstyle='steps-mid',color='k')
-        plt.plot(wave[indblue:indred+1]+lag[2]*wdelt, bstartmp[indblue:indred+1],drawstyle='steps-mid',color='g')
+        axarr[1].plot(wave[indblue:indred+1], scale*object[indblue:indred+1],drawstyle='steps-mid',color='r')
+        axarr[1].plot(wave[indblue:indred+1], bstartmp[indblue:indred+1],drawstyle='steps-mid',color='k')
+        axarr[1].plot(wave[indblue:indred+1]+lag[2]*wdelt, bstartmp[indblue:indred+1],drawstyle='steps-mid',color='g')
         plt.pause(0.01)
         print('Check plot')
         answer=yesno('y')
@@ -85,7 +83,8 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
         angshift=0.0
     bstartmpcopy=bstartmp.copy()
     telluric_done = False
-    plt.clf()
+    plt.close()
+    fig = plt.figure(figsize = [9,5])
     while (not telluric_done):
         bstartmp=bstartmpcopy.copy()
         tmp=womscipyrebin(wave+angshift,bstartmp,wave)
@@ -102,6 +101,7 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
         ymin,ymax=finalscaler(spectrum)
         plt.plot(wave,spectrum,drawstyle='steps-mid',color='r')
         plt.plot(wave,newobject,drawstyle='steps-mid',color='k')
+        plt.ylim([ymin,ymax])
         plt.pause(0.01)
         print('Is this OK?')
         answer=yesno('y')
@@ -109,5 +109,6 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
             angshift=inputter('Enter B-star shift in Angstroms: ','float',False)
         else:
             telluric_done = True
+    plt.close()
     return newobject, bvar, angshift
             

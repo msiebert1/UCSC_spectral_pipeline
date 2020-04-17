@@ -121,6 +121,7 @@ def mkfluxstar(fluxfile,gratcode):
     splineresult=fitspl_dev(wave,np.log10(fstar),(airmass>airlimit),fig, cal='fluxstar{}'.format(gratcode))
     splineresult=10**(splineresult)
     plt.cla()
+    plt.plot(wave,fstar,drawstyle='steps-mid', color='r')
     plt.plot(wave,splineresult,drawstyle='steps-mid')
     plt.pause(0.01)
     delkeylist=['WAT0_001', 'WAT1_001', 'WAT2_001', 'WAT0_002', \

@@ -67,22 +67,23 @@ def main():
     print('(In other words, include the d in your file names.)')
     print(' ')
     print('Do you want to use second-order correction?\n')
-    answer = yesno('n')
-    if (answer == 'y'):
-        secondord = True
+    secondord = False
+    # answer = yesno('n')
+    # if (answer == 'y'):
+    #     secondord = True
     #axarr=fig.subplots(2,sharex=True)
     #fig.subplots_adjust(hspace=0)
 
     print('\nWe now need a grating code, such as opt or ir2.')
     print('This will be used to keep track of the fluxstar and')
     print('bstar as in fluxstaropt.fits or bstarir2.fits\n')
-    gratcode = inputter('Enter the grating code: ', 'string', False)
+    gratcode = inputter('Enter the grating code (blue/red): ', 'string', False)
     print(' ')
     if (secondord):
         gratcode2 = inputter('Enter the second-order grating code: ', 'string', False)
     print(' ')
-    print('Enter the file containing the list of objects')
-    print('(should be dispersion-corrected)\n')
+    # print('Enter the file containing the list of objects')
+    # print('(should be dispersion-corrected)\n')
     done = False
     while (not done):
         # objectlist = inputter('Object list file: ', 'string', False)
