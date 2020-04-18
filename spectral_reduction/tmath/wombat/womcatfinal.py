@@ -1,6 +1,7 @@
 def womcatfinal(blue_data, red_data):
     """concatenate data with overlapping wavelength regions"""
     import numpy as np
+    import math
     import logging
     import matplotlib.pyplot as plt
     from tmath.wombat.inputter import inputter
@@ -11,6 +12,8 @@ def womcatfinal(blue_data, red_data):
     from tmath.wombat.womwaverange2 import womwaverange2
     from tmath.wombat import HOPSIZE
     from matplotlib.widgets import Cursor
+    from tmath.wombat.womspectres import spectres
+
     plt.ion()
     screen_width, screen_height = get_screen_size()
     screenpos = '+{}+{}'.format(int(screen_width*0.2), int(screen_height*0.05))
@@ -52,6 +55,38 @@ def womcatfinal(blue_data, red_data):
     wavered=np.asarray(red_data[0])
     fluxred=np.asarray(red_data[1])
     varred=np.asarray(red_data[2])
+
+    blue_dw = waveblue[1] - waveblue[0]
+    red_dw = wavered[1] - wavered[0]
+    if red_dw > blue_dw:
+        print ("Interpolating to {} A/pix".format(red_dw))
+        interp_wave = np.arange(math.ceil(waveblue[0])+1.*red_dw, math.floor(wavered[-1])-1.*red_dw, dtype=float, step=red_dw)
+        blue_range = np.where((interp_wave >= waveblue[0]+1) & (interp_wave <= waveblue[-1]-1))
+        red_range = np.where((interp_wave >= wavered[0]+1) & (interp_wave <= wavered[-1]-1))
+        blue_interp = spectres(interp_wave[blue_range], waveblue, fluxblue, spec_errs=np.sqrt(varblue))
+        red_interp = spectres(interp_wave[red_range], wavered, fluxred, spec_errs=np.sqrt(varred))
+
+        waveblue = blue_interp[0]
+        fluxblue = blue_interp[1]
+        varblue = blue_interp[2]**2.
+        wavered = red_interp[0]
+        fluxred = red_interp[1]
+        varred = red_interp[2]**2.
+    else:
+        print ("Interpolating to {} A/pix".format(blue_dw))
+        interp_wave = np.arange(math.ceil(waveblue[0])+1.*blue_dw, math.floor(wavered[-1])-1.*blue_dw, dtype=float, step=blue_dw)
+        blue_range = np.where((interp_wave >= waveblue[0]+1) & (interp_wave <= waveblue[-1]-1))
+        red_range = np.where((interp_wave >= wavered[0]+1) & (interp_wave <= wavered[-1]-1))
+        blue_interp = spectres(interp_wave[blue_range], waveblue, fluxblue, spec_errs=np.sqrt(varblue))
+        red_interp = spectres(interp_wave[red_range], wavered, fluxred, spec_errs=np.sqrt(varred))
+
+        waveblue = blue_interp[0]
+        fluxblue = blue_interp[1]
+        varblue = blue_interp[2]**2.
+        wavered = red_interp[0]
+        fluxred = red_interp[1]
+        varred = red_interp[2]**2.
+
     indexblue=womget_element(waveblue,wavered[0])
     indexred=womget_element(wavered,waveblue[-1])
     fluxcor=1.0

@@ -6,6 +6,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
     import os, pdb
     import inspect
     import glob
+    import math
     from astropy.io import fits
     from astropy import units as u
     from astropy.coordinates import SkyCoord
@@ -19,6 +20,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
     from tmath.wombat.yesno import yesno
     from tmath.wombat.womashrebin import womashrebin
     from tmath.wombat.wominterpofluxconserving import interpo_flux_conserving
+    from tmath.wombat.womspectres import spectres
     from tmath.pydux.getfitsfile import getfitsfile
     from tmath.pydux.pacheck import pacheck
     from tmath.pydux.jdcnv import jdcnv
@@ -376,13 +378,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 print('\nPrevious resolution choice: {}'.format(deltsave))
             else:
                 deltsave = 0.0
-            # newdelt=2
-            while (newdelt <= 0) or (newdelt > wave[-1]):
-                print('Rebin to how many Angstroms per pixel? ')
-                newdelt=inputter('         <CR> selects previous choice: ','float',True,deltsave)
-                if (newdelt <= 0) or (newdelt > wave[-1]):
-                    print('Need positive resoution and smaller than the')
-                    print('entire spectrum.  Try again')
+            newdelt=wave[1]-wave[0]
+            # while (newdelt <= 0) or (newdelt > wave[-1]):
+            #     print('Rebin to how many Angstroms per pixel? ')
+            #     newdelt=inputter('         <CR> selects previous choice: ','float',True,deltsave)
+            #     if (newdelt <= 0) or (newdelt > wave[-1]):
+            #         print('Need positive resoution and smaller than the')
+            #         print('entire spectrum.  Try again')
             print('\nCurrent range: {} {}'.format(wave[0],wave[-1]))
             if (secondtime):
                 print('\nPrevious selection was {} {} (marked in red on plot)'.format(wavesave0,wavesaven))
@@ -417,12 +419,21 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             # finalsig=np.sqrt(finalvar)*np.sqrt(olddelt/newdelt)
 
             #Matt's interpolation algorithm. womashrebin is an unreadable monstrosity.
-            interp_data = interpo_flux_conserving(wave, bobj, 1./vartmp, waveb, waver, dw=newdelt, testing=False)
-            trim_range = (interp_data[0] > waveb) & (interp_data[0] < waver)
-            nwave = interp_data[0][trim_range]
-            finalobj = interp_data[1][trim_range]
-            finalvar = 1./interp_data[2][trim_range]
-            finalsig = np.sqrt(finalvar)
+            # interp_data = interpo_flux_conserving(wave, bobj, 1./vartmp, waveb, waver, dw=newdelt, testing=False)
+
+            # interp_wave = np.arange(math.ceil(wave[0])+1., math.floor(wave[-1])-1., dtype=float, step=newdelt)
+            # spectres_data = spectres(interp_wave, wave, bobj, spec_errs=bsig)
+
+            # trim_range = (interp_data[0] > waveb) & (interp_data[0] < waver)
+            # nwave = interp_data[0][trim_range]
+            # finalobj = interp_data[1][trim_range]
+            # finalvar = 1./interp_data[2][trim_range]
+            # finalsig = np.sqrt(finalvar)
+
+            nwave = wave
+            finalobj = bobj
+            finalvar = bsig**2.
+            finalsig = bsig
 
             #gonna ignore the second order stuff for now
             if (secondord):
@@ -434,12 +445,16 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 finalobj, finalsig, wavebeg, waveend, brscale=secondcat(nwave,finalobj,finalobj2, finalsig,finalsig2,secondtime, wavebeg, waveend, brscale)
             seconddone = True
             ymin,ymax=finalscaler(finalobj)
-            plt.clf()
+            plt.close()
+            fig=plt.figure()
             plt.plot(nwave,finalobj,drawstyle='steps-mid')
+            # plt.plot(spectres_data[0],spectres_data[1],drawstyle='steps-mid', color='green')
             plt.xlabel('Wavelength')
             plt.ylabel('Flux')
             plt.title(objectname)
             plt.savefig(objectname + '-' + gratcode + '.png')
+
+            plt.show()
 
             outputdone = False
             while (not outputdone):
