@@ -226,6 +226,15 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             except KeyError:
                 pass """
         for i in range(0,num_apertures):
+            # plt.close()
+            # fig=plt.figure()
+            # plt.plot(multispec[0,i,:], drawstyle='steps-mid',color='r')
+            # plt.plot(multispec[1,i,:], drawstyle='steps-mid',color='k')
+            # plt.xlim(1750,1900)
+            # plt.pause(0.01)
+            # print('Check plot')
+            # answer=yesno('y')
+
             print('\nAperture {}:'.format(i+1))
             wave=getmswave(mshead,i)
             wdelt=wave[1]-wave[0]
@@ -238,6 +247,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             fig.subplots_adjust(hspace=0)
             ax0.plot(wave,multispec[1,i,:],drawstyle='steps-mid',color='r')
             ax0.plot(wave,multispec[0,i,:],drawstyle='steps-mid',color='k')
+            # ax0.plot(multispec[0,i,:],multispec[2,i,:],drawstyle='steps-mid',color='r')
+            # ax0.plot(multispec[0,i,:],multispec[1,i,:],drawstyle='steps-mid',color='k')
             plt.pause(0.01)
             ax0.set_ylim((ymin,ymax))
             ax1.semilogy(wave,np.abs(multispec[1,i,:]-multispec[0,i,:])/mean, \
@@ -305,15 +316,18 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             wave=wave+angshift #check to make sure signs are right
             skyshiftdone=False
             npixsky2=len(sky)//2
-            # plt.close()
             msky_max = np.max(msky[npixsky2-1:])
             sky_max = np.max(sky[npixsky2-1:])
             scale = sky_max/msky_max
+
+            plt.close()
+            fig = plt.figure(figsize=[8,5])
+            fig.subplots_adjust(hspace=0)
             while (not skyshiftdone):
-                plt.clf()
                 axarr=fig.subplots(2)
-                fig.subplots_adjust(hspace=0)
+                
                 waveplus=wave-angshift
+
                 axarr[0].plot(waveplus[0:npixsky2],scale*msky[0:npixsky2], \
                               drawstyle='steps-mid',color='k')
                 axarr[0].plot(wave[0:npixsky2],sky[0:npixsky2], \
@@ -452,7 +466,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             plt.xlabel('Wavelength')
             plt.ylabel('Flux')
             plt.title(objectname)
-            plt.savefig(objectname + '-' + gratcode + '.png')
+            plt.savefig(objectname + '-' + gratcode + '_ap' + str(i+1) +'.png')
 
             plt.show()
 
@@ -466,8 +480,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 print('\nEnter the object name for the final fits file: ')
                 # objname=inputter('(UT date and .fits will be added): ','string',False)
                 objname = objectname + '-' + gratcode
-                fname=objname+'-'+printdate+'.fits'
-                sname=objname+'-'+printdate+'-sigma.fits'
+                fname=objname+'-'+printdate+'_ap'+str(i+1)+'.fits'
+                sname=objname+'-'+printdate+'_ap'+str(i+1)+'-sigma.fits'
                 if (os.path.isfile(fname)):
                     print('{} already exists!!!!'.format(fname))
                     print('Do you wish to overwrite it? ')
@@ -513,7 +527,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             hdul[0].header=mshead.copy()
             hdul.writeto(fname,overwrite=True)
 
-            spectxt = objname+'-'+printdate+'.flm'
+            spectxt = objname+'-'+printdate+'_ap'+ str(i+1)+'.flm'
             spectxt=spectxt.strip()
             np.savetxt(spectxt,np.transpose([nwave,finalobj.copy(),finalsig.copy()]))
 
@@ -528,7 +542,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     files = glob.glob(objname.split('-')[0]+'*.fits')
                     print (files)
                     for f in files:
-                        if objname not in f and ('red' in f or 'blue' in f):
+                        if objname not in f and ('red' in f or 'blue' in f) and '_ap'+str(i+1) in f:
                             inputfile = f
                     inputfile=input('Name of fits file to be combined? [{}]: '.format(inputfile)) or inputfile
                     print (inputfile)
@@ -588,7 +602,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 plt.xlabel('Wavelength')
                 plt.ylabel('Flux')
                 plt.title(objectname)
-                plt.savefig(objectname + '_combined.png')
+                plt.savefig(objectname + '_combined_ap'+str(i+1)+'.png')
                 
                 outputdone = False
                 while (not outputdone):
@@ -600,8 +614,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     print('\nEnter the object name for the final fits file: ')
                     # objname=inputter('(UT date and .fits will be added): ','string',False)
                     objname = objectname + '-combined'
-                    fname=objname+'-'+printdate+'.fits'
-                    sname=objname+'-'+printdate+'-sigma.fits'
+                    fname=objname+'-'+printdate+'_combined_ap'+str(i+1)+'.fits'
+                    sname=objname+'-'+printdate+'_combined_ap'+str(i+1)+'-sigma.fits'
                     if (os.path.isfile(fname)):
                         print('{} already exists!!!!'.format(fname))
                         print('Do you wish to overwrite it? ')
@@ -611,44 +625,44 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     else:
                         outputdone = True
                 # add to header
-                mshead.set('CRPIX1', 1)
-                mshead.set('CRVAL1',  nwave[0])
-                mshead.set('CDELT1', nwave[1] - nwave[0])
-                mshead.set('CTYPE1', 'LINEAR')
-                mshead.set('W_RANGE', waverange)
-                mshead.set('BSTAR_Z', bstarairmass)
-                mshead.set('BSTARNUM', bstarnum)
-                mshead.set('BSTAROBJ', bstarname)
-                mshead.set('BARYVEL', v)
-                mshead.set('SKYSHIFT', angshift)
-                mshead.set('ATMSHIFT', bangshift)
-                mshead.set('EXTRACT', extractcode)
-                mshead.set('REDUCER', user)
-                mshead.set('RED_DATE', datetime.now().strftime("%Y-%M-%d %I:%M%p"), 'EPOCH OF REDUCTION')
-                mshead.set('OBJECT', objectname)
-                if (secondord):
-                    mshead.set('SECOND', 'yes',  'Second order correction attempted')
-                    mshead.set('COMBRANGE',combrange)
-                    mshead.set('BSTAR_Z2',bstarairmass2)
-                    mshead.set('BSTARNU2', bstarnum2)
-                    mshead.set('BSTAROB2', bstarname2)
+                mshead_combined = mshead.copy()
+                mshead_combined.set('CRPIX1', 1)
+                mshead_combined.set('CRVAL1',  nwave[0])
+                mshead_combined.set('CDELT1', nwave[1] - nwave[0])
+                mshead_combined.set('CTYPE1', 'LINEAR')
+                mshead_combined.set('W_RANGE', waverange)
+                mshead_combined.set('BSTAR_Z', bstarairmass)
+                mshead_combined.set('BSTARNUM', bstarnum)
+                mshead_combined.set('BSTAROBJ', bstarname)
+                mshead_combined.set('BARYVEL', v)
+                mshead_combined.set('SKYSHIFT', angshift)
+                mshead_combined.set('ATMSHIFT', bangshift)
+                mshead_combined.set('EXTRACT', extractcode)
+                mshead_combined.set('REDUCER', user)
+                mshead_combined.set('RED_DATE', datetime.now().strftime("%Y-%M-%d %I:%M%p"), 'EPOCH OF REDUCTION')
+                mshead_combined.set('OBJECT', objectname)
+                if (secondord): #not implemented
+                    mshead_combined.set('SECOND', 'yes',  'Second order correction attempted')
+                    mshead_combined.set('COMBRANGE',combrange)
+                    mshead_combined.set('BSTAR_Z2',bstarairmass2)
+                    mshead_combined.set('BSTARNU2', bstarnum2)
+                    mshead_combined.set('BSTAROB2', bstarname2)
                     fluxairmass2=mshead2['FLX2_Z']
                     fluxnum2=mshead2['FLX2_NUM']
                     fluxname2=mshead2['FLX2_OBJ']
-                    mshead.set('FLX2_Z',fluxairmass2)
-                    mshead.set('FLX2_NUM', fluxnum2)
-                    mshead.set('FLX2_OBJ', fluxname2)
+                    mshead_combined.set('FLX2_Z',fluxairmass2)
+                    mshead_combined.set('FLX2_NUM', fluxnum2)
+                    mshead_combined.set('FLX2_OBJ', fluxname2)
                 outdata=np.zeros((len(finalobj),2))
                 outdata[:,0]=finalobj.copy()
                 outdata[:,1]=finalsig.copy()
                 outhdu=fits.PrimaryHDU(outdata)
                 hdul=fits.HDUList([outhdu])
-                mshead.set('NAXIS2',2)
-                hdul[0].header=mshead.copy()
+                mshead_combined.set('NAXIS2',2)
+                hdul[0].header=mshead_combined.copy()
                 hdul.writeto(fname,overwrite=True)
                 hdul.close()
-
-                spectxt = objname+'-'+printdate+'.flm'
+                spectxt = objname+'-'+printdate+'_combined_ap'+ str(i+1)+'.flm'
                 spectxt=spectxt.strip()
                 np.savetxt(spectxt,np.transpose([nwave,finalobj.copy(),finalsig.copy()]))
                     

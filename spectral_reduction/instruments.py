@@ -35,7 +35,9 @@ kast_blue = {'name': 'kast_blue',
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 2.8,
              'approx_extract_line': 145,
-             'approx_extract_column': 1000}
+             'approx_extract_column': 1000,
+             'pixel_scale': .43 #arcsec/pix
+             }
 
 
 kast_red = { 'name': 'kast_red',
@@ -65,7 +67,9 @@ kast_red = { 'name': 'kast_red',
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 2.8,
              'approx_extract_line': 150,
-             'approx_extract_column': 1000}
+             'approx_extract_column': 1000,
+             'pixel_scale': .43 #arcsec/pix
+             }
 
 lris_blue = {'name': 'lris_blue',
              'arm': 'blue',
@@ -90,7 +94,9 @@ lris_blue = {'name': 'lris_blue',
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 8,
              # 'approx_extract_line': 740, jon old
-             'approx_extract_line': 200}
+             'approx_extract_line': 200,
+             'pixel_scale': .135 #arcsec/pix
+             }
              
 lris_red = { 'name': 'lris_red',
              'arm': 'red',
@@ -115,7 +121,9 @@ lris_red = { 'name': 'lris_red',
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 8,
              # 'approx_extract_line': 370, jon old
-             'approx_extract_line': 69}
+             'approx_extract_line': 69,
+             'pixel_scale': .135 #arcsec/pix
+             }
              
 goodman_m1={ 'name': 'goodman_blue',
              'arm': 'blue',
@@ -143,7 +151,9 @@ goodman_m1={ 'name': 'goodman_blue',
              'observatory': 'soar',
              'sky_file': path_to_trunk + 'licksky.fits', # JB: need to fix
              'section': 'middle column',
-             'pyzap_boxsize': 5}
+             'pyzap_boxsize': 5,
+             'pixel_scale': .15 #arcsec/pix
+             }
              
 goodman_m2={ 'name': 'goodman_red',
              'arm': 'red',
@@ -170,7 +180,9 @@ goodman_m2={ 'name': 'goodman_red',
              'observatory': 'soar',
              'sky_file': path_to_trunk + 'SOAR_cals/licksky.fits', # JB: need to fix
              'section': 'middle column',
-             'pyzap_boxsize': 5}
+             'pyzap_boxsize': 5,
+             'pixel_scale': .15 #arcsec/pix
+             }
 
 
 def blue_or_red(img):

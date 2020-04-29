@@ -1,6 +1,6 @@
 from __future__    import print_function
 
-def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc, _fast):
+def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _arc, _fast, _host):
     import string
     import os
     import re
@@ -17,6 +17,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
     import cosmics
     from pyraf import iraf
     import pyzapspec
+    import host_galaxies as host_gals
 
     dv = util.dvex()
     scal = np.pi / 180.
@@ -543,6 +544,9 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
             print('\n### warning problem \n exit ')
             sys.exit()
         else:
+            if _host:
+                ap_width, create_sn_ap = host_gals.calculate_ap_data(_object0.lower().split('_')[0], inst)
+                write_host_ap(ap_width, create_sn_ap, nameout0)
             imgex = util.extractspectrum(
                 img, dv, inst, _interactive, 'obj')
 
@@ -552,6 +556,29 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction,_arc
                 os.system('cp ' + 'database/ap' + img[0:-5] + ' ../master_files/ap'+img[0:-5])
             #TODO: Generate blue/red aperture
 
+            with open('database/ap' + img[0:-5]) as apfile:
+                ap_data = apfile.readlines()
+                count = 0
+                for line in ap_data:
+                    if line.startswith('begin'):
+                        count+=1
+                if count > 1:
+                    with open('database/' + wave_sol_file) as arc:
+                        with open('database/' + wave_sol_file + '_new','w') as arcex_new:
+                            lines = arc.readlines()
+                            for i in range(count):
+                                for line in lines:
+                                    if 'identify' in line:
+                                        arcex_new.write(line.replace('Ap 1', 'Ap '+ str(i+1)))
+                                    elif 'image' in line:
+                                        arcex_new.write(line.replace('Ap 1', 'Ap '+ str(i+1)))
+                                    elif 'aperture' in line:
+                                        arcex_new.write(line.replace('1', str(i+1)))
+                                    else:
+                                        arcex_new.write(line)
+                                arcex_new.write('\n')
+            os.system('cp ' + 'database/' + wave_sol_file +'_new' + ' database/'+wave_sol_file)
+            util.delete('database/'+wave_sol_file+'_new')
             print('\n### applying wavelength solution')
             print (arc_ex)
             iraf.disp(inlist=imgex, reference=arc_ex)    

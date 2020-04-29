@@ -13,6 +13,7 @@ from pyraf import iraf
 import pyds9 as pyds9
 import keck_basic_2d
 import manifest_utils as mu
+import host_galaxies as host_gals
 
 matplotlib.use('TkAgg')
 from flat_utils import combine_flats,inspect_flat
@@ -269,6 +270,7 @@ def pre_reduction_dev(*args,**kwargs):
     MAKE_ARCS = kwargs.get('MAKE_ARCS')
     MAKE_FLATS = kwargs.get('MAKE_FLATS')
     QUICK = kwargs.get('QUICK')
+    HOST = kwargs.get('HOST')
 
     # init iraf stuff
     iraf.noao(_doprint=0)
@@ -611,6 +613,8 @@ def pre_reduction_dev(*args,**kwargs):
             # finally, inspect the flat and mask bad regions
             res = inspect_flat(['pre_reduced/RESP_red.fits'],DISPAXIS=dispaxis)
 
+    if HOST:
+        host_gals.make_host_metadata(configDict)
 
     return 0
 
@@ -949,6 +953,8 @@ def parse_cmd_args():
                         help='Combine arcs into master arc images', action='store_true')
     parser.add_argument('--make-flats',
                         help='Combine flats into master flat images', action='store_true')
+    parser.add_argument('--host',
+                        help='Obtain relevant host galaxy metadata', action='store_true')
 
     basicProcCG.add_argument('--fake-basic-2d',
                         help='Fake the basic 2D reductions', action='store_true')
@@ -959,6 +965,7 @@ def parse_cmd_args():
                     help='Run the original pre_reduction',action='store_true')
     configCG.add_argument('-c','--config-file',
                     help='Config file to use for pre-reduction')
+
 
 
 
@@ -979,6 +986,7 @@ def parse_cmd_args():
     kwargs['MAKE_ARCS'] = cmdArgs.make_arcs
     kwargs['MAKE_FLATS'] = cmdArgs.make_flats
     kwargs['QUICK'] = cmdArgs.quicklook
+    kwargs['HOST'] = cmdArgs.host
 
     return (args,kwargs)
 
