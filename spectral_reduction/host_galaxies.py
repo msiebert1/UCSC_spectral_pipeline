@@ -91,6 +91,12 @@ def calculate_ap_data(sn, inst, seeing = 1., ap_scale=.0015):
         else:
             ap_width = theta/inst.get('pixel_scale')
 
+        ap_binning = raw_input('Enter aperture spatial binning [1]: ') or 1
+        ap_binning = float(ap_binning)
+
+        ap_width = ap_width/ap_binning
+        sep_pix = sep_pix/ap_binning
+
         print ('AP Width: ', ap_width, 'Sep kpc', sep_Mpc/1000., 'Sep pix: ', sep_pix)
 
         if sep_pix < ap_width:
@@ -101,17 +107,56 @@ def calculate_ap_data(sn, inst, seeing = 1., ap_scale=.0015):
 
         return sep_pix, create_sn_ap
 
-def write_host_ap(ap_width, create_sn_ap, name)
+def write_host_ap(ap_width, sep_pix, create_sn_ap, name):
     aps = glob.glob('../master_files/ap*')
     for ap in aps:
         print (ap.split('/')[-1])
-    center_ap = raw_input('Choose aperture for reference: ')
+    ref_ap = raw_input('Choose aperture for reference: ')
 
-    with open('../master_files/'+ref_ap) as ref_ap:
+    if create_sn_ap:
+        sn_direction = raw_input('Choose SN direction [1]: ')
+        sn_direction = float(sn_direction)
+
+    with open('../master_files/'+ref_ap) as ref_ap_file:
         with open('database/ap'+name,'w') as host_ap_file
-            ref_ap_data = ref_ap.readlines()
+            ref_ap_data = ref_ap_file.readlines()
             for i, r_line in enumerate(ref_ap_data):
-                host_ap_file.write(r_line)
+                if 'begin' in r_line and 'aperture' in r_line:
+                    host_ap_file.write(r_line.replace(r_line.split()[2], name))
+
+                elif 'image' in r_line:
+                    host_ap_file.write(r_line.replace(r_line.split()[1], name))
+
+                elif 'low' in line and 'reject' not in line:
+                    low = str(-1.*apwidth/2.) 
+                    host_ap_file.write(line.replace(line.split()[2], low))
+                elif 'high' in line and 'reject' not in line:
+                    high = str(apwidth/2.) 
+                    host_ap_file.write(line.replace(line.split()[2], high))
+
+                else:
+                    host_ap_file.write(r_line)
+
+            if create_sn_ap:
+                host_ap_file.write('\n')
+                for i, r_line in enumerate(ref_ap_data):
+                    if 'begin' in r_line and 'aperture' in r_line:
+                        host_ap_file.write(r_line.replace((r_line.split()[2] + ' 1'), name + ' 2'))
+
+                    elif 'image' in r_line:
+                        host_ap_file.write(r_line.replace(r_line.split()[1], name))
+
+                    if 'begin' not in r_line and 'aperture' in r_line:
+                        host_ap_file.write(r_line.replace(r_line.split()[2], '2'))
+
+                    elif 'low' in line and 'reject' not in line:
+                        low = str(-1.*apwidth/2. + sn_direction*sep_pix) 
+                        host_ap_file.write(line.replace(line.split()[2], low))
+                    elif 'high' in line and 'reject' not in line:
+                        high = str(apwidth/2. + sn_direction*sep_pix) 
+                        host_ap_file.write(line.replace(line.split()[2], high))
+                    else:
+                        host_ap_file.write(r_line)
 
 
 #function to generate aperture data from host file
