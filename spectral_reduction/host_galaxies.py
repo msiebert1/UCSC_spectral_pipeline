@@ -118,7 +118,7 @@ def write_host_ap(ap_width, sep_pix, create_sn_ap, name):
         sn_direction = float(sn_direction)
 
     with open('../master_files/'+ref_ap) as ref_ap_file:
-        with open('database/ap'+name,'w') as host_ap_file
+        with open('database/ap'+name,'w') as host_ap_file:
             ref_ap_data = ref_ap_file.readlines()
             for i, r_line in enumerate(ref_ap_data):
                 if 'begin' in r_line and 'aperture' in r_line:
