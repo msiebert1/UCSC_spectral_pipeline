@@ -14,6 +14,7 @@ import pyds9 as pyds9
 import keck_basic_2d
 import manifest_utils as mu
 import host_galaxies as host_gals
+import numpy as np
 
 matplotlib.use('TkAgg')
 from flat_utils import combine_flats,inspect_flat
@@ -324,15 +325,15 @@ def pre_reduction_dev(*args,**kwargs):
         observations = sorted(glob.glob('*.fits'))
         arm, inst_dict = instruments.blue_or_red(observations[0])
         if 'lris' in inst_dict.get('name'):
-            inst = 'LRIS'
+            inst_name = 'LRIS'
         elif 'kast' in inst_dict.get('name'):
-            inst = 'KAST'
+            inst_name = 'KAST'
         elif 'goodman' in inst_dict.get('name'):
-            inst = 'GOODMAN'
+            inst_name = 'GOODMAN'
 
         for obsfile in observations:
             header = fits.open(obsfile)[0].header
-            imageType = mu.determine_image_type(header, inst, STANDARD_STAR_LIBRARY)
+            imageType = mu.determine_image_type(header, inst_name, STANDARD_STAR_LIBRARY)
 
             channel, inst_dict = instruments.blue_or_red(obsfile)
             obj = header.get('OBJECT').strip()
@@ -491,7 +492,12 @@ def pre_reduction_dev(*args,**kwargs):
                         inst = instruments.blue_or_red(rawFile)[1]
                         if inst['name'] == 'lris_blue' or inst['name'] == 'lris_red':
                             # res = keck_basic_2d.main([rawFile])
-                            res = keck_basic_2d.main([rawFile], TRIM=True)
+                            if imgType != 'CAL_FLAT':
+                                print (imgType)
+                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False)
+                            else:
+                                print (imgType)
+                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True)
                         else:
                             res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
                     else:
@@ -548,12 +554,156 @@ def pre_reduction_dev(*args,**kwargs):
 
 
     # combine the flats
-    if MAKE_FLATS:
+    if MAKE_FLATS and 'lris' in inst['name']:
 
         list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
         list_flat_r = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
         inter = 'yes'
-        
+
+        b_amp1_list = []
+        b_amp2_list = []
+        r_amp1_list = []
+        r_amp2_list = []
+        for flat in list_flat_b:
+            b_amp1_list.append(flat.split('.')[0]+'_amp1.'+flat.split('.')[1])
+            b_amp2_list.append(flat.split('.')[0]+'_amp2.'+flat.split('.')[1])
+        for flat in list_flat_r:
+            r_amp1_list.append(flat.split('.')[0]+'_amp1.'+flat.split('.')[1])
+            r_amp2_list.append(flat.split('.')[0]+'_amp2.'+flat.split('.')[1])
+
+
+        # blue flats
+        if len(list_flat_b) > 0:
+            # br, inst = instruments.blue_or_red(list_flat_b[0])
+            br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(b_amp1_list[0]))
+            dispaxis = inst.get('dispaxis')
+            iraf.specred.dispaxi = dispaxis
+            Flat_blue_amp1 = 'pre_reduced/toFlat_blue_amp1.fits'
+            Flat_blue_amp2 = 'pre_reduced/toFlat_blue_amp2.fits'
+
+            flat_list_amp1 = []
+            for flat in b_amp1_list:
+                flat_list_amp1.append('pre_reduced/to'+ flat)
+            if os.path.isfile(Flat_blue_amp1):
+                os.remove(Flat_blue_amp1)
+
+            flat_list_amp2 = []
+            for flat in b_amp2_list:
+                flat_list_amp2.append('pre_reduced/to'+ flat)
+            if os.path.isfile(Flat_blue_amp2):
+                os.remove(Flat_blue_amp2)
+
+            # first, combine all the flat files into a master flat
+            res = combine_flats(flat_list_amp1,OUTFILE=Flat_blue_amp1,MEDIAN_COMBINE=True)
+            res = combine_flats(flat_list_amp2,OUTFILE=Flat_blue_amp2,MEDIAN_COMBINE=True)
+            
+            # run iraf response
+            iraf.specred.response(Flat_blue_amp1, 
+                                   normaliz=Flat_blue_amp1, 
+                                   response='pre_reduced/RESP_blue_amp1', 
+                                   interac=inter, thresho='INDEF',
+                                   sample='*', naverage=2, function='legendre', 
+                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   grow=0, graphic='stdgraph')
+            iraf.specred.response(Flat_blue_amp2, 
+                                   normaliz=Flat_blue_amp2, 
+                                   response='pre_reduced/RESP_blue_amp2', 
+                                   interac=inter, thresho='INDEF',
+                                   sample='*', naverage=2, function='legendre', 
+                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   grow=0, graphic='stdgraph')
+
+            # finally, inspect the flat and mask bad regions
+            res = inspect_flat(['pre_reduced/RESP_blue_amp1.fits'], OUTFILE='pre_reduced/RESP_blue_amp1.fits', DISPAXIS=dispaxis)
+            res = inspect_flat(['pre_reduced/RESP_blue_amp2.fits'], OUTFILE='pre_reduced/RESP_blue_amp2.fits', DISPAXIS=dispaxis)
+
+            hdu_amp1 = fits.open('pre_reduced/RESP_blue_amp1.fits')
+            hdu_amp2 = fits.open('pre_reduced/RESP_blue_amp2.fits')
+            amp1_flatten = np.asarray(hdu_amp1[0].data).flatten()
+            amp2_flatten = np.asarray(hdu_amp2[0].data).flatten()
+            concat_amps = np.concatenate([amp1_flatten, amp2_flatten])
+            resp_blue_data = np.reshape(concat_amps, (1000,4096))
+
+            header = hdu_amp1[0].header
+            if os.path.isfile('pre_reduced/RESP_blue.fits'):
+                os.remove('pre_reduced/RESP_blue.fits')
+
+            hdu = fits.PrimaryHDU(resp_blue_data,header)
+            hdu.writeto('pre_reduced/RESP_blue.fits',output_verify='ignore')
+
+            os.remove('pre_reduced/RESP_blue_amp1.fits')
+            os.remove('pre_reduced/RESP_blue_amp2.fits')
+
+        # red flats
+        if len(list_flat_r) > 0:
+            # br, inst = instruments.blue_or_red(list_flat_r[0])
+            br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(r_amp1_list[0]))
+            dispaxis = inst.get('dispaxis')
+            iraf.specred.dispaxi = dispaxis
+            Flat_red_amp1 = 'pre_reduced/toFlat_red_amp1.fits'
+            Flat_red_amp2 = 'pre_reduced/toFlat_red_amp2.fits'
+
+
+            flat_list_amp1 = []
+            for flat in r_amp1_list:
+                flat_list_amp1.append('pre_reduced/to'+ flat)
+            if os.path.isfile(Flat_red_amp1):
+                os.remove(Flat_red_amp1)
+
+            flat_list_amp2 = []
+            for flat in r_amp2_list:
+                flat_list_amp2.append('pre_reduced/to'+ flat)
+            if os.path.isfile(Flat_red_amp2):
+                os.remove(Flat_red_amp2)
+
+            # first, combine all the flat files into a master flat
+            res = combine_flats(flat_list_amp1,OUTFILE=Flat_red_amp1,MEDIAN_COMBINE=True)
+            res = combine_flats(flat_list_amp2,OUTFILE=Flat_red_amp2,MEDIAN_COMBINE=True)
+
+            #What is the output here? Check for overwrite
+            iraf.specred.response(Flat_red_amp1, 
+                                  normaliz=Flat_red_amp1, 
+                                  response='pre_reduced/RESP_red_amp1', 
+                                  interac=inter, thresho='INDEF',
+                                  sample='*', naverage=2, function='legendre', 
+                                  low_rej=3,high_rej=3, order=80, niterat=20, 
+                                  grow=0, graphic='stdgraph')
+            iraf.specred.response(Flat_red_amp2, 
+                                  normaliz=Flat_red_amp2, 
+                                  response='pre_reduced/RESP_red_amp2', 
+                                  interac=inter, thresho='INDEF',
+                                  sample='*', naverage=2, function='legendre', 
+                                  low_rej=3,high_rej=3, order=80, niterat=20, 
+                                  grow=0, graphic='stdgraph')
+
+            # finally, inspect the flat and mask bad regions
+            res = inspect_flat(['pre_reduced/RESP_red_amp1.fits'], OUTFILE='pre_reduced/RESP_red_amp1.fits', DISPAXIS=dispaxis)
+            res = inspect_flat(['pre_reduced/RESP_red_amp2.fits'], OUTFILE='pre_reduced/RESP_red_amp2.fits', DISPAXIS=dispaxis)
+
+            hdu_amp1 = fits.open('pre_reduced/RESP_red_amp1.fits')
+            hdu_amp2 = fits.open('pre_reduced/RESP_red_amp2.fits')
+            amp1_flatten = np.asarray(hdu_amp1[0].data).flatten()
+            amp2_flatten = np.asarray(hdu_amp2[0].data).flatten()
+            concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
+            resp_red_data = np.reshape(concat_amps, (575,4061))
+
+            resp_red_data[278:294,:] = 1.
+
+            header = hdu_amp1[0].header
+            if os.path.isfile('pre_reduced/RESP_red.fits'):
+                os.remove('pre_reduced/RESP_red.fits')
+
+            hdu = fits.PrimaryHDU(resp_red_data,header)
+            hdu.writeto('pre_reduced/RESP_red.fits',output_verify='ignore')
+
+            os.remove('pre_reduced/RESP_red_amp1.fits')
+            os.remove('pre_reduced/RESP_red_amp2.fits')
+
+    elif MAKE_FLATS:
+        list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
+        list_flat_r = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
+        inter = 'yes'
+
         # blue flats
         if len(list_flat_b) > 0:
             # br, inst = instruments.blue_or_red(list_flat_b[0])
@@ -562,7 +712,7 @@ def pre_reduction_dev(*args,**kwargs):
             iraf.specred.dispaxi = dispaxis
             Flat_blue = 'pre_reduced/toFlat_blue.fits'
 
-            flat_list = []
+            flat_list= []
             for flat in list_flat_b:
                 flat_list.append('pre_reduced/to'+ flat)
             if os.path.isfile(Flat_blue):
@@ -581,7 +731,7 @@ def pre_reduction_dev(*args,**kwargs):
                                    grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
-            res = inspect_flat(['pre_reduced/RESP_blue.fits'],DISPAXIS=dispaxis)
+            res = inspect_flat(['pre_reduced/RESP_blue.fits'], OUTFILE='pre_reduced/RESP_blue.fits', DISPAXIS=dispaxis)
 
         # red flats
         if len(list_flat_r) > 0:
@@ -591,8 +741,7 @@ def pre_reduction_dev(*args,**kwargs):
             iraf.specred.dispaxi = dispaxis
             Flat_red = 'pre_reduced/toFlat_red.fits'
 
-
-            flat_list = []
+            flat_list= []
             for flat in list_flat_r:
                 flat_list.append('pre_reduced/to'+ flat)
             if os.path.isfile(Flat_red):
@@ -600,18 +749,20 @@ def pre_reduction_dev(*args,**kwargs):
 
             # first, combine all the flat files into a master flat
             res = combine_flats(flat_list,OUTFILE=Flat_red,MEDIAN_COMBINE=True)
-
-            #What is the output here? Check for overwrite
+            
+            # run iraf response
             iraf.specred.response(Flat_red, 
-                                  normaliz=Flat_red, 
-                                  response='pre_reduced/RESP_red', 
-                                  interac=inter, thresho='INDEF',
-                                  sample='*', naverage=2, function='legendre', 
-                                  low_rej=3,high_rej=3, order=80, niterat=20, 
-                                  grow=0, graphic='stdgraph')
+                                   normaliz=Flat_red, 
+                                   response='pre_reduced/RESP_red', 
+                                   interac=inter, thresho='INDEF',
+                                   sample='*', naverage=2, function='legendre', 
+                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
-            res = inspect_flat(['pre_reduced/RESP_red.fits'],DISPAXIS=dispaxis)
+            res = inspect_flat(['pre_reduced/RESP_red.fits'], OUTFILE='pre_reduced/RESP_red.fits', DISPAXIS=dispaxis)
+
+
 
     if HOST:
         host_gals.make_host_metadata(configDict)

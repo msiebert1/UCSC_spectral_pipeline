@@ -611,7 +611,7 @@ def StoN2(img, show=False):
 ################################################
 
 
-def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
+def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_ex = False, match_aperture = 'n'):
     # print "LOGX:: Entering `extractspectrum` method/function in
     # %(__file__)s" % globals()
     import glob
@@ -718,7 +718,6 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
         _upper=dv[_type]['_upper']
         _b_sample = dv[_type]['_b_sample']
 
-        match_aperture = raw_input('Match aperture? y/[n]: ') or 'n'
         if match_aperture == 'y':
 
             aps = glob.glob('database/ap*')
@@ -755,123 +754,31 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
                     if 'center' in c_line:
                         center_ap_loc = float(c_line.split()[2])
 
-            with open(new_apfile,'w') as new_file:
                 with open('database/'+ap_select) as old_file:
                     ap_data = old_file.readlines()
+                    lows, highs, b_samps = get_relevant_ap_data(ap_data, ap_binning, img_binning, inst)
 
-                    ap_centers = {}
-                    for i, line in enumerate(ap_data):
-                        if len(line.split()) == 2 and 'aperture' in line:
-                            if line.split()[1] == '1':
-                                ismainap = True
-                            else:
-                                ismainap = False
-                            current_ap = line.split()[1]
-
-                        elif 'center' in line:
-                            ap_centers[current_ap] = float(line.split()[2])
-
-
-
-                    for i, line in enumerate(ap_data):
-
-                        if len(line.split()) == 2 and 'aperture' in line:
-                            if line.split()[1] == '1':
-                                ismainap = True
-                            else:
-                                ismainap = False
-                            # print (line.split()[0], line.split()[1])
-                            current_ap = line.split()[1]
-                            new_file.write(line)
-
-                        elif 'center' in line:
-                            if ismainap:
-                                newcenter = str(center_ap_loc)
-                                diff=0
-                            else:
-                                newcenter = str(center_ap_loc)
-                                diff = (float(line.split()[2]) - ap_centers['1'])*(ap_binning/img_binning)
-                                # if 'lris' in inst.get('name'):
-                                #     newcenter = str(center_ap_loc - diff)
-                                # else:
-                                #     newcenter = str(center_ap_loc + diff)
-                            if 'lris' in inst.get('name'):
-                                diff *= -1.
-
-                            new_file.write(line.replace(line.split()[2], newcenter))
-                            # print (line.split()[0], line.split()[2])
-
-                        elif 'low' in line and 'reject' not in line:
-                            low = str(float(line.split()[2])*(ap_binning/img_binning) + diff) 
-                            new_file.write(line.replace(line.split()[2], low))
-                            # print (line.split()[0], line.split()[2])
-
-                        elif 'high' in line and 'reject' not in line:
-                            high = str(float(line.split()[2])*(ap_binning/img_binning) + diff)
-                            new_file.write(line.replace(line.split()[2], high))
-                            # print (line.split()[0], line.split()[2])
-
-                        elif 'sample' in line:
-                            _b_sample = line.split('sample')[1].split('\n')[0]
-                            if ',' in _b_sample:
-                                b1 = float(_b_sample.split(',')[0].split(':')[0])
-                                b2 = float(_b_sample.split(',')[0].split(':')[1])
-                                b3 = float(_b_sample.split(',')[1].split(':')[0])
-                                b4 = float(_b_sample.split(',')[1].split(':')[1])
-                            else:
-                                b1 = float(_b_sample.split()[0].split(':')[0])
-                                b2 = float(_b_sample.split()[0].split(':')[1])
-                                b3 = float(_b_sample.split()[1].split(':')[0])
-                                b4 = float(_b_sample.split()[1].split(':')[1])
-                            b1 = b1*(ap_binning/img_binning) + diff
-                            b2 = b2*(ap_binning/img_binning) + diff
-                            b3 = b3*(ap_binning/img_binning) + diff
-                            b4 = b4*(ap_binning/img_binning) + diff
-                            _b_sample_new = str(b1)+':'+str(b2)+' '+str(b3)+':'+str(b4)
-                            new_file.write(line.replace(_b_sample, ' '+_b_sample_new))
-                            # print (line.split('sample')[1].split('\n')[0])
-
-                        elif 'blue' in line:
-                            new_file.write(line.replace('blue', 'red'))
-
-                        elif 'red' in line:
-                            new_file.write(line.replace('red', 'blue'))
-                        else:
-                            new_file.write(line)
-
-                    # raise TypeError
+                    with open(new_apfile,'w') as new_file:
+                        for i in range(len(lows)):
+                            for c_line in c_ap_data:
+                                if 'begin' in c_line and 'aperture' in c_line:
+                                    new_file.write(c_line.replace((c_line.split()[2] + ' 1'), c_line.split()[2] + ' ' + str(i+1)))
+                                elif 'begin' not in c_line and 'aperture' in c_line:
+                                    new_file.write(c_line.replace(c_line.split()[1], str(i+1)))
+                                elif 'low' in c_line and 'reject' not in c_line:
+                                    low = str(lows[i])
+                                    new_file.write(c_line.replace(c_line.split()[2], low))
+                                elif 'high' in c_line and 'reject' not in c_line:
+                                    high = str(highs[i])
+                                    new_file.write(c_line.replace(c_line.split()[2], high))
+                                elif 'sample' in c_line:
+                                    b_sample = str(b_samps[i])
+                                    new_file.write(c_line.replace(c_line.split('sample')[1].split('\n')[0], ' '+ b_sample))
+                                else:
+                                    new_file.write(c_line)
 
 
-            # print (ap_data[6].split()[2], ap_data[7].split()[2], ap_data[13].split('sample')[1].split('\n')[0])
 
-            #TODO: change to allow for any binning 
-            #I don't think this works when tracing on a different source
-            # _lower = float(ap_data[6].split()[2])
-            # _upper = float(ap_data[7].split()[2])
-            # _b_sample = ap_data[13].split('sample')[1].split('\n')[0]
-            # if ',' in _b_sample:
-            #     b1 = float(_b_sample.split(',')[0].split(':')[0])
-            #     b2 = float(_b_sample.split(',')[0].split(':')[1])
-            #     b3 = float(_b_sample.split(',')[1].split(':')[0])
-            #     b4 = float(_b_sample.split(',')[1].split(':')[1])
-            # else:
-            #     b1 = float(_b_sample.split()[0].split(':')[0])
-            #     b2 = float(_b_sample.split()[0].split(':')[1])
-            #     b3 = float(_b_sample.split()[1].split(':')[0])
-            #     b4 = float(_b_sample.split()[1].split(':')[1])
-
-            # img_binning = hdr.get('BINNING', None).strip()
-            # if img_binning != None:
-            #     img_binning = float(img_binning.split(',')[0])
-            # ap_binning = raw_input('Enter aperture spatial binning [1]: ') or 1
-            # ap_binning = float(ap_binning)
-            # _lower = _lower*(ap_binning/img_binning)
-            # _upper = _upper*(ap_binning/img_binning)
-            # b1 = b1*(ap_binning/img_binning)
-            # b2 = b2*(ap_binning/img_binning)
-            # b3 = b3*(ap_binning/img_binning)
-            # b4 = b4*(ap_binning/img_binning)
-            # _b_sample = str(b1)+':'+str(b2)+' '+str(b3)+':'+str(b4)
             _find = 'yes'
             _recenter = 'yes'
             _reference=ap_match[2:]
@@ -899,6 +806,12 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
             #                    recenter=_recenter, edit=_edit, review=_review, resize=_resize,
             #                    interactive=_interactive)
 
+
+        if host_ex:
+            _recenter = 'n'
+            _trace = 'n'
+            _fittrac = 'n'
+            _find = 'n'
         
         iraf.specred.apall(img, output=imgex, referen=_reference, trace=_trace, fittrac=_fittrac, find=_find,
                            recenter=_recenter, edit=_edit,
@@ -919,6 +832,69 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False):
     else:
         print('\n### skipping new extraction')
     return imgex
+
+def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
+
+    num_aps = 0
+    lows = []
+    highs = []
+    b_samps = []
+
+    ap_centers = {}
+    for i, line in enumerate(ap_data):
+        if len(line.split()) == 2 and 'aperture' in line:
+            current_ap = line.split()[1]
+            num_aps+=1
+        elif 'center' in line:
+            ap_centers[current_ap] = float(line.split()[2])
+
+    for line in ap_data:
+
+        if len(line.split()) == 2 and 'aperture' in line:
+            if line.split()[1] == '1':
+                ismainap = True
+            else:
+                ismainap = False
+            current_ap = line.split()[1]
+
+        elif 'center' in line:
+            if ismainap:
+                diff=0
+            else:
+                diff = (float(line.split()[2]) - ap_centers['1'])*(ap_binning/img_binning)
+            if 'lris' in inst.get('name'):
+                diff *= -1.
+
+        elif 'low' in line and 'reject' not in line:
+            low = str(float(line.split()[2])*(ap_binning/img_binning) + diff) 
+            lows.append(low)
+
+        elif 'high' in line and 'reject' not in line:
+            high = str(float(line.split()[2])*(ap_binning/img_binning) + diff)
+            highs.append(high)
+
+        elif 'sample' in line:
+            _b_sample = line.split('sample')[1].split('\n')[0]
+            if ',' in _b_sample:
+                b1 = float(_b_sample.split(',')[0].split(':')[0])
+                b2 = float(_b_sample.split(',')[0].split(':')[1])
+                b3 = float(_b_sample.split(',')[1].split(':')[0])
+                b4 = float(_b_sample.split(',')[1].split(':')[1])
+            else:
+                b1 = float(_b_sample.split()[0].split(':')[0])
+                b2 = float(_b_sample.split()[0].split(':')[1])
+                b3 = float(_b_sample.split()[1].split(':')[0])
+                b4 = float(_b_sample.split()[1].split(':')[1])
+            b1 = b1*(ap_binning/img_binning) + diff
+            b2 = b2*(ap_binning/img_binning) + diff
+            b3 = b3*(ap_binning/img_binning) + diff
+            b4 = b4*(ap_binning/img_binning) + diff
+            _b_sample_new = str(b1)+':'+str(b2)+' '+str(b3)+':'+str(b4)
+            b_samps.append(_b_sample_new)
+
+    return lows, highs, b_samps
+
+
 
 def skyfrom2d(fitsfile, skyfile, interac=True):
 

@@ -302,15 +302,23 @@ def pyzapspec(infile,
     if newzaps > 0:
         zapimage_ravel[crcores] = 1
 
+
+    # #this is hacky but MIGHT needed for host analysis 
+    # zapimage[50:80, 1280:1360] = 0 #halpha keck
+    # zapimage_ravel = zapimage.ravel()
+
+
+    res = writefits(zapimage,'zapimage1.fits',CLOBBER=True)
     if DEBUG:
-        res = writefits(zapimage,'{}/zapimage.fits'.format(DEBUG_DIR),clobber=True)
+        res = writefits(zapimage,'{}/zapimage.fits'.format(DEBUG_DIR),CLOBBER=True)
 
 
     outStr = 'Flagged {} initial affected pixels before percolation.'.format(newzaps)
     print(outStr)
 
     nperczap = 0
-    iterCount = 0
+    # iterCount = 0
+    iterCount = 1 #testing
     d0 = nx
     d1 = ny
 
@@ -432,6 +440,7 @@ def pyzapspec(infile,
     histStr = 'Processed by pyzapspec UT {}'.format(datetime.datetime.now())
     header.add_history(histStr)
 
+    res = writefits(zapimage,'zapimage2.fits',CLOBBER=True)
     if DEBUG:
         res = writefits(ymedimage,'{}/ymedimage.fits'.format(DEBUG_DIR),CLOBBER=True)
         res = writefits(xmedimage,'{}/xmedimage.fits'.format(DEBUG_DIR),CLOBBER=True)
@@ -445,6 +454,7 @@ def pyzapspec(infile,
 
     if WRITE_OUTFILE:
         res = writefits(outimg,outfile,header=header,CLOBBER=True)
+        res = writefits(outmask,maskfile,CLOBBER=True)
 
     return outimg,outmask,header
 

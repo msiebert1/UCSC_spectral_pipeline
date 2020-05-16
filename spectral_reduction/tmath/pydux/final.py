@@ -225,6 +225,9 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 mshead.remove(k)
             except KeyError:
                 pass """
+        waveb = None
+        waver = None
+        bshift = None
         for i in range(0,num_apertures):
             # plt.close()
             # fig=plt.figure()
@@ -237,6 +240,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
 
             print('\nAperture {}:'.format(i+1))
             wave=getmswave(mshead,i)
+            print (wave[0], wave[-1])
             wdelt=wave[1]-wave[0]
             mean=np.mean(multispec[0,i,:])
             ymin,ymax=finalscaler(multispec[0,i,:])
@@ -328,33 +332,38 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 
                 waveplus=wave-angshift
 
-                axarr[0].plot(waveplus[0:npixsky2],scale*msky[0:npixsky2], \
-                              drawstyle='steps-mid',color='k')
-                axarr[0].plot(wave[0:npixsky2],sky[0:npixsky2], \
-                              drawstyle='steps-mid',color='r')
-                axarr[1].plot(waveplus[npixsky2-1:],scale*msky[npixsky2-1:], \
-                              drawstyle='steps-mid',color='k')
-                axarr[1].plot(wave[npixsky2-1:],sky[npixsky2-1:], \
-                              drawstyle='steps-mid',color='r')
-                plt.pause(0.01)
-                print('\nBlack spectrum = master sky')
-                print('Red spectrum   = object sky shifted to match master sky')
-                print('Is this ok?')
-                answer=yesno('y')
-                if (answer == 'n'):
-                    wave=wave-angshift
-                    angshift=inputter('Enter desired shift in Angstroms: ','float',False)
-                    wave=wave+angshift
+                if not secondtime:
+                    axarr[0].plot(waveplus[0:npixsky2],scale*msky[0:npixsky2], \
+                                  drawstyle='steps-mid',color='k')
+                    axarr[0].plot(wave[0:npixsky2],sky[0:npixsky2], \
+                                  drawstyle='steps-mid',color='r')
+                    axarr[1].plot(waveplus[npixsky2-1:],scale*msky[npixsky2-1:], \
+                                  drawstyle='steps-mid',color='k')
+                    axarr[1].plot(wave[npixsky2-1:],sky[npixsky2-1:], \
+                                  drawstyle='steps-mid',color='r')
+                    plt.pause(0.01)
+                    print('\nBlack spectrum = master sky')
+                    print('Red spectrum   = object sky shifted to match master sky')
+                    print('Is this ok?')
+                    answer=yesno('y')
+                    if (answer == 'n'):
+                        wave=wave-angshift
+                        angshift=inputter('Enter desired shift in Angstroms: ','float',False)
+                        wave=wave+angshift
+                    else:
+                        skyshiftdone = True
                 else:
+                    wave=wave+angshift
                     skyshiftdone = True
 
             plt.close()
             # B star removal
             bstarpass=bstarstar
             bobj, bsig, bangshift=telluric_remove(bstarwave,bstarpass, bstarairmass, wave, \
-                                       object, airmass, sigma, object)
+                                       object, airmass, sigma, object, shift=bshift)
             # bobj, bsig, bangshift=telluric_remove(bstarwave,bstarpass, bstarairmass, wave, \
             #                            test_sky, airmass, sigma, object)
+            bshift=bangshift
             if (secondord):
                 bobj2, bsig2, bangshift2 =telluric_remove(bstarwave2,bstarpass2, bstarairmass2, \
                                              wave, object2, airmass, sigma2)
@@ -409,25 +418,40 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 print('Enter the new wavelength range desired: ')
             
             waveb,waver=waveparse(wave,wavesave0,wavesaven)
-            newbin=(waver-waveb)/newdelt +1.0
-            frac,whole=np.modf(newbin)
-            if (frac > 0.000001):
-                print('NON-INTEGER number of bins')
-                testwave=newdelt*whole+waveb
-                print('Closest match is: {} to {}'.format(waveb,testwave))
-                print('Would you like this wavelength range?')
-                answer=yesno('y')
-                if (answer == 'y'):
-                    waver=testwave
-            deltsave=newdelt
+            newbin=(waver-waveb)/newdelt +1.0 #should stay the same now
+            # frac,whole=np.modf(newbin)
+            # if (frac > 0.000001):
+                # testwave=newdelt*whole+waveb
+                # print('Closest match is: {} to {}'.format(waveb,testwave))
+                # print('Would you like this wavelength range?')
+                # answer=yesno('y')
+                # if (answer == 'y'):
+                #     waver=testwave
+
+            wave_locs = np.where((wave>waveb) & (wave<waver))
+
+            # deltsave=newdelt
             wavesave0=waveb
             wavesaven=waver
             waverange=str(waveb) + ' ' + str(waver)
             secondtime = True
-            nwave=np.arange(0,whole)*newdelt + waveb
-            vartmp=bsig*bsig
-            olddeltvec=wave-np.roll(wave,1)
-            olddelt=np.mean(olddeltvec)
+            # nwave=np.arange(0,whole)*newdelt + waveb
+            # vartmp=bsig*bsig
+            # olddeltvec=wave-np.roll(wave,1)
+            # olddelt=np.mean(olddeltvec)
+
+            # nwave = wave
+            # finalobj = bobj
+            # finalvar = bsig**2.
+            # finalsig = bsig
+
+            #NOT TESTED!!!
+            nwave = wave[wave_locs]
+            print (nwave[0], nwave[-1])
+            finalobj = bobj[wave_locs]
+            finalvar = bsig[wave_locs]**2.
+            finalsig = bsig[wave_locs]
+
             # finalobj=womashrebin(wave,bobj,nwave)
             # finalvar=womashrebin(wave,vartmp,nwave)
             # finalsig=np.sqrt(finalvar)*np.sqrt(olddelt/newdelt)
@@ -444,10 +468,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             # finalvar = 1./interp_data[2][trim_range]
             # finalsig = np.sqrt(finalvar)
 
-            nwave = wave
-            finalobj = bobj
-            finalvar = bsig**2.
-            finalsig = bsig
+            suffixes = {}
+            suffixes['ap'+str(i+1)] = ''
+            if os.path.isfile('../HOST_AP_DATA.txt'):
+                with open('../HOST_AP_DATA.txt') as host_ap_data:
+                    h_lines = host_ap_data.readlines()
+                    for l in h_lines:
+                        suffixes[l.split()[0]] = '_'+ l.split()[1]
 
             #gonna ignore the second order stuff for now
             if (secondord):
@@ -466,8 +493,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             plt.xlabel('Wavelength')
             plt.ylabel('Flux')
             plt.title(objectname)
-            plt.savefig(objectname + '-' + gratcode + '_ap' + str(i+1) +'.png')
-
+            plt.savefig(objectname + '-' + gratcode + '_ap' + str(i+1) + suffixes['ap'+str(i+1)] +'.png')
             plt.show()
 
             outputdone = False
@@ -480,8 +506,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 print('\nEnter the object name for the final fits file: ')
                 # objname=inputter('(UT date and .fits will be added): ','string',False)
                 objname = objectname + '-' + gratcode
-                fname=objname+'-'+printdate+'_ap'+str(i+1)+'.fits'
-                sname=objname+'-'+printdate+'_ap'+str(i+1)+'-sigma.fits'
+                fname=objname+'-'+printdate+'_ap'+str(i+1)+ suffixes['ap'+str(i+1)] +'.fits'
+                sname=objname+'-'+printdate+'_ap'+str(i+1)+ suffixes['ap'+str(i+1)] +'-sigma.fits'
                 if (os.path.isfile(fname)):
                     print('{} already exists!!!!'.format(fname))
                     print('Do you wish to overwrite it? ')
@@ -491,43 +517,44 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 else:
                     outputdone = True
             # add to header
-            mshead.set('CRPIX1', 1)
-            mshead.set('CRVAL1',  nwave[0])
-            mshead.set('CDELT1', nwave[1] - nwave[0])
-            mshead.set('CTYPE1', 'LINEAR')
-            mshead.set('W_RANGE', waverange)
-            mshead.set('BSTAR_Z', bstarairmass)
-            mshead.set('BSTARNUM', bstarnum)
-            mshead.set('BSTAROBJ', bstarname)
-            mshead.set('BARYVEL', v)
-            mshead.set('SKYSHIFT', angshift)
-            mshead.set('ATMSHIFT', bangshift)
-            mshead.set('EXTRACT', extractcode)
-            mshead.set('REDUCER', user)
-            mshead.set('RED_DATE', datetime.now().strftime("%Y-%M-%d %I:%M%p"), 'EPOCH OF REDUCTION')
-            mshead.set('OBJECT', objectname)
-            if (secondord):
-                mshead.set('SECOND', 'yes',  'Second order correction attempted')
-                mshead.set('COMBRANGE',combrange)
-                mshead.set('BSTAR_Z2',bstarairmass2)
-                mshead.set('BSTARNU2', bstarnum2)
-                mshead.set('BSTAROB2', bstarname2)
-                fluxairmass2=mshead2['FLX2_Z']
-                fluxnum2=mshead2['FLX2_NUM']
-                fluxname2=mshead2['FLX2_OBJ']
-                mshead.set('FLX2_Z',fluxairmass2)
-                mshead.set('FLX2_NUM', fluxnum2)
-                mshead.set('FLX2_OBJ', fluxname2)
+            new_mshead = mshead.copy()
+            new_mshead.set('CRPIX1', 1)
+            new_mshead.set('CRVAL1',  nwave[0])
+            new_mshead.set('CDELT1', nwave[1] - nwave[0])
+            new_mshead.set('CTYPE1', 'LINEAR')
+            new_mshead.set('W_RANGE', waverange)
+            new_mshead.set('BSTAR_Z', bstarairmass)
+            new_mshead.set('BSTARNUM', bstarnum)
+            new_mshead.set('BSTAROBJ', bstarname)
+            new_mshead.set('BARYVEL', v)
+            new_mshead.set('SKYSHIFT', angshift)
+            new_mshead.set('ATMSHIFT', bangshift)
+            new_mshead.set('EXTRACT', extractcode)
+            new_mshead.set('REDUCER', user)
+            new_mshead.set('RED_DATE', str(datetime.now()).split()[0], 'EPOCH OF REDUCTION')
+            new_mshead.set('OBJECT', objectname)
+            # if (secondord):
+            #     new_mshead.set('SECOND', 'yes',  'Second order correction attempted')
+            #     new_mshead.set('COMBRANGE',combrange)
+            #     new_mshead.set('BSTAR_Z2',bstarairmass2)
+            #     new_mshead.set('BSTARNU2', bstarnum2)
+            #     new_mshead.set('BSTAROB2', bstarname2)
+            #     fluxairmass2=mshead2['FLX2_Z']
+            #     fluxnum2=mshead2['FLX2_NUM']
+            #     fluxname2=mshead2['FLX2_OBJ']
+            #     new_mshead.set('FLX2_Z',fluxairmass2)
+            #     new_mshead.set('FLX2_NUM', fluxnum2)
+            #     new_mshead.set('FLX2_OBJ', fluxname2)
             outdata=np.zeros((len(finalobj),2))
             outdata[:,0]=finalobj.copy()
             outdata[:,1]=finalsig.copy()
             outhdu=fits.PrimaryHDU(outdata)
             hdul=fits.HDUList([outhdu])
             mshead.set('NAXIS2',2)
-            hdul[0].header=mshead.copy()
+            hdul[0].header=new_mshead.copy()
             hdul.writeto(fname,overwrite=True)
 
-            spectxt = objname+'-'+printdate+'_ap'+ str(i+1)+'.flm'
+            spectxt = objname+'-'+printdate+'_ap'+ str(i+1)+ suffixes['ap'+str(i+1)] +'.flm'
             spectxt=spectxt.strip()
             np.savetxt(spectxt,np.transpose([nwave,finalobj.copy(),finalsig.copy()]))
 
@@ -602,7 +629,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 plt.xlabel('Wavelength')
                 plt.ylabel('Flux')
                 plt.title(objectname)
-                plt.savefig(objectname + '_combined_ap'+str(i+1)+'.png')
+                plt.savefig(objectname + '_combined_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'.png')
                 
                 outputdone = False
                 while (not outputdone):
@@ -614,8 +641,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     print('\nEnter the object name for the final fits file: ')
                     # objname=inputter('(UT date and .fits will be added): ','string',False)
                     objname = objectname + '-combined'
-                    fname=objname+'-'+printdate+'_combined_ap'+str(i+1)+'.fits'
-                    sname=objname+'-'+printdate+'_combined_ap'+str(i+1)+'-sigma.fits'
+                    fname=objname+'-'+printdate+'_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'.fits'
+                    sname=objname+'-'+printdate+'_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'-sigma.fits'
                     if (os.path.isfile(fname)):
                         print('{} already exists!!!!'.format(fname))
                         print('Do you wish to overwrite it? ')
@@ -625,7 +652,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     else:
                         outputdone = True
                 # add to header
-                mshead_combined = mshead.copy()
+                mshead_combined = new_mshead.copy()
                 mshead_combined.set('CRPIX1', 1)
                 mshead_combined.set('CRVAL1',  nwave[0])
                 mshead_combined.set('CDELT1', nwave[1] - nwave[0])
@@ -662,7 +689,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 hdul[0].header=mshead_combined.copy()
                 hdul.writeto(fname,overwrite=True)
                 hdul.close()
-                spectxt = objname+'-'+printdate+'_combined_ap'+ str(i+1)+'.flm'
+                spectxt = objname+'-'+printdate+'_ap'+ str(i+1) + suffixes['ap'+str(i+1)] +'.flm'
                 spectxt=spectxt.strip()
                 np.savetxt(spectxt,np.transpose([nwave,finalobj.copy(),finalsig.copy()]))
                     

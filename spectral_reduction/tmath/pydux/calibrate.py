@@ -90,7 +90,7 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             else:
                 print('\nCannot find mastersky file and observatory unknown\n')
                 mskyfile=getfitsfile('master sky','.fits')
-            print('Using {} as PRELIMINARY master sky'.format(mskyfile))
+            print('Using {} as PRELIMINARY master sky'.format(mskyfile.split('/')[-1]))
             mskyfits=fits.open(mskyfile)
             mskydata=mskyfits[0].data
             mskyhead=mskyfits[0].header
@@ -111,7 +111,7 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             sky=sky-skycont
             if (np.abs(np.mean(sky)) < 1.e-7):
                 sky=sky*1.e15
-            print(len(mskywave),len(mskydata))
+            # print(len(mskywave),len(mskydata))
             msky=scipyrebinsky(mskywave,mskydata,wave)
 
 

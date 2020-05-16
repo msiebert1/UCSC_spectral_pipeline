@@ -634,6 +634,8 @@ def parse_cmd_args():
                         help='Do not reorient to wavelength increasing rightward')
     parser.add_argument('--no-trim',action='store_true',
                         help='Do not trim 2D image to hardcoded section')
+    parser.add_argument('--is-dflat',action='store_true',
+                        help='The current file is a dome flat')
     parser.add_argument('--mask-middle-blue',action='store_true',
                         help='Mask the middle section of rows on the blue detector')
     parser.add_argument('--mask-middle-red',action='store_true',
@@ -650,6 +652,7 @@ def parse_cmd_args():
     kwargs['FULL_CLEAN'] = cmdArgs.full_clean
     kwargs['REORIENT'] = not cmdArgs.no_reorient
     kwargs['TRIM'] = not cmdArgs.no_trim
+    kwargs['ISDFLAT'] = cmdArgs.is_dflat
     kwargs['MASK_MIDDLE_BLUE'] = cmdArgs.mask_middle_blue
     kwargs['MASK_MIDDLE_RED'] = cmdArgs.mask_middle_red
 
@@ -698,6 +701,7 @@ def main(rawFiles,*args,**kwargs):
     PIXEL_FLOOR = kwargs.get('PIXEL_FLOOR',False) 
     REORIENT = kwargs.get('REORIENT',True) 
     TRIM = kwargs.get('TRIM',False) 
+    ISDFLAT = kwargs.get('ISDFLAT',False) 
     MASK_MIDDLE_BLUE = kwargs.get('MASK_MIDDLE_BLUE',False)
     MASK_MIDDLE_RED = kwargs.get('MASK_MIDDLE_RED',False)
 
@@ -732,13 +736,15 @@ def main(rawFiles,*args,**kwargs):
         
         rawFile = rawFiles[i]
         oScanFile = 'pre_reduced/to{}'.format(rawFile)
+        oScanFile_amp1 = oScanFile.split('.')[0]+'_amp1.'+oScanFile.split('.')[1]
+        oScanFile_amp2 = oScanFile.split('.')[0]+'_amp2.'+oScanFile.split('.')[1]
         
-        if (not os.path.isfile(oScanFile)) or CLOBBER:
+        if (not os.path.isfile(oScanFile) and not os.path.isfile(oScanFile_amp1) and not os.path.isfile(oScanFile_amp2)) or CLOBBER:
             
             # read file
             img,gain_img,head,secs = read_lris(rawFile)
             # img,gain_img,head,secs = read_lris(rawFile, TRIM=TRIM)
-            print (secs)
+            # print (secs)
             dsec,osec = np.array(secs[0]),np.array(secs[1])
             xbin, ybin = [int(ibin) for ibin in head['BINNING'].split(',')]
                         
@@ -774,12 +780,20 @@ def main(rawFiles,*args,**kwargs):
             # trim
             if TRIM:
                 if rawFile[0] == 'b':
-                    # outImg = outImg[1800//xbin:2800//xbin,:] # blue shouldn't be binned
-                    outImg = outImg[2260//xbin:2800//xbin,:]
+                    if ISDFLAT:
+                        outImg_amp1 = outImg[2260//xbin:2800//xbin,:]
+                        outImg_amp2 = outImg[1800//xbin:2260//xbin,:]
+                    else:
+                        outImg = outImg[1800//xbin:2800//xbin,:]
                 else:
                     if nAmps == 2:
-                        outImg = outImg[290:575,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
-                        # outImg = outImg[600//xbin:1100//xbin,:]
+                        if ISDFLAT:
+                            outImg_amp1 = outImg[290:575,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
+                            outImg_amp2 = outImg[0:290,:-55]
+                        else:
+                            # outImg = outImg[600//xbin:1100//xbin,:]
+                            outImg = outImg[0:575,:-55]
+
                     else:
                         outImg = outImg[1600//xbin:2600//xbin,:]
                         # This is a weird case. Red is being read out in full frame
@@ -807,11 +821,24 @@ def main(rawFiles,*args,**kwargs):
             head['DATE-OBS'] = head['DATE_BEG']
             head['BASIC-2D'] = 'DONE'
                 
-            # write the image          
-            hdu = fits.PrimaryHDU(outImg,head)
-            if os.path.isfile(oScanFile):
-                os.remove(oScanFile)
-            hdu.writeto(oScanFile,output_verify='ignore')  
+            # write the images  
+            if ISDFLAT:   
+                oScanFile_amp1 = oScanFile.split('.')[0]+'_amp1.'+oScanFile.split('.')[1]
+                hdu = fits.PrimaryHDU(outImg_amp1,head)
+                if os.path.isfile(oScanFile_amp1):
+                    os.remove(oScanFile_amp1)
+                hdu.writeto(oScanFile_amp1,output_verify='ignore')  
+
+                oScanFile_amp2 = oScanFile.split('.')[0]+'_amp2.'+oScanFile.split('.')[1]
+                hdu = fits.PrimaryHDU(outImg_amp2,head)
+                if os.path.isfile(oScanFile_amp2):
+                    os.remove(oScanFile_amp2)
+                hdu.writeto(oScanFile_amp2,output_verify='ignore')
+            else:
+                hdu = fits.PrimaryHDU(outImg,head)
+                if os.path.isfile(oScanFile):
+                    os.remove(oScanFile)
+                hdu.writeto(oScanFile,output_verify='ignore')
                         
         else:
             outStr = 'File exists: {}'.format(oScanFile)
