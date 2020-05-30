@@ -225,6 +225,14 @@ def basic_2d_proc(rawFile,CLOBBER=False):
                         readaxi='line',trimsec=str(_trimsec0), Stdout=1)
 
             # clean up intermediate files
+
+            # if 'kast_red' in inst.get('name'):
+            #     iraf.imtranspose(toScanFile, output=toScanFile)
+            #     iraf.wcsreset(toScanFile, wcs='physical')
+            #     tfits=fits.open(toScanFile, mode='update')
+            #     thead=tfits[0].header
+            #     thead.set('DATASEC',  inst.get('trimsec'))
+            #     tfits.flush()
             os.remove(oScanFile)
 
     return 0
@@ -271,6 +279,7 @@ def pre_reduction_dev(*args,**kwargs):
     MAKE_ARCS = kwargs.get('MAKE_ARCS')
     MAKE_FLATS = kwargs.get('MAKE_FLATS')
     QUICK = kwargs.get('QUICK')
+    RED_AMP_BAD = kwargs.get('RED_AMP_BAD')
     HOST = kwargs.get('HOST')
 
     # init iraf stuff
@@ -494,10 +503,10 @@ def pre_reduction_dev(*args,**kwargs):
                             # res = keck_basic_2d.main([rawFile])
                             if imgType != 'CAL_FLAT':
                                 print (imgType)
-                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False)
+                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD)
                             else:
                                 print (imgType)
-                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True)
+                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD)
                         else:
                             res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
                     else:
@@ -569,7 +578,8 @@ def pre_reduction_dev(*args,**kwargs):
             b_amp2_list.append(flat.split('.')[0]+'_amp2.'+flat.split('.')[1])
         for flat in list_flat_r:
             r_amp1_list.append(flat.split('.')[0]+'_amp1.'+flat.split('.')[1])
-            r_amp2_list.append(flat.split('.')[0]+'_amp2.'+flat.split('.')[1])
+            if not RED_AMP_BAD:
+                r_amp2_list.append(flat.split('.')[0]+'_amp2.'+flat.split('.')[1])
 
 
         # blue flats
@@ -657,8 +667,11 @@ def pre_reduction_dev(*args,**kwargs):
                 os.remove(Flat_red_amp2)
 
             # first, combine all the flat files into a master flat
-            res = combine_flats(flat_list_amp1,OUTFILE=Flat_red_amp1,MEDIAN_COMBINE=True)
-            res = combine_flats(flat_list_amp2,OUTFILE=Flat_red_amp2,MEDIAN_COMBINE=True)
+            if not RED_AMP_BAD:
+                res = combine_flats(flat_list_amp1,OUTFILE=Flat_red_amp1,MEDIAN_COMBINE=True)
+                res = combine_flats(flat_list_amp2,OUTFILE=Flat_red_amp2,MEDIAN_COMBINE=True)
+            else:
+                res = combine_flats(flat_list_amp1,OUTFILE=Flat_red_amp1,MEDIAN_COMBINE=True)
 
             #What is the output here? Check for overwrite
             iraf.specred.response(Flat_red_amp1, 
@@ -668,36 +681,43 @@ def pre_reduction_dev(*args,**kwargs):
                                   sample='*', naverage=2, function='legendre', 
                                   low_rej=3,high_rej=3, order=80, niterat=20, 
                                   grow=0, graphic='stdgraph')
-            iraf.specred.response(Flat_red_amp2, 
-                                  normaliz=Flat_red_amp2, 
-                                  response='pre_reduced/RESP_red_amp2', 
-                                  interac=inter, thresho='INDEF',
-                                  sample='*', naverage=2, function='legendre', 
-                                  low_rej=3,high_rej=3, order=80, niterat=20, 
-                                  grow=0, graphic='stdgraph')
+            if not RED_AMP_BAD:
+                iraf.specred.response(Flat_red_amp2, 
+                                      normaliz=Flat_red_amp2, 
+                                      response='pre_reduced/RESP_red_amp2', 
+                                      interac=inter, thresho='INDEF',
+                                      sample='*', naverage=2, function='legendre', 
+                                      low_rej=3,high_rej=3, order=80, niterat=20, 
+                                      grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
-            res = inspect_flat(['pre_reduced/RESP_red_amp1.fits'], OUTFILE='pre_reduced/RESP_red_amp1.fits', DISPAXIS=dispaxis)
-            res = inspect_flat(['pre_reduced/RESP_red_amp2.fits'], OUTFILE='pre_reduced/RESP_red_amp2.fits', DISPAXIS=dispaxis)
+            if not RED_AMP_BAD:
+                res = inspect_flat(['pre_reduced/RESP_red_amp1.fits'], OUTFILE='pre_reduced/RESP_red_amp1.fits', DISPAXIS=dispaxis)
+                res = inspect_flat(['pre_reduced/RESP_red_amp2.fits'], OUTFILE='pre_reduced/RESP_red_amp2.fits', DISPAXIS=dispaxis)
+            else:
+                res = inspect_flat(['pre_reduced/RESP_red_amp1.fits'], OUTFILE='pre_reduced/RESP_red.fits', DISPAXIS=dispaxis)
 
-            hdu_amp1 = fits.open('pre_reduced/RESP_red_amp1.fits')
-            hdu_amp2 = fits.open('pre_reduced/RESP_red_amp2.fits')
-            amp1_flatten = np.asarray(hdu_amp1[0].data).flatten()
-            amp2_flatten = np.asarray(hdu_amp2[0].data).flatten()
-            concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
-            resp_red_data = np.reshape(concat_amps, (575,4061))
+            if not RED_AMP_BAD:
+                hdu_amp1 = fits.open('pre_reduced/RESP_red_amp1.fits')
+                hdu_amp2 = fits.open('pre_reduced/RESP_red_amp2.fits')
+                amp1_flatten = np.asarray(hdu_amp1[0].data).flatten()
+                amp2_flatten = np.asarray(hdu_amp2[0].data).flatten()
+                concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
+                resp_red_data = np.reshape(concat_amps, (575,4061))
 
-            resp_red_data[278:294,:] = 1.
+                resp_red_data[278:294,:] = 1.
 
-            header = hdu_amp1[0].header
-            if os.path.isfile('pre_reduced/RESP_red.fits'):
-                os.remove('pre_reduced/RESP_red.fits')
+                header = hdu_amp1[0].header
+                if os.path.isfile('pre_reduced/RESP_red.fits'):
+                    os.remove('pre_reduced/RESP_red.fits')
 
-            hdu = fits.PrimaryHDU(resp_red_data,header)
-            hdu.writeto('pre_reduced/RESP_red.fits',output_verify='ignore')
+                hdu = fits.PrimaryHDU(resp_red_data,header)
+                hdu.writeto('pre_reduced/RESP_red.fits',output_verify='ignore')
 
-            os.remove('pre_reduced/RESP_red_amp1.fits')
-            os.remove('pre_reduced/RESP_red_amp2.fits')
+                os.remove('pre_reduced/RESP_red_amp1.fits')
+                os.remove('pre_reduced/RESP_red_amp2.fits')
+            else:
+                os.remove('pre_reduced/RESP_red_amp1.fits')
 
     elif MAKE_FLATS:
         list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
@@ -1106,6 +1126,8 @@ def parse_cmd_args():
                         help='Combine flats into master flat images', action='store_true')
     parser.add_argument('--host',
                         help='Obtain relevant host galaxy metadata', action='store_true')
+    parser.add_argument('--red-amp-bad',
+                        help='Red side amplifier is bad so trim', action='store_true')
 
     basicProcCG.add_argument('--fake-basic-2d',
                         help='Fake the basic 2D reductions', action='store_true')
@@ -1138,6 +1160,7 @@ def parse_cmd_args():
     kwargs['MAKE_FLATS'] = cmdArgs.make_flats
     kwargs['QUICK'] = cmdArgs.quicklook
     kwargs['HOST'] = cmdArgs.host
+    kwargs['RED_AMP_BAD'] = cmdArgs.red_amp_bad
 
     return (args,kwargs)
 

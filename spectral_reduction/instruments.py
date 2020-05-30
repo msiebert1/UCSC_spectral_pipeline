@@ -36,7 +36,8 @@ kast_blue = {'name': 'kast_blue',
              'pyzap_subsigma': 2.8,
              'approx_extract_line': 145,
              'approx_extract_column': 1000,
-             'pixel_scale': .43 #arcsec/pix
+             'pixel_scale': .43, #arcsec/pix
+             'spatial_binning': 1.
              }
 
 
@@ -49,8 +50,9 @@ kast_red = { 'name': 'kast_red',
              'slit': 'temp',
              'dispaxis': 2, 
              'biassec': '[360:405,1:2725]',
+             # 'biassec': '[1:2725, 360:405]', #transposed
              'trimsec': '[66:346,80:2296]',
-             # 'trimsec': '[18:298,139:2457]', # temporary
+             # 'trimsec': '[80:2296, 66:346]', #transposed
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
              'archive_sens': path_to_trunk + 'KAST_cals/fluxstarred.fits',
@@ -68,7 +70,8 @@ kast_red = { 'name': 'kast_red',
              'pyzap_subsigma': 2.8,
              'approx_extract_line': 150,
              'approx_extract_column': 1000,
-             'pixel_scale': .43 #arcsec/pix
+             'pixel_scale': .43, #arcsec/pix
+             'spatial_binning': 1.
              }
 
 lris_blue = {'name': 'lris_blue',
@@ -95,7 +98,8 @@ lris_blue = {'name': 'lris_blue',
              'pyzap_subsigma': 8,
              # 'approx_extract_line': 740, jon old
              'approx_extract_line': 200,
-             'pixel_scale': .135 #arcsec/pix
+             'pixel_scale': .135, #arcsec/pix
+             'spatial_binning': 1.
              }
              
 lris_red = { 'name': 'lris_red',
@@ -122,7 +126,8 @@ lris_red = { 'name': 'lris_red',
              'pyzap_subsigma': 8,
              # 'approx_extract_line': 370, jon old
              'approx_extract_line': 69,
-             'pixel_scale': .135 #arcsec/pix
+             'pixel_scale': .135, #arcsec/pix
+             'spatial_binning': 2.
              }
              
 goodman_m1={ 'name': 'goodman_blue',
@@ -152,7 +157,8 @@ goodman_m1={ 'name': 'goodman_blue',
              'sky_file': path_to_trunk + 'licksky.fits', # JB: need to fix
              'section': 'middle column',
              'pyzap_boxsize': 5,
-             'pixel_scale': .15 #arcsec/pix
+             'pixel_scale': .15, #arcsec/pix
+             'spatial_binning': 1.
              }
              
 goodman_m2={ 'name': 'goodman_red',
@@ -181,7 +187,8 @@ goodman_m2={ 'name': 'goodman_red',
              'sky_file': path_to_trunk + 'SOAR_cals/licksky.fits', # JB: need to fix
              'section': 'middle column',
              'pyzap_boxsize': 5,
-             'pixel_scale': .15 #arcsec/pix
+             'pixel_scale': .15, #arcsec/pix
+             'spatial_binning': 1.
              }
 
 

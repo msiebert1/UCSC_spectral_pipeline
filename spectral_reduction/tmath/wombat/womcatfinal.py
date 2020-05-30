@@ -61,8 +61,8 @@ def womcatfinal(blue_data, red_data):
     if red_dw > blue_dw:
         print ("Interpolating to {} A/pix".format(red_dw))
         interp_wave = np.arange(math.ceil(waveblue[0])+1.*red_dw, math.floor(wavered[-1])-1.*red_dw, dtype=float, step=red_dw)
-        blue_range = np.where((interp_wave >= waveblue[0]+1) & (interp_wave <= waveblue[-1]-1))
-        red_range = np.where((interp_wave >= wavered[0]+1) & (interp_wave <= wavered[-1]-1))
+        blue_range = np.where((interp_wave >= waveblue[0]+1.*red_dw) & (interp_wave <= waveblue[-1]-1.*red_dw))
+        red_range = np.where((interp_wave >= wavered[0]+1.*red_dw) & (interp_wave <= wavered[-1]-1.*red_dw))
         blue_interp = spectres(interp_wave[blue_range], waveblue, fluxblue, spec_errs=np.sqrt(varblue))
         red_interp = spectres(interp_wave[red_range], wavered, fluxred, spec_errs=np.sqrt(varred))
 
@@ -75,8 +75,8 @@ def womcatfinal(blue_data, red_data):
     else:
         print ("Interpolating to {} A/pix".format(blue_dw))
         interp_wave = np.arange(math.ceil(waveblue[0])+1.*blue_dw, math.floor(wavered[-1])-1.*blue_dw, dtype=float, step=blue_dw)
-        blue_range = np.where((interp_wave >= waveblue[0]+1) & (interp_wave <= waveblue[-1]-1))
-        red_range = np.where((interp_wave >= wavered[0]+1) & (interp_wave <= wavered[-1]-1))
+        blue_range = np.where((interp_wave >= waveblue[0]+1*blue_dw) & (interp_wave <= waveblue[-1]-1*blue_dw))
+        red_range = np.where((interp_wave >= wavered[0]+1*blue_dw) & (interp_wave <= wavered[-1]-1*blue_dw))
         blue_interp = spectres(interp_wave[blue_range], waveblue, fluxblue, spec_errs=np.sqrt(varblue))
         red_interp = spectres(interp_wave[red_range], wavered, fluxred, spec_errs=np.sqrt(varred))
 

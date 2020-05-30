@@ -7,8 +7,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
     import sys
     import pdb
     os.environ["PYRAF_BETA_STATUS"] = "1"
-    try:      from astropy.io import fits as pyfits
-    except:      import   pyfits
+    try:      from astropy.io import fits 
+    except:      import   pyfits as fits
     import numpy as np
     import glob
     import util
@@ -187,6 +187,16 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
             iraf.imcopy(img, output=timg)
         
         # should just do this by hand
+        # tfits=fits.open(timg, mode='update')
+        # thead=tfits[0].header
+        # thead.set('DATASEC',  '[80:2296,66:346]')
+        # thead.set('CCDSEC',  '[80:2296,66:346]')
+        # flatfits=fits.open(flat_file + '.fits',mode='update')
+        # flathead=flatfits[0].header
+        # flathead.set('DATASEC',  '[80:2296,66:346]')
+        # flathead.set('CCDSEC',  '[80:2296,66:346]')
+        # tfits.flush()
+        # flatfits.flush()
         iraf.ccdproc(timg, output='', 
                            overscan='no', 
                            trim='no', 
@@ -544,6 +554,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
             print('\n### warning problem \n exit ')
             sys.exit()
         else:
+            match_aperture = raw_input('Match aperture? y/[n]: ') or 'n'
             if _host:
                 match_aperture = raw_input('Match aperture? y/[n]: ') or 'n'
                 if match_aperture != 'n':
@@ -553,7 +564,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     host_gals.write_host_ap(ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, nameout0.split('.')[0], ap_widths_arcsec, ap_widths_kpc, r_kron_rad)
                     imgex = util.extractspectrum(img, dv, inst, _interactive, 'obj', host_ex = True, match_aperture=match_aperture)
             else:
-                imgex = util.extractspectrum(img, dv, inst, _interactive, 'obj')
+                imgex = util.extractspectrum(img, dv, inst, _interactive, 'obj', match_aperture=match_aperture)
 
             save_ap = 'n'
             save_ap = raw_input('Save as a master aperture ? y/[n]: ')

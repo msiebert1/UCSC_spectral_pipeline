@@ -125,30 +125,36 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             angshift=shift*wdelt
             print ('Potential preliminary shift of {} angstroms'.format(angshift))
 
-            # if answer_flux == 'y':
-            #     fluxwave=fluxwave+angshift
-
-            # print ('Obj wave without shift: ', wave[0])
-            # wave = wave+angshift
+            print ('Obj wave without shift: ', wave[0])
 
 
-            # #georgios
-            # skyshiftdone=False
-            # while (not skyshiftdone):
-            #     print('Is this ok?')
-            #     answer=yesno('y')
-            #     if (answer == 'n'):
-            #         #undo shifts
-            #         if answer_flux == 'y':
-            #             fluxwave=fluxwave-angshift
-            #         wave = wave-angshift
-            #         angshift=inputter('Enter desired shift in Angstroms: ','float',False)
-            #         if answer_flux == 'y':
-            #             fluxwave=fluxwave+angshift
-            #         wave = wave+angshift
-            #     else:
-            #         skyshiftdone = True
-            # ###
+            #The following code applies the calculated shift prior to fitting the flux star
+            #If the target is an object then the object is shifted prior to applying the flux star
+            answer_flux = input('Is this a master standard star? y/[n]: ') or 'n'
+            if answer_flux == 'y':
+                fluxwave=fluxwave+angshift
+            wave = wave+angshift
+
+
+            #Testing only for standard star
+            skyshiftdone=False
+            while (not skyshiftdone):
+                print('Is this ok?')
+                answer=yesno('y')
+                if (answer == 'n'):
+                    #undo shifts
+                    if answer_flux == 'y':
+                        fluxwave=fluxwave-angshift
+                    wave = wave-angshift
+                    angshift=inputter('Enter desired shift in Angstroms: ','float',False)
+                    if answer_flux == 'y':
+                        fluxwave=fluxwave+angshift
+                    wave = wave+angshift
+                else:
+                    skyshiftdone = True
+            ##
+
+
             # skyshiftdone=False
             # npixsky2=len(sky)//2
 
@@ -192,13 +198,14 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             #     else:
             #         skyshiftdone = True
             # plt.close()
-            # print ('Obj wave with shift: ', wave[0])
-            # mshead.set('CRVAL1',  wave[0])
-            # mshead.set('CDELT1', wave[1] - wave[0])
+            print ('Obj wave with shift: ', wave[0])
+            mshead.set('CRVAL1',  wave[0])
+            mshead.set('CDELT1', wave[1] - wave[0])
 
 
             # print ('Fluxwave start', fluxwave[0])
             if answer_flux == 'y':
+                print ('Changing Flux Star Wavelength')
                 fluxhead.set('CRVAL1',  fluxwave[0])
                 fluxhead.set('CDELT1', fluxwave[1] - fluxwave[0])
                 outfile='fluxstar'+gratcode+'.fits'
@@ -218,29 +225,29 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
 
             #testing 
             # mx1=womget_element(wave,5500)
-            # mx2=womget_element(wave,5850)
+            # mx2=womget_element(wave,6050)
             # fx1=womget_element(fluxwave,5500)
-            # fx2=womget_element(fluxwave,5850)
-            # mx1=0
-            # mx2=300
-            # fx1=0
-            # fx2=300
-            # # mx1=-1000
-            # # mx2=-50
-            # # fx1=-1000
-            # # fx2=-50
-            # test = extfactor[mx1:mx2]*multispec[0,i,:][mx1:mx2]
-            # scale1 = 1./np.median(test)
-            # scale2 = 1./np.median(fluxstartmp[fx1:fx2])
-            # # print (xcor(scale1*multispec[0,i,:][mx1:mx2],scale2*fluxstar[fx1:fx2],10,200))
-            # fig=plt.figure()
-            # plt.clf()
-            # plt.plot(wave[mx1:mx2], scale1*test,drawstyle='steps-mid',color='r')
-            # plt.plot(fluxwave[fx1:fx2], scale2*fluxstar[fx1:fx2],drawstyle='steps-mid',color='k')
-            # plt.pause(0.01)
-            # print('Check plot')
-            # answer=yesno('y')
-            ##
+            # fx2=womget_element(fluxwave,5050)
+            mx1=0
+            mx2=300
+            fx1=0
+            fx2=300
+            # mx1=-1000
+            # mx2=-50
+            # fx1=-1000
+            # fx2=-50
+            test = extfactor[mx1:mx2]*multispec[0,i,:][mx1:mx2]
+            scale1 = 1./np.median(test)
+            scale2 = 1./np.median(fluxstartmp[fx1:fx2])
+            # print (xcor(scale1*multispec[0,i,:][mx1:mx2],scale2*fluxstar[fx1:fx2],10,200))
+            fig=plt.figure()
+            plt.clf()
+            plt.plot(wave[mx1:mx2], scale1*test,drawstyle='steps-mid',color='r')
+            plt.plot(fluxwave[fx1:fx2], scale2*fluxstar[fx1:fx2],drawstyle='steps-mid',color='k')
+            plt.pause(0.01)
+            check=inputter('Check plot [enter when done]: ','string',False)
+            plt.close()
+            #
             
 
             for j in range(0,num_bands):

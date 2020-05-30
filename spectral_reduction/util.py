@@ -725,18 +725,28 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
                 print (ap.split('/')[-1])
             ap_select = raw_input('Choose image to match apertures: ')
             
-            if 'blue' in ap_select:
+            #this is just to make things automatic for now
+            if 'blue' in ap_select and 'lris' in inst.get('name'):
                 ap_match = ap_select.replace('blue','red')
-                # os.system('cp ' + 'database/' + ap_select + ' database/'+ap_match+'_temp')
-            elif 'red' in ap_select:
+                ap_binning = 1.
+            elif 'red' in ap_select and 'lris' in inst.get('name'):
                 ap_match = ap_select.replace('red','blue')
-                # os.system('cp ' + 'database/' + ap_select + ' database/'+ap_match+'_temp')
+                ap_binning = 2.
+            elif 'blue' in ap_select and 'kast' in inst.get('name'):
+                ap_match = ap_select.replace('blue','red')
+                ap_binning = 1.
+            elif 'red' in ap_select and 'kast' in inst.get('name'):
+                ap_match = ap_select.replace('red','blue')
+                ap_binning = 1.
 
-            img_binning = hdr.get('BINNING', None).strip()
-            if img_binning != None:
-                img_binning = float(img_binning.split(',')[0])
-            ap_binning = raw_input('Enter aperture spatial binning [1]: ') or 1
-            ap_binning = float(ap_binning)
+
+            # img_binning = hdr.get('BINNING', None).strip()
+            # if img_binning != None:
+            #     img_binning = float(img_binning.split(',')[0])
+            img_binning = inst.get('spatial_binning')
+
+            # ap_binning = raw_input('Enter aperture spatial binning [1]: ') or 1
+            # ap_binning = float(ap_binning)
 
             delete('database/'+ap_match)
             new_apfile = 'database/'+ap_match
@@ -757,25 +767,49 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
                 with open('database/'+ap_select) as old_file:
                     ap_data = old_file.readlines()
                     lows, highs, b_samps = get_relevant_ap_data(ap_data, ap_binning, img_binning, inst)
-
                     with open(new_apfile,'w') as new_file:
-                        for i in range(len(lows)):
-                            for c_line in c_ap_data:
-                                if 'begin' in c_line and 'aperture' in c_line:
-                                    new_file.write(c_line.replace((c_line.split()[2] + ' 1'), c_line.split()[2] + ' ' + str(i+1)))
-                                elif 'begin' not in c_line and 'aperture' in c_line:
-                                    new_file.write(c_line.replace(c_line.split()[1], str(i+1)))
-                                elif 'low' in c_line and 'reject' not in c_line:
-                                    low = str(lows[i])
-                                    new_file.write(c_line.replace(c_line.split()[2], low))
-                                elif 'high' in c_line and 'reject' not in c_line:
-                                    high = str(highs[i])
-                                    new_file.write(c_line.replace(c_line.split()[2], high))
-                                elif 'sample' in c_line:
-                                    b_sample = str(b_samps[i])
-                                    new_file.write(c_line.replace(c_line.split('sample')[1].split('\n')[0], ' '+ b_sample))
-                                else:
-                                    new_file.write(c_line)
+                        if 'kast' in inst.get('name'): #the kast red trace is mirrored
+                            for i in range(len(lows)):
+                                low = str(lows[i])
+                                high = str(highs[i])
+                                for c_line in c_ap_data:
+                                    if 'begin' in c_line and 'aperture' in c_line:
+                                        new_file.write(c_line.replace((c_line.split()[2] + ' 1'), c_line.split()[2] + ' ' + str(i+1)))
+                                    elif 'begin' not in c_line and 'aperture' in c_line:
+                                        new_file.write(c_line.replace(c_line.split()[1], str(i+1)))
+                                    elif 'low' in c_line and 'reject' not in c_line:
+                                        if 'kast_blue' in inst.get('name'):
+                                            new_file.write(c_line.replace(c_line.split()[2], high))
+                                        else:
+                                            new_file.write(c_line.replace(c_line.split()[1], high))
+                                    elif 'high' in c_line and 'reject' not in c_line:
+                                        if 'kast_blue' in inst.get('name'):
+                                            new_file.write(c_line.replace(c_line.split()[2], low))
+                                        else:
+                                            new_file.write(c_line.replace(c_line.split()[1], low))
+                                    elif 'sample' in c_line:
+                                        b_sample = str(b_samps[i])
+                                        new_file.write(c_line.replace(c_line.split('sample')[1].split('\n')[0], ' '+ b_sample))
+                                    else:
+                                        new_file.write(c_line)
+                        else:
+                            for i in range(len(lows)):
+                                low = str(lows[i])
+                                high = str(highs[i])
+                                for c_line in c_ap_data:
+                                    if 'begin' in c_line and 'aperture' in c_line:
+                                        new_file.write(c_line.replace((c_line.split()[2] + ' 1'), c_line.split()[2] + ' ' + str(i+1)))
+                                    elif 'begin' not in c_line and 'aperture' in c_line:
+                                        new_file.write(c_line.replace(c_line.split()[1], str(i+1)))
+                                    elif 'low' in c_line and 'reject' not in c_line:
+                                        new_file.write(c_line.replace(c_line.split()[2], low))
+                                    elif 'high' in c_line and 'reject' not in c_line:
+                                        new_file.write(c_line.replace(c_line.split()[2], high))
+                                    elif 'sample' in c_line:
+                                        b_sample = str(b_samps[i])
+                                        new_file.write(c_line.replace(c_line.split('sample')[1].split('\n')[0], ' '+ b_sample))
+                                    else:
+                                        new_file.write(c_line)
 
 
 
@@ -784,27 +818,17 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
             _reference=ap_match[2:]
             # _reference = 'BD262606_lris_red_1'
 
-        use_diff_aperture = raw_input('Trace different aperture? y/[n]: ')
-        if use_diff_aperture == 'y':
-            aps = glob.glob('../master_files/ap*')
-            for ap in aps:
-                print (ap.split('/')[-1])
-            ap_select = raw_input('Choose ref image from list above: ')
-            os.system('cp ' + ' ../master_files/' + ap_select + ' database/'+ap_select)
-            # _fittrac = 'no'
-            # _find = 'no'
-            # _trace = 'yes'
-            # _interactive = 'yes'
-            # _edit = 'yes'
-            # _recenter='no'
-            # _review = 'yes'
-            # _resize = 'no'
-            _reference = ap_select[2:]
-            _fittrac = 'no'
-            _trace = 'no'
-            # iraf.specred.apall(img, output=imgex, references=ap_select[2:], trace=_trace, fittrac=_fittrac, find=_find,
-            #                    recenter=_recenter, edit=_edit, review=_review, resize=_resize,
-            #                    interactive=_interactive)
+
+        # use_diff_aperture = raw_input('Trace different aperture? y/[n]: ')
+        # if use_diff_aperture == 'y':
+        #     aps = glob.glob('../master_files/ap*')
+        #     for ap in aps:
+        #         print (ap.split('/')[-1])
+        #     ap_select = raw_input('Choose ref image from list above: ')
+        #     os.system('cp ' + ' ../master_files/' + ap_select + ' database/'+ap_select)
+        #     _reference = ap_select[2:]
+        #     _fittrac = 'no'
+        #     _trace = 'no'
 
 
         if host_ex:
@@ -848,6 +872,11 @@ def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
         elif 'center' in line:
             ap_centers[current_ap] = float(line.split()[2])
 
+    if 'kast' in inst.get('name'):
+        sign = -1.
+    else:
+        sign = 1.
+
     for line in ap_data:
 
         if len(line.split()) == 2 and 'aperture' in line:
@@ -866,11 +895,17 @@ def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
                 diff *= -1.
 
         elif 'low' in line and 'reject' not in line:
-            low = str(float(line.split()[2])*(ap_binning/img_binning) + diff) 
+            if 'kast_blue' in inst.get('name'): #current inst is blue so want to get correct red ap
+                low = str(sign*float(line.split()[1])*(ap_binning/img_binning) + diff) 
+            else:
+                low = str(sign*float(line.split()[2])*(ap_binning/img_binning) + diff) 
             lows.append(low)
 
         elif 'high' in line and 'reject' not in line:
-            high = str(float(line.split()[2])*(ap_binning/img_binning) + diff)
+            if 'kast_blue' in inst.get('name'): #current inst is blue so want to get correct red ap
+                high = str(sign*float(line.split()[1])*(ap_binning/img_binning) + diff)
+            else:
+                high = str(sign*float(line.split()[2])*(ap_binning/img_binning) + diff)
             highs.append(high)
 
         elif 'sample' in line:
@@ -889,7 +924,10 @@ def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
             b2 = b2*(ap_binning/img_binning) + diff
             b3 = b3*(ap_binning/img_binning) + diff
             b4 = b4*(ap_binning/img_binning) + diff
-            _b_sample_new = str(b1)+':'+str(b2)+' '+str(b3)+':'+str(b4)
+            if 'kast' in inst.get('name'):
+                _b_sample_new = str(sign*b4)+':'+str(sign*b3)+' '+str(sign*b2)+':'+str(sign*b1)
+            else:
+                _b_sample_new = str(b1)+':'+str(b2)+' '+str(b3)+':'+str(b4)
             b_samps.append(_b_sample_new)
 
     return lows, highs, b_samps

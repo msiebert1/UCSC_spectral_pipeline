@@ -702,6 +702,7 @@ def main(rawFiles,*args,**kwargs):
     REORIENT = kwargs.get('REORIENT',True) 
     TRIM = kwargs.get('TRIM',False) 
     ISDFLAT = kwargs.get('ISDFLAT',False) 
+    RED_AMP_BAD = kwargs.get('RED_AMP_BAD',False) 
     MASK_MIDDLE_BLUE = kwargs.get('MASK_MIDDLE_BLUE',False)
     MASK_MIDDLE_RED = kwargs.get('MASK_MIDDLE_RED',False)
 
@@ -787,9 +788,13 @@ def main(rawFiles,*args,**kwargs):
                         outImg = outImg[1800//xbin:2800//xbin,:]
                 else:
                     if nAmps == 2:
-                        if ISDFLAT:
+                        if ISDFLAT and not RED_AMP_BAD:
                             outImg_amp1 = outImg[290:575,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
                             outImg_amp2 = outImg[0:290,:-55]
+                        elif ISDFLAT and RED_AMP_BAD:
+                            outImg_amp1 = outImg[290:575,:-55]
+                        elif not ISDFLAT and RED_AMP_BAD:
+                            outImg = outImg[290:575,:-55]
                         else:
                             # outImg = outImg[600//xbin:1100//xbin,:]
                             outImg = outImg[0:575,:-55]
@@ -829,11 +834,18 @@ def main(rawFiles,*args,**kwargs):
                     os.remove(oScanFile_amp1)
                 hdu.writeto(oScanFile_amp1,output_verify='ignore')  
 
-                oScanFile_amp2 = oScanFile.split('.')[0]+'_amp2.'+oScanFile.split('.')[1]
-                hdu = fits.PrimaryHDU(outImg_amp2,head)
-                if os.path.isfile(oScanFile_amp2):
-                    os.remove(oScanFile_amp2)
-                hdu.writeto(oScanFile_amp2,output_verify='ignore')
+                if rawFile[0] == 'b':
+                    oScanFile_amp2 = oScanFile.split('.')[0]+'_amp2.'+oScanFile.split('.')[1]
+                    hdu = fits.PrimaryHDU(outImg_amp2,head)
+                    if os.path.isfile(oScanFile_amp2):
+                        os.remove(oScanFile_amp2)
+                    hdu.writeto(oScanFile_amp2,output_verify='ignore')    
+                elif not RED_AMP_BAD:
+                    oScanFile_amp2 = oScanFile.split('.')[0]+'_amp2.'+oScanFile.split('.')[1]
+                    hdu = fits.PrimaryHDU(outImg_amp2,head)
+                    if os.path.isfile(oScanFile_amp2):
+                        os.remove(oScanFile_amp2)
+                    hdu.writeto(oScanFile_amp2,output_verify='ignore')
             else:
                 hdu = fits.PrimaryHDU(outImg,head)
                 if os.path.isfile(oScanFile):

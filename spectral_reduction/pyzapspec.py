@@ -308,7 +308,7 @@ def pyzapspec(infile,
     # zapimage_ravel = zapimage.ravel()
 
 
-    res = writefits(zapimage,'zapimage1.fits',CLOBBER=True)
+    # res = writefits(zapimage,'zapimage1.fits',CLOBBER=True)
     if DEBUG:
         res = writefits(zapimage,'{}/zapimage.fits'.format(DEBUG_DIR),CLOBBER=True)
 
@@ -440,7 +440,7 @@ def pyzapspec(infile,
     histStr = 'Processed by pyzapspec UT {}'.format(datetime.datetime.now())
     header.add_history(histStr)
 
-    res = writefits(zapimage,'zapimage2.fits',CLOBBER=True)
+    # res = writefits(zapimage,'zapimage2.fits',CLOBBER=True)
     if DEBUG:
         res = writefits(ymedimage,'{}/ymedimage.fits'.format(DEBUG_DIR),CLOBBER=True)
         res = writefits(xmedimage,'{}/xmedimage.fits'.format(DEBUG_DIR),CLOBBER=True)
@@ -454,7 +454,7 @@ def pyzapspec(infile,
 
     if WRITE_OUTFILE:
         res = writefits(outimg,outfile,header=header,CLOBBER=True)
-        res = writefits(outmask,maskfile,CLOBBER=True)
+        # res = writefits(outmask,maskfile,CLOBBER=True)
 
     return outimg,outmask,header
 
