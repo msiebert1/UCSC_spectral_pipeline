@@ -130,28 +130,28 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
 
             #The following code applies the calculated shift prior to fitting the flux star
             #If the target is an object then the object is shifted prior to applying the flux star
-            answer_flux = input('Is this a master standard star? y/[n]: ') or 'n'
-            if answer_flux == 'y':
-                fluxwave=fluxwave+angshift
-            wave = wave+angshift
+            # answer_flux = input('Is this a master standard star? y/[n]: ') or 'n'
+            # if answer_flux == 'y':
+            #     fluxwave=fluxwave+angshift
+            # wave = wave+angshift
 
 
-            #Testing only for standard star
-            skyshiftdone=False
-            while (not skyshiftdone):
-                print('Is this ok?')
-                answer=yesno('y')
-                if (answer == 'n'):
-                    #undo shifts
-                    if answer_flux == 'y':
-                        fluxwave=fluxwave-angshift
-                    wave = wave-angshift
-                    angshift=inputter('Enter desired shift in Angstroms: ','float',False)
-                    if answer_flux == 'y':
-                        fluxwave=fluxwave+angshift
-                    wave = wave+angshift
-                else:
-                    skyshiftdone = True
+            # #Testing only for standard star
+            # skyshiftdone=False
+            # while (not skyshiftdone):
+            #     print('Is this ok?')
+            #     answer=yesno('y')
+            #     if (answer == 'n'):
+            #         #undo shifts
+            #         if answer_flux == 'y':
+            #             fluxwave=fluxwave-angshift
+            #         wave = wave-angshift
+            #         angshift=inputter('Enter desired shift in Angstroms: ','float',False)
+            #         if answer_flux == 'y':
+            #             fluxwave=fluxwave+angshift
+            #         wave = wave+angshift
+            #     else:
+            #         skyshiftdone = True
             ##
 
 
@@ -198,9 +198,9 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             #     else:
             #         skyshiftdone = True
             # plt.close()
-            print ('Obj wave with shift: ', wave[0])
-            mshead.set('CRVAL1',  wave[0])
-            mshead.set('CDELT1', wave[1] - wave[0])
+            # print ('Obj wave with shift: ', wave[0])
+            # mshead.set('CRVAL1',  wave[0])
+            # mshead.set('CDELT1', wave[1] - wave[0])
 
 
             # print ('Fluxwave start', fluxwave[0])

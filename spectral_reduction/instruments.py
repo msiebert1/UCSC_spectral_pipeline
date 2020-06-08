@@ -18,6 +18,7 @@ kast_blue = {'name': 'kast_blue',
              'biassec': '[1:2048,318:350]',
              # 'trimsec': '[50:2010,7:287]',
              'trimsec': '[80:1850,7:287]',
+             'flatsec': '[80:1850,50:287]',
              # 'trimsec': '[26:1976,22:302]', # temporary
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_blue_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_blue.fits',
@@ -50,9 +51,8 @@ kast_red = { 'name': 'kast_red',
              'slit': 'temp',
              'dispaxis': 2, 
              'biassec': '[360:405,1:2725]',
-             # 'biassec': '[1:2725, 360:405]', #transposed
              'trimsec': '[66:346,80:2296]',
-             # 'trimsec': '[80:2296, 66:346]', #transposed
+             'flatsec': '[110:346,80:2296]',
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
              'archive_sens': path_to_trunk + 'KAST_cals/fluxstarred.fits',

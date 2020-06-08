@@ -13,6 +13,7 @@ from scipy import optimize
 from scipy import signal, ndimage
 
 from optparse import OptionParser
+import instruments
 
 import matplotlib
 
@@ -47,7 +48,7 @@ class fitFlatClass(object):
         A dictionary representing a prototype masking region
 
     '''
-    def __init__(self,image,fig):
+    def __init__(self,image,fig,inst):
         ''' 
         Initialize the object 
 
@@ -67,6 +68,7 @@ class fitFlatClass(object):
         
         # figure
         self.fig = fig
+        self.inst = inst
         
         # spline smoothing (used in fitting)
         # use larger values to accept worse fits,
@@ -523,6 +525,9 @@ class fitFlatClass(object):
             newCols = newCols.astype(int)
             
             self.flatModelData[:,newCols] = skyModelFull[:,newCols] # obviously check this
+
+        self.refresh_plot()
+        return 0
         
         return 0
         
@@ -537,8 +542,59 @@ class fitFlatClass(object):
             newCols = np.arange(region.colLo,region.colUp,1)
             newCols = newCols.astype(int)
             self.flatCorrData[:,newCols] = 1.*self.flatModelData[:,newCols] 
+
+
+        if 'kast' in self.inst.get('name'):
+            std_tol = 0.03 #subject to change
+            count = 0
+            found_blue = False
+            found_red = False
+            for i in range(len(self.flatModelData[0,:])):
+                newCols = np.arange(i,i+20,1)
+                newCols = newCols.astype(int)
+                if i < len(self.flatModelData[0,:]) - 21:
+                    std = np.std(np.ravel(self.flatModelData[:,newCols]))
+                    print (i, std)
+                    if std < std_tol:
+                        count+=1
+                    if std < std_tol and count > 10 and not found_blue:
+                        blue_ind = i - 10
+                        found_blue = True
+                        count=0
+                        if 'blue' in self.inst.get('name'):
+                            break
+
+                    #do not substitute in red side of blue detector
+                    if 'red' in self.inst.get('name'):
+                        if std > std_tol and found_blue:
+                            count+=1
+                        if std > std_tol and count > 10 and not found_red and found_blue:
+                            red_ind = i - 10
+                            found_red = True
+                            break
+
+
+            good_range = [1200,1300]
+            medCols = np.arange(good_range[0],good_range[1],1)
+            medCols = medCols.astype(int)
+
+            print ('Substituting median profile at edges up to column ', blue_ind)
+            subdata = np.median(self.rawData[:,medCols], axis=1)
+            num_blue_cols = blue_ind
+            for col in range(num_blue_cols):
+                self.flatCorrData[:,col] = subdata
+
+
+            if 'red' in self.inst.get('name'):
+                num_red_cols = red_ind
+                for col in range(num_blue_cols):
+                    neg_col = int(-1.*col)
+                    self.flatCorrData[:,neg_col] = subdata
+
+
         self.refresh_plot()
         return 0
+        
         
     #
     # Substitutes the data in a user supplied region with self.masterProfile
@@ -660,6 +716,7 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
     # loop over the flat files
     for file in flat_list:
         hdu = fits.open(file)
+        br, inst = instruments.blue_or_red(file)
         data = hdu[0].data
         header = hdu[0].header
         nImages += 1
@@ -723,7 +780,7 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
         hdu = fits.PrimaryHDU(flat_comb_image,header)
         hdu.writeto(outFile,output_verify='ignore')  
 
-    return (flat_comb_image,header)
+    return (flat_comb_image,header,inst)
 
 
 
@@ -825,8 +882,9 @@ def inspect_flat(flat_list,*args,**kwargs):
 
     # if user passed multiple files, combine them, otherwise, just read in the single file
     if len(flat_list) > 1:
-        flat_comb_image,header = combine_flats(flat_list,**kwargs)
+        flat_comb_image, header, inst = combine_flats(flat_list,**kwargs)
     else:
+        br, inst = instruments.blue_or_red(flat_list[0])
         hdu = fits.open(flat_list[0])
         flat_comb_image = hdu[0].data
         header = hdu[0].header
@@ -909,8 +967,8 @@ def inspect_flat(flat_list,*args,**kwargs):
     ax1.set_yticklabels([])
     ax2.set_yticklabels([])
     ax3.set_yticklabels([])
-    
-    flatFitObj = fitFlatClass(flat_comb_image,fig)
+
+    flatFitObj = fitFlatClass(flat_comb_image,fig,inst)
 
     while True:
         
@@ -966,7 +1024,7 @@ def inspect_flat(flat_list,*args,**kwargs):
                 flatFitObj.subsitute_model_flat()
                 
             if usrResp == 'U':
-                flatFitObj = fitFlatClass(flat_comb_image,fig)
+                flatFitObj = fitFlatClass(flat_comb_image,fig,inst)
                 flatFitObj.refresh_plot()
                 
             if usrResp == 'H':

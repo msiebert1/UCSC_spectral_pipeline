@@ -183,11 +183,12 @@ def user_adjust_config(configDict,operation=''):
     return configDict
 
 
-def basic_2d_proc(rawFile,CLOBBER=False):
+def basic_2d_proc(rawFile,imgType=None,CLOBBER=False):
 
     # set up file names based on our convention
     oScanFile = 'pre_reduced/o{}'.format(rawFile)
     toScanFile = 'pre_reduced/to{}'.format(rawFile)
+    toScanFlat = 'pre_reduced/to{}'.format(rawFile.split('.')[0]+'_norm.fits')
 
     # run the basic 2D stuff on this image if necessary
     if (not os.path.isfile(oScanFile)) or CLOBBER:
@@ -198,6 +199,7 @@ def basic_2d_proc(rawFile,CLOBBER=False):
         iraf.longslit.dispaxi = inst.get('dispaxis')
         _biassec0 = inst.get('biassec')
         _trimsec0 = inst.get('trimsec')
+        _flatsec0 = inst.get('flatsec')
 
         # remove destination files
         for file in [oScanFile,toScanFile]:
@@ -224,6 +226,11 @@ def basic_2d_proc(rawFile,CLOBBER=False):
                         overscan='no', trim='yes', zerocor="no", flatcor="no", 
                         readaxi='line',trimsec=str(_trimsec0), Stdout=1)
 
+            #create trimmed flats for norm region
+            if imgType == 'CAL_FLAT' and 'kast' in inst.get('name'):
+                iraf.ccdproc(oScanFile, output=toScanFlat, 
+                        overscan='no', trim='yes', zerocor="no", flatcor="no", 
+                        readaxi='line',trimsec=str(_flatsec0), Stdout=1)
             # clean up intermediate files
 
             # if 'kast_red' in inst.get('name'):
@@ -231,7 +238,7 @@ def basic_2d_proc(rawFile,CLOBBER=False):
             #     iraf.wcsreset(toScanFile, wcs='physical')
             #     tfits=fits.open(toScanFile, mode='update')
             #     thead=tfits[0].header
-            #     thead.set('DATASEC',  inst.get('trimsec'))
+            #     thead.set('DATASEC', '[80:2296, 66:346]')
             #     tfits.flush()
             os.remove(oScanFile)
 
@@ -508,7 +515,7 @@ def pre_reduction_dev(*args,**kwargs):
                                 print (imgType)
                                 res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD)
                         else:
-                            res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
+                            res = basic_2d_proc(rawFile,imgType=imgType,CLOBBER=CLOBBER)
                     else:
                         # here we're faking the basic 2D reduction because we've done
                         # specialized 2D reduction (e.g., keck_basic_2d)
@@ -613,14 +620,14 @@ def pre_reduction_dev(*args,**kwargs):
                                    response='pre_reduced/RESP_blue_amp1', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
-                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   low_rej=5,high_rej=5, order=60, niterat=20, 
                                    grow=0, graphic='stdgraph')
             iraf.specred.response(Flat_blue_amp2, 
                                    normaliz=Flat_blue_amp2, 
                                    response='pre_reduced/RESP_blue_amp2', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
-                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   low_rej=5,high_rej=5, order=60, niterat=20, 
                                    grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
@@ -679,7 +686,7 @@ def pre_reduction_dev(*args,**kwargs):
                                   response='pre_reduced/RESP_red_amp1', 
                                   interac=inter, thresho='INDEF',
                                   sample='*', naverage=2, function='legendre', 
-                                  low_rej=3,high_rej=3, order=80, niterat=20, 
+                                  low_rej=5,high_rej=5, order=80, niterat=20, 
                                   grow=0, graphic='stdgraph')
             if not RED_AMP_BAD:
                 iraf.specred.response(Flat_red_amp2, 
@@ -687,7 +694,7 @@ def pre_reduction_dev(*args,**kwargs):
                                       response='pre_reduced/RESP_red_amp2', 
                                       interac=inter, thresho='INDEF',
                                       sample='*', naverage=2, function='legendre', 
-                                      low_rej=3,high_rej=3, order=80, niterat=20, 
+                                      low_rej=5,high_rej=5, order=80, niterat=20, 
                                       grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
@@ -732,26 +739,39 @@ def pre_reduction_dev(*args,**kwargs):
             iraf.specred.dispaxi = dispaxis
             Flat_blue = 'pre_reduced/toFlat_blue.fits'
 
-            flat_list= []
+            flat_list = []
+            norm_list = []
             for flat in list_flat_b:
                 flat_list.append('pre_reduced/to'+ flat)
+                norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
             if os.path.isfile(Flat_blue):
                 os.remove(Flat_blue)
 
             # first, combine all the flat files into a master flat
             res = combine_flats(flat_list,OUTFILE=Flat_blue,MEDIAN_COMBINE=True)
-            
+            # combine all the flat files for norm region
+            res = combine_flats(norm_list,OUTFILE='pre_reduced/dummy_blue.fits',MEDIAN_COMBINE=True)
+        
+            #can't get this to work:
+            # _flatsec0 = inst.get('flatsec')
+            # iraf.ccdproc(Flat_blue, output='pre_reduced/dummy_blue.fits', 
+            #         overscan='no', trim='yes', zerocor="no", flatcor="no", 
+            #         readaxi='line',trimsec=str(_flatsec0), Stdout=1)
+
             # run iraf response
             iraf.specred.response(Flat_blue, 
-                                   normaliz=Flat_blue, 
+                                   normaliz='pre_reduced/dummy_blue.fits', 
                                    response='pre_reduced/RESP_blue', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
-                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   low_rej=5,high_rej=5, order=60, niterat=20, 
                                    grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
             res = inspect_flat(['pre_reduced/RESP_blue.fits'], OUTFILE='pre_reduced/RESP_blue.fits', DISPAXIS=dispaxis)
+
+            for flat in list_flat_b:
+                os.remove('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
 
         # red flats
         if len(list_flat_r) > 0:
@@ -762,25 +782,33 @@ def pre_reduction_dev(*args,**kwargs):
             Flat_red = 'pre_reduced/toFlat_red.fits'
 
             flat_list= []
+            norm_list = []
             for flat in list_flat_r:
                 flat_list.append('pre_reduced/to'+ flat)
+                norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
             if os.path.isfile(Flat_red):
                 os.remove(Flat_red)
 
             # first, combine all the flat files into a master flat
             res = combine_flats(flat_list,OUTFILE=Flat_red,MEDIAN_COMBINE=True)
+            # combine all the flat files for norm region
+            res = combine_flats(norm_list,OUTFILE='pre_reduced/dummy_red.fits',MEDIAN_COMBINE=True)
+
             
             # run iraf response
             iraf.specred.response(Flat_red, 
-                                   normaliz=Flat_red, 
+                                   normaliz='pre_reduced/dummy_red.fits', 
                                    response='pre_reduced/RESP_red', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
-                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   low_rej=5,high_rej=5, order=60, niterat=20, 
                                    grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
             res = inspect_flat(['pre_reduced/RESP_red.fits'], OUTFILE='pre_reduced/RESP_red.fits', DISPAXIS=dispaxis)
+
+            for flat in list_flat_r:
+                os.remove('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
 
 
 
@@ -1013,7 +1041,7 @@ def pre_reduction_orig():
                                    response='pre_reduced/RESP_blue', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
-                                   low_rej=3,high_rej=3, order=60, niterat=20, 
+                                   low_rej=5,high_rej=5, order=60, niterat=20, 
                                    grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
@@ -1042,7 +1070,7 @@ def pre_reduction_orig():
                                   response='pre_reduced/RESP_red', 
                                   interac=inter, thresho='INDEF',
                                   sample='*', naverage=2, function='legendre', 
-                                  low_rej=3,high_rej=3, order=80, niterat=20, 
+                                  low_rej=5,high_rej=5, order=80, niterat=20, 
                                   grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions

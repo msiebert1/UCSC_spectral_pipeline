@@ -187,6 +187,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
             iraf.imcopy(img, output=timg)
         
         # should just do this by hand
+
         # tfits=fits.open(timg, mode='update')
         # thead=tfits[0].header
         # thead.set('DATASEC',  '[80:2296,66:346]')
@@ -212,6 +213,14 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         #                    flatcor="no", 
         #                    readaxi='line',
         #                    Stdout=1)
+
+        if 'kast_red' in inst.get('name'):
+            tfits = fits.open(timg)
+            tdata = tfits[0].data
+            theader = tfits[0].header
+            flip_tdata = np.fliplr(tdata)
+            hdu = fits.PrimaryHDU(flip_tdata, theader)
+            hdu.writeto(timg,output_verify='ignore', clobber=True)
 
         img = timg
             
