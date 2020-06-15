@@ -768,48 +768,23 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
                     ap_data = old_file.readlines()
                     lows, highs, b_samps = get_relevant_ap_data(ap_data, ap_binning, img_binning, inst)
                     with open(new_apfile,'w') as new_file:
-                        if 'kast' in inst.get('name'): #the kast red trace is mirrored
-                            for i in range(len(lows)):
-                                low = str(lows[i])
-                                high = str(highs[i])
-                                for c_line in c_ap_data:
-                                    if 'begin' in c_line and 'aperture' in c_line:
-                                        new_file.write(c_line.replace((c_line.split()[2] + ' 1'), c_line.split()[2] + ' ' + str(i+1)))
-                                    elif 'begin' not in c_line and 'aperture' in c_line:
-                                        new_file.write(c_line.replace(c_line.split()[1], str(i+1)))
-                                    elif 'low' in c_line and 'reject' not in c_line:
-                                        if 'kast_blue' in inst.get('name'):
-                                            new_file.write(c_line.replace(c_line.split()[2], high))
-                                        else:
-                                            new_file.write(c_line.replace(c_line.split()[1], high))
-                                    elif 'high' in c_line and 'reject' not in c_line:
-                                        if 'kast_blue' in inst.get('name'):
-                                            new_file.write(c_line.replace(c_line.split()[2], low))
-                                        else:
-                                            new_file.write(c_line.replace(c_line.split()[1], low))
-                                    elif 'sample' in c_line:
-                                        b_sample = str(b_samps[i])
-                                        new_file.write(c_line.replace(c_line.split('sample')[1].split('\n')[0], ' '+ b_sample))
-                                    else:
-                                        new_file.write(c_line)
-                        else:
-                            for i in range(len(lows)):
-                                low = str(lows[i])
-                                high = str(highs[i])
-                                for c_line in c_ap_data:
-                                    if 'begin' in c_line and 'aperture' in c_line:
-                                        new_file.write(c_line.replace((c_line.split()[2] + ' 1'), c_line.split()[2] + ' ' + str(i+1)))
-                                    elif 'begin' not in c_line and 'aperture' in c_line:
-                                        new_file.write(c_line.replace(c_line.split()[1], str(i+1)))
-                                    elif 'low' in c_line and 'reject' not in c_line:
-                                        new_file.write(c_line.replace(c_line.split()[2], low))
-                                    elif 'high' in c_line and 'reject' not in c_line:
-                                        new_file.write(c_line.replace(c_line.split()[2], high))
-                                    elif 'sample' in c_line:
-                                        b_sample = str(b_samps[i])
-                                        new_file.write(c_line.replace(c_line.split('sample')[1].split('\n')[0], ' '+ b_sample))
-                                    else:
-                                        new_file.write(c_line)
+                        for i in range(len(lows)):
+                            low = str(lows[i])
+                            high = str(highs[i])
+                            for c_line in c_ap_data:
+                                if 'begin' in c_line and 'aperture' in c_line:
+                                    new_file.write(c_line.replace((c_line.split()[2] + ' 1'), c_line.split()[2] + ' ' + str(i+1)))
+                                elif 'begin' not in c_line and 'aperture' in c_line:
+                                    new_file.write(c_line.replace(c_line.split()[1], str(i+1)))
+                                elif 'low' in c_line and 'reject' not in c_line:
+                                    new_file.write(c_line.replace(c_line.split()[2], low))
+                                elif 'high' in c_line and 'reject' not in c_line:
+                                    new_file.write(c_line.replace(c_line.split()[2], high))
+                                elif 'sample' in c_line:
+                                    b_sample = str(b_samps[i])
+                                    new_file.write(c_line.replace(c_line.split('sample')[1].split('\n')[0], ' '+ b_sample))
+                                else:
+                                    new_file.write(c_line)
 
 
 
@@ -873,7 +848,7 @@ def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
             ap_centers[current_ap] = float(line.split()[2])
 
     if 'kast' in inst.get('name'):
-        sign = -1.
+        sign = 1.
     else:
         sign = 1.
 

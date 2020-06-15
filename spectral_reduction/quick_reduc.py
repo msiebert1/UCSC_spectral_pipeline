@@ -220,9 +220,12 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
             tfits = fits.open(timg)
             tdata = tfits[0].data
             theader = tfits[0].header
-            flip_tdata = np.fliplr(tdata)
-            hdu = fits.PrimaryHDU(flip_tdata, theader)
-            hdu.writeto(timg,output_verify='ignore', clobber=True)
+            if theader.get('Mirrored', None) is None:
+                print ('Mirroring Image!')
+                flip_tdata = np.fliplr(tdata)
+                theader.set('Mirrored',  'True')
+                hdu = fits.PrimaryHDU(flip_tdata, theader)
+                hdu.writeto(timg,output_verify='ignore', clobber=True)
 
         img = timg
 

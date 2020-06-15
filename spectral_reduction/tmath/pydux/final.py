@@ -508,6 +508,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 objname = objectname + '-' + gratcode
                 fname=objname+'-'+printdate+'_ap'+str(i+1)+ suffixes['ap'+str(i+1)] +'.fits'
                 sname=objname+'-'+printdate+'_ap'+str(i+1)+ suffixes['ap'+str(i+1)] +'-sigma.fits'
+                outputdone=True
                 if (os.path.isfile(fname)):
                     print('{} already exists!!!!'.format(fname))
                     print('Do you wish to overwrite it? ')
@@ -641,8 +642,9 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     print('\nEnter the object name for the final fits file: ')
                     # objname=inputter('(UT date and .fits will be added): ','string',False)
                     objname = objectname + '-combined'
-                    fname=objname+'-'+printdate+'_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'.fits'
-                    sname=objname+'-'+printdate+'_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'-sigma.fits'
+                    fname_comb=objname+'-'+printdate+'_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'.fits'
+                    sname_comb=objname+'-'+printdate+'_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'-sigma.fits'
+                    outputdone=True
                     if (os.path.isfile(fname)):
                         print('{} already exists!!!!'.format(fname))
                         print('Do you wish to overwrite it? ')
@@ -687,13 +689,19 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 hdul=fits.HDUList([outhdu])
                 mshead_combined.set('NAXIS2',2)
                 hdul[0].header=mshead_combined.copy()
-                hdul.writeto(fname,overwrite=True)
+                hdul.writeto(fname_comb,overwrite=True)
                 hdul.close()
                 spectxt = objname+'-'+printdate+'_ap'+ str(i+1) + suffixes['ap'+str(i+1)] +'.flm'
                 spectxt=spectxt.strip()
                 np.savetxt(spectxt,np.transpose([nwave,finalobj.copy(),finalsig.copy()]))
-                    
-        print('final')        
+              
+            is_final=input('Is this a final reduction? [y]/n: ') or 'y'      
+            if is_final:
+                if not os.path.isdir('../../final_reductions/'):
+                    os.mkdir('../../final_reductions/')
+                os.system('cp ' + fname + ' ' + '../../final_reductions/'+ fname)
+                os.system('cp ' + fname_comb + ' ' + '../../final_reductions/'+ fname_comb)      
+        print('final')
         print(objectlist,gratcode,secondord,gratcode2)
         plt.close()
     return
