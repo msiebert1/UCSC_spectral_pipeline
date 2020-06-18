@@ -267,9 +267,8 @@ def add_final_reductions():
         print ('Telescope not implemented')
         return
 
-    db_path_ziggy = '/data2/UCSC_spectral_database/'
+    db_path_ziggy = '/data2/UCSC_Spectral_Database/'
     spec_files = glob.glob(path+"/final_reductions/*.fits")
-    print (glob.glob('../../data2/UCSC_spectral_database/*.db'))
     print (db_path_ziggy+'UCSC_SPEC_DATA_DEV.db')
     for spec in spec_files:
         add_spectrum_to_db(db_path_ziggy+'UCSC_SPEC_DATA_DEV.db', spec, telescope)
