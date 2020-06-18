@@ -1,3 +1,4 @@
+#!/usr/bin/env astroconda37
 import UCSC_spec_db_management as spec_db 
 
 if __name__ == "__main__":
