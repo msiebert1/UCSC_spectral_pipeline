@@ -239,7 +239,7 @@ def add_spectrum_to_db(new_db_name, spec, telescope):
     err_binary = err.tobytes()
     print ('Adding:', meta_dict['FILENAME'])
     
-    add_str = """INSERT INTO SPECTRA( """
+    add_str = """INSERT OR REPLACE INTO SPECTRA( """
     meta_data = ()
     for m in meta_dict:
         add_str = add_str + m + ', '
