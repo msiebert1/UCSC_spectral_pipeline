@@ -258,9 +258,20 @@ def add_spectrum_to_db(new_db_name, spec, telescope):
 
 
 def add_final_reductions():
+    path = os.getcwd()
+    if 'keck' in path.lower():
+        telescope = 'keck'
+    elif 'lick' in path.lower():
+        telescope = 'lick'
+    else:
+        print ('Telescope not implemented')
+        return
+
+    db_path_ziggy = '/data2/UCSC_spectral_database/'
     spec_files = glob.glob("/final_reductions/*.fits")
     for spec in spec_files_lick:
-        add_spectrum_to_db(db_name, spec, 'lick')
+        add_spectrum_to_db(db_path_ziggy+'UCSC_SPEC_DATA_DEV.db', spec, telescope)
+        print (spec, 'added to database')
     return
 
 
