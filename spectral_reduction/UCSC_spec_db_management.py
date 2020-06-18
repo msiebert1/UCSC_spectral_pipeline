@@ -257,7 +257,7 @@ def add_spectrum_to_db(new_db_name, spec, telescope):
     con.commit()
 
 
-def main():
+def add_final_reductions():
     spec_files = glob.glob("/final_reductions/*.fits")
     for spec in spec_files_lick:
         add_spectrum_to_db(db_name, spec, 'lick')
