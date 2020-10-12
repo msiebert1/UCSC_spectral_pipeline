@@ -792,15 +792,19 @@ def main(rawFiles,*args,**kwargs):
                             outImg_amp1 = outImg[290:575,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
                             outImg_amp2 = outImg[0:290,:-55]
                         elif ISDFLAT and RED_AMP_BAD:
-                            outImg_amp1 = outImg[290:575,:-55]
+                            # outImg_amp1 = outImg[290:575,:-55]
+                            outImg_amp1 = outImg[290:545,:-55]
                         elif not ISDFLAT and RED_AMP_BAD:
-                            outImg = outImg[290:575,:-55]
+                            # outImg = outImg[290:575,:-55]
+                            outImg = outImg[290:545,:-55]
                         else:
                             # outImg = outImg[600//xbin:1100//xbin,:]
                             outImg = outImg[0:575,:-55]
 
                     else:
-                        outImg = outImg[1600//xbin:2600//xbin,:]
+                        outImg = outImg[1600//xbin:2600//xbin,:-55]
+                        outImg_amp1 = outImg[250:575,:] #12/7/18 ignoring middle of red
+                        outImg_amp2 = outImg[0:250,:]
                         # This is a weird case. Red is being read out in full frame
                         # and if its a mask, the slits aren't on the normal longlist
                         # sections; we probably don't want to trim at all. Just save
@@ -815,7 +819,7 @@ def main(rawFiles,*args,**kwargs):
             if MASK_MIDDLE_RED and rawFile[0] == 'r':
                 # these rows should be chosen programatically
                 # this is much more aggressive than necessary
-                outImg[190:240,:] = np.median(outImg)
+                outImg[190:250,:] = np.median(outImg)
             if MASK_MIDDLE_BLUE and rawFile[0] == 'b':
                 # these rows should be chosen programatically
                 # this is much more aggressive than necessary
@@ -827,7 +831,7 @@ def main(rawFiles,*args,**kwargs):
             head['BASIC-2D'] = 'DONE'
                 
             # write the images  
-            if ISDFLAT:   
+            if ISDFLAT:  
                 oScanFile_amp1 = oScanFile.split('.')[0]+'_amp1.'+oScanFile.split('.')[1]
                 hdu = fits.PrimaryHDU(outImg_amp1,head)
                 if os.path.isfile(oScanFile_amp1):

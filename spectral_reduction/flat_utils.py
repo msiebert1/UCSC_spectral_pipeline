@@ -544,7 +544,7 @@ class fitFlatClass(object):
             self.flatCorrData[:,newCols] = 1.*self.flatModelData[:,newCols] 
 
 
-        if 'kast' in self.inst.get('name'):
+        if 'blue' in self.inst.get('name'):
             std_tol = 0.03 #subject to change
             count = 0
             found_blue = False
@@ -573,8 +573,8 @@ class fitFlatClass(object):
                             found_red = True
                             break
 
-
-            good_range = [1200,1300]
+            # good_range = [1200,1300]#kast
+            good_range = [2500,2700]#lris
             medCols = np.arange(good_range[0],good_range[1],1)
             medCols = medCols.astype(int)
 
@@ -585,7 +585,7 @@ class fitFlatClass(object):
                 self.flatCorrData[:,col] = subdata
 
 
-            if 'red' in self.inst.get('name'):
+            if 'red' in self.inst.get('name') and found_red:
                 num_red_cols = red_ind
                 for col in range(num_blue_cols):
                     neg_col = int(-1.*col)

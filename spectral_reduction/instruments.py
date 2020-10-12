@@ -92,7 +92,8 @@ lris_blue = {'name': 'lris_blue',
              'archive_arc_extracted': path_to_trunk + 'LRIS_cals/LRIS_Blue_Arc_Ref.ms.fits',
              'archive_arc_extracted_id': path_to_trunk + 'LRIS_cals/id/idLRIS_Blue_Arc_Ref.ms',
              'archive_arc_aperture': path_to_trunk + 'LRIS_cals/apLRIS_Blue_Arc_Ref',
-             'line_list': path_to_trunk+'LRIS_cals/lines.dat', #this nearly hits pathname length limits
+             # 'line_list': path_to_trunk+'LRIS_cals/lines.dat', #this nearly hits pathname length limits
+             'line_list': path_to_trunk+'LRIS_cals/lines_lpipe.dat', #this nearly hits pathname length limits
              'extinction_file': path_to_trunk + 'LRIS_cals/lick_extinction.dat', # JB: need to fix
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
@@ -120,7 +121,8 @@ lris_red = { 'name': 'lris_red',
              'archive_arc_extracted': path_to_trunk + 'LRIS_cals/LRIS_Red_Arc_Ref.ms.fits',
              'archive_arc_extracted_id': path_to_trunk + 'LRIS_cals/id/idLRIS_Red_Arc_Ref.ms',
              'archive_arc_aperture': path_to_trunk + 'LRIS_cals/apLRIS_Red_Arc_Ref',
-             'line_list': path_to_trunk+'LRIS_cals/lines.dat', #this nearly hits pathname length limits
+             # 'line_list': path_to_trunk+'LRIS_cals/lines.dat', #this nearly hits pathname length limits
+             'line_list': path_to_trunk+'LRIS_cals/lines_lpipe.dat', #this nearly hits pathname length limits
              'extinction_file': path_to_trunk + 'LRIS_cals/lick_extinction.dat', # JB: need to fix
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
@@ -128,8 +130,8 @@ lris_red = { 'name': 'lris_red',
              'pyzap_boxsize': 5,
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 8,
-             # 'approx_extract_line': 370, jon old
-             'approx_extract_line': 69,
+             'approx_extract_line': 370, #jon old
+             # 'approx_extract_line': 69,
              'pixel_scale': .135, #arcsec/pix
              'spatial_binning': 2.
              }
@@ -143,10 +145,11 @@ goodman_m1={ 'name': 'goodman_blue',
              'slit': 'temp',
              'dispaxis': 1, 
              'biassec': '[1:25,100:800]', # RED CAMERA
-             'trimsec': '[400:2068,84:900]', # RED CAMERA
+             # 'trimsec': '[400:2068,84:900]', # RED CAMERA
              # 'biassec': '[2060:2070,100:800]', # BLUE CAMERA
              # 'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
-             # 'trimsec': '[400:2025,65:775]', # BLUE CAMERA (cuts out flat field artifact)
+             'trimsec': '[400:2025,65:775]', # BLUE CAMERA (cuts out flat field artifact)
+             # 'trimsec': '[400:2068,84:900]',
              'archive_zero_file': path_to_trunk + 'SOAR_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'SOAR_cals/RESP_blue.fits',
              'archive_sens': path_to_trunk + 'SOAR_cals/fluxstarblue.fits',
@@ -205,9 +208,9 @@ def blue_or_red(img):
     elif util.readkey3(hdr, 'VERSION') == 'kastr':
         return 'red', kast_red
     # soar
-    elif util.readkey3(hdr, 'WAVMODE') == '400_M1':
+    elif util.readkey3(hdr, 'WAVMODE') == '400_M1' or util.readkey3(hdr, 'WAVMODE') == '400 m1':
         return 'blue', goodman_m1
-    elif util.readkey3(hdr, 'WAVMODE') == '400_M2':
+    elif util.readkey3(hdr, 'WAVMODE') == '400_M2' or util.readkey3(hdr, 'WAVMODE') == '400 m2':
         return 'red', goodman_m2
     # lris
     elif util.readkey3(hdr, 'INSTRUME') == 'LRISBLUE':

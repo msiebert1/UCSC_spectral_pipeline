@@ -563,6 +563,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
 
             print('Do you wish to combine with another spectrum? ')
             answer=yesno('y')
+            fname_comb = None
             if (answer == 'y'):
                 plt.close()
                 done=False
@@ -700,7 +701,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 if not os.path.isdir('../../final_reductions/'):
                     os.mkdir('../../final_reductions/')
                 os.system('cp ' + fname + ' ' + '../../final_reductions/'+ fname)
-                os.system('cp ' + fname_comb + ' ' + '../../final_reductions/'+ fname_comb)      
+                if fname_comb:
+                    os.system('cp ' + fname_comb + ' ' + '../../final_reductions/'+ fname_comb)      
         print('final')
         print(objectlist,gratcode,secondord,gratcode2)
         plt.close()

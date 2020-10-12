@@ -246,6 +246,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         #There is a bug in identify when the path to the coordlist is too long
         #This is my hacky workaround for now, the file  is deleted later
         os.system('cp ' + inst.get('line_list') + ' .')
+        line_list = inst.get('line_list').split('/')[-1]
 
         if _arc_identify:
             if not os.path.isdir('../master_files/'):
@@ -273,7 +274,6 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     print('\n### arcfile : ',arcfile)
                     print('\n### arcfile extraction : ',arc_ex)
                     print(inst.get('line_list'))
-                    print ('here')
                     # remove the file from the extract destination
                     if os.path.isfile(arc_ex):
                         os.remove(arc_ex)
@@ -292,7 +292,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                         recen='no')
                     iraf.longslit.identify(images=arc_ex,
                                             section='line {}'.format(inst.get('approx_extract_line')),
-                                            coordli='lines.dat',
+                                            coordli=line_list,
                                             function = 'spline3',
                                             order=3,
                                             mode='h')
@@ -306,6 +306,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                 if os.path.isfile(arc_ex):
                     os.remove(arc_ex)
 
+                print (arcfile, inst.get('approx_extract_line'))
                 iraf.specred.apall(arcfile,
                                     output=arc_ex,
                                     line = inst.get('approx_extract_line'),
@@ -320,7 +321,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                     recen='no')
                 iraf.longslit.identify(images=arc_ex,
                                         section='line {}'.format(inst.get('approx_extract_line')),
-                                        coordli='lines.dat',
+                                        coordli=line_list,
                                         function = 'spline3',
                                         order=3,
                                         mode='h')
@@ -537,7 +538,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                      images=arc_ex,
                                      interac='NO',
                                      section='middle line',
-                                     coordli='lines.dat',
+                                     coordli=line_list,
                                      shift='INDEF',
                                      search='INDEF',
                                      mode='h',
@@ -551,7 +552,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                      newaps='no')
 
             os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')
-        util.delete('lines.dat')
+        util.delete(line_list)
 
 
 

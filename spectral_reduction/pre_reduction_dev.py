@@ -493,6 +493,9 @@ def pre_reduction_dev(*args,**kwargs):
 
     # loop over raw files in configDict, if the destination exists, do nothing
     # # otherwise, do the bias/reorient/trim/output/etc
+
+    MASK_MIDDLE_RED = True #may need to update
+
     for imgType,typeDict in configDict.items():
         for chan,objDict in typeDict.items():
             for obj,fileList in objDict.items():
@@ -510,10 +513,10 @@ def pre_reduction_dev(*args,**kwargs):
                             # res = keck_basic_2d.main([rawFile])
                             if imgType != 'CAL_FLAT':
                                 print (imgType)
-                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD)
+                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED)
                             else:
                                 print (imgType)
-                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD)
+                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED)
                         else:
                             res = basic_2d_proc(rawFile,imgType=imgType,CLOBBER=CLOBBER)
                     else:
@@ -611,8 +614,8 @@ def pre_reduction_dev(*args,**kwargs):
                 os.remove(Flat_blue_amp2)
 
             # first, combine all the flat files into a master flat
-            res = combine_flats(flat_list_amp1,OUTFILE=Flat_blue_amp1,MEDIAN_COMBINE=True)
-            res = combine_flats(flat_list_amp2,OUTFILE=Flat_blue_amp2,MEDIAN_COMBINE=True)
+            res = combine_flats(flat_list_amp1,OUTFILE=Flat_blue_amp1,MEDIAN_COMBINE=False)
+            res = combine_flats(flat_list_amp2,OUTFILE=Flat_blue_amp2,MEDIAN_COMBINE=False)
             
             # run iraf response
             iraf.specred.response(Flat_blue_amp1, 
@@ -638,7 +641,7 @@ def pre_reduction_dev(*args,**kwargs):
             hdu_amp2 = fits.open('pre_reduced/RESP_blue_amp2.fits')
             amp1_flatten = np.asarray(hdu_amp1[0].data).flatten()
             amp2_flatten = np.asarray(hdu_amp2[0].data).flatten()
-            concat_amps = np.concatenate([amp1_flatten, amp2_flatten])
+            concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
             resp_blue_data = np.reshape(concat_amps, (1000,4096))
 
             header = hdu_amp1[0].header
@@ -710,9 +713,11 @@ def pre_reduction_dev(*args,**kwargs):
                 amp1_flatten = np.asarray(hdu_amp1[0].data).flatten()
                 amp2_flatten = np.asarray(hdu_amp2[0].data).flatten()
                 concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
-                resp_red_data = np.reshape(concat_amps, (575,4061))
-
-                resp_red_data[278:294,:] = 1.
+                if not MASK_MIDDLE_RED:
+                    resp_red_data = np.reshape(concat_amps, (575,4061))
+                    resp_red_data[278:294,:] = 1.
+                else:
+                    resp_red_data = np.reshape(concat_amps, (575,4061)) #depends on num amps? (500 for 4)
 
                 header = hdu_amp1[0].header
                 if os.path.isfile('pre_reduced/RESP_red.fits'):
