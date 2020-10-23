@@ -143,7 +143,14 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
         pacheck(mshead)
         objectname=mshead['OBJECT']
         print('The object is: {}'.format(objectname))
-        observat=mshead['OBSERVAT'].strip().lower()
+        # observat=mshead['OBSERVAT'].strip().lower()
+        observat=mshead.get('TELESCOP',None)
+        if observat != None:
+            observat = observat.split()[0].lower()
+        else:
+            observat=mshead.get('VERSION',None)
+            if 'kast' in observat:
+                observat='lick'
         airmass=float(mshead['AIRMASS'])
         if (airmass < 1):
             airmass=1.0
@@ -262,7 +269,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             ax1.set_xlabel('Wavelength')
             plt.pause(0.01)
             print('\nPlotting optimal as black, normal as red\n')
-            extract=inputter_single('Do you want to use the (n)ormal or the (o)ptimal extraction? ','no')
+            extract = input('Do you want to use (n)ormal or [o]ptimal extraction? ') or 'o'
             if (extract == 'o'):
                 object=multispec[0,i,:]
                 extractcode='optimal'
@@ -344,8 +351,9 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     plt.pause(0.01)
                     print('\nBlack spectrum = master sky')
                     print('Red spectrum   = object sky shifted to match master sky')
-                    print('Is this ok?')
-                    answer=yesno('y')
+                    # print('Is this ok?')
+                    # answer=yesno('y')
+                    answer = input('Is this ok? [y]/n: ') or 'y'
                     if (answer == 'n'):
                         wave=wave-angshift
                         angshift=inputter('Enter desired shift in Angstroms: ','float',False)
@@ -415,9 +423,29 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             else:
                 wavesave0 = 0.0
                 wavesaven = 0.0
-                print('Enter the new wavelength range desired: ')
+                # print('Enter the new wavelength range desired: ')
             
-            waveb,waver=waveparse(wave,wavesave0,wavesaven)
+            if observat == 'keck' and 'blue' in inputfile:
+                waves = input('Enter the new wavelength range desired [3160 5640]: ') or '3160 5640'
+                waveb = float(waves.split()[0])
+                waver = float(waves.split()[1])
+            elif observat == 'keck' and 'red' in inputfile:
+                waves = input('Enter the new wavelength range desired [5400 10150]: ') or '5400 10150'
+                waveb = float(waves.split()[0])
+                waver = float(waves.split()[1])
+            elif observat == 'lick':
+                waveb, waver = input('Enter the new wavelength range desired [3160 5640]: ') or '3160 5640'
+                waveb = float(waves.split()[0])
+                waver = float(waves.split()[1])
+            elif observat == 'lick':
+                waveb, waver = input('Enter the new wavelength range desired [5400 10150]: ') or '5400 10150'
+                waveb = float(waves.split()[0])
+                waver = float(waves.split()[1])
+            else:
+                waveb, waver = input('Enter the new wavelength range desired: ') or '3160 5640'
+                waveb = float(waves.split()[0])
+                waver = float(waves.split()[1])
+            # waveb,waver=waveparse(wave,wavesave0,wavesaven)
             newbin=(waver-waveb)/newdelt +1.0 #should stay the same now
             # frac,whole=np.modf(newbin)
             # if (frac > 0.000001):
@@ -511,8 +539,9 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 outputdone=True
                 if (os.path.isfile(fname)):
                     print('{} already exists!!!!'.format(fname))
-                    print('Do you wish to overwrite it? ')
-                    answer=yesno('y')
+                    # print('Do you wish to overwrite it? ')
+                    # answer=yesno('y')
+                    answer = input('Do you wish to overwrite it? [y]/n: ') or 'y'
                     if (answer == 'y'):
                         outputdone = True
                 else:
@@ -561,8 +590,9 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
 
             hdul.close()
 
-            print('Do you wish to combine with another spectrum? ')
-            answer=yesno('y')
+            # print('Do you wish to combine with another spectrum? ')
+            # answer=yesno('y')
+            answer = input('Do you wish to combine with another spectrum? y/[n]: ') or 'n'
             fname_comb = None
             if (answer == 'y'):
                 plt.close()
@@ -648,8 +678,9 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     outputdone=True
                     if (os.path.isfile(fname)):
                         print('{} already exists!!!!'.format(fname))
-                        print('Do you wish to overwrite it? ')
-                        answer=yesno('y')
+                        # print('Do you wish to overwrite it? ')
+                        # answer=yesno('y')
+                        answer = input('Do you wish to overwrite it? [y]/n: ') or 'y'
                         if (answer == 'y'):
                             outputdone = True
                     else:

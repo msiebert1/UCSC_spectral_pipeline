@@ -228,25 +228,25 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             # mx2=womget_element(wave,6050)
             # fx1=womget_element(fluxwave,5500)
             # fx2=womget_element(fluxwave,5050)
-            mx1=0
-            mx2=300
-            fx1=0
-            fx2=300
-            # mx1=-1000
-            # mx2=-50
-            # fx1=-1000
-            # fx2=-50
-            test = extfactor[mx1:mx2]*multispec[0,i,:][mx1:mx2]
-            scale1 = 1./np.median(test)
-            scale2 = 1./np.median(fluxstartmp[fx1:fx2])
-            # print (xcor(scale1*multispec[0,i,:][mx1:mx2],scale2*fluxstar[fx1:fx2],10,200))
-            fig=plt.figure()
-            plt.clf()
-            plt.plot(wave[mx1:mx2], scale1*test,drawstyle='steps-mid',color='r')
-            plt.plot(fluxwave[fx1:fx2], scale2*fluxstar[fx1:fx2],drawstyle='steps-mid',color='k')
-            plt.pause(0.01)
-            check=inputter('Check plot [enter when done]: ','string',False)
-            plt.close()
+            # mx1=0
+            # mx2=300
+            # fx1=0
+            # fx2=300
+            # # mx1=-1000
+            # # mx2=-50
+            # # fx1=-1000
+            # # fx2=-50
+            # test = extfactor[mx1:mx2]*multispec[0,i,:][mx1:mx2]
+            # scale1 = 1./np.median(test)
+            # scale2 = 1./np.median(fluxstartmp[fx1:fx2])
+            # # print (xcor(scale1*multispec[0,i,:][mx1:mx2],scale2*fluxstar[fx1:fx2],10,200))
+            # fig=plt.figure()
+            # plt.clf()
+            # plt.plot(wave[mx1:mx2], scale1*test,drawstyle='steps-mid',color='r')
+            # plt.plot(fluxwave[fx1:fx2], scale2*fluxstar[fx1:fx2],drawstyle='steps-mid',color='k')
+            # plt.pause(0.01)
+            # check=inputter('Check plot [enter when done]: ','string',False)
+            # plt.close()
             #
             
 

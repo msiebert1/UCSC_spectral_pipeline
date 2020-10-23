@@ -816,9 +816,11 @@ def main(rawFiles,*args,**kwargs):
                         # this with TRIM=False.
                         #pass # if red is full frame, we probabaly don't want to bin?
 
+            MASK_MIDDLE_RED = False
             if MASK_MIDDLE_RED and rawFile[0] == 'r':
                 # these rows should be chosen programatically
                 # this is much more aggressive than necessary
+                print ('here')
                 outImg[190:250,:] = np.median(outImg)
             if MASK_MIDDLE_BLUE and rawFile[0] == 'b':
                 # these rows should be chosen programatically

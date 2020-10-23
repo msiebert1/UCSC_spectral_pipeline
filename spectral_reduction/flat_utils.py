@@ -153,6 +153,18 @@ class fitFlatClass(object):
         
         return
         
+    def run_presets(self,name,inst):
+
+        regions = []
+        for reg in inst.get('flat_regions'):
+            self.add_fit_region(name,colLo=reg[0],colUp=reg[1])
+            self.fit_sky_background()
+            self.subsitute_model_flat()
+
+        return 0
+
+
+
     def add_fit_region(self,name,colLo=-1,colUp=-1):
         '''
         Add a fitting region to the current sky model object
@@ -189,7 +201,7 @@ class fitFlatClass(object):
         ax5 = ax_list[4]
         
         # user gave regions
-        if colLo > 0 and colUp > 0:
+        if colLo >= 0 and colUp > 0:
             
             # populate the dummy variable
             self.dummyRegion['colLo'] = colLo
@@ -544,8 +556,8 @@ class fitFlatClass(object):
             self.flatCorrData[:,newCols] = 1.*self.flatModelData[:,newCols] 
 
 
-        if 'blue' in self.inst.get('name'):
-            std_tol = 0.03 #subject to change
+        if 'blue' in self.inst.get('name') or 'red' in self.inst.get('name'):
+            std_tol = 0.02 #subject to change
             count = 0
             found_blue = False
             found_red = False
@@ -573,8 +585,7 @@ class fitFlatClass(object):
                             found_red = True
                             break
 
-            # good_range = [1200,1300]#kast
-            good_range = [2500,2700]#lris
+            good_range = self.inst.get('flat_good_region')
             medCols = np.arange(good_range[0],good_range[1],1)
             medCols = medCols.astype(int)
 
@@ -902,7 +913,7 @@ def inspect_flat(flat_list,*args,**kwargs):
     # set up plotting window
     plt.ion()
     
-    fig=plt.figure(figsize=(16,8))
+    fig=plt.figure(figsize=(10,5))
     axMain = plt.subplot2grid((36,36), (0,0), rowspan=36, colspan=36)
     ax1 = plt.subplot2grid((36,36), (0,0), rowspan=11, colspan=12)
     ax2 = plt.subplot2grid((36,36), (0,12), rowspan=11, colspan=12)
@@ -974,10 +985,11 @@ def inspect_flat(flat_list,*args,**kwargs):
         
         # this really should be a dict of key/value pairs
         # and then the prompt is dynamically generated
-        validResps = ['A','R','F','S','U','H',  # standard options
+        validResps = ['P','A','R','F','S','U','H',  # standard options
                       'AHARD','RHARD','REFINE', # poweruser/hidden options
                       'W','D','Q','Q!']              # stardard ends 
-        promptStr = 'Enter (a) to add an exclusion region.\n'
+        promptStr =  'Enter (p) to run preset regions, fits, and substitutions.\n'
+        promptStr += 'Enter (a) to add an exclusion region.\n'
         promptStr += 'Enter (r) to remove a region.\n'
         promptStr += 'Enter (f) to fit the exclusion regions.\n'
         promptStr += 'Enter (s) to substitute model in exclusion regions.\n'
@@ -991,7 +1003,12 @@ def inspect_flat(flat_list,*args,**kwargs):
         usrResp = raw_input(promptStr).strip().upper()
         
         if usrResp in validResps:
-            
+
+            #run preset regions, fits, and substitutions for inst
+            if usrResp == 'P':
+                name = usrResp
+                flatFitObj.run_presets(name,inst)
+
             # add region by marking it
             if usrResp == 'A':
                 promptStr = 'Enter the name of the sky region (e.g. c1): '
@@ -1070,6 +1087,7 @@ def inspect_flat(flat_list,*args,**kwargs):
 
                 print('Saving and quitting.')
                 # if cols x rows, transpose before writting
+                plt.close()
                 if dispaxis == 2:
                     flatFitObj.flatCorrData = flatFitObj.flatCorrData.T
                 if outFile is None:

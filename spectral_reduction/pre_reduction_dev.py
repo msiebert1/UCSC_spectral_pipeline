@@ -281,7 +281,7 @@ def pre_reduction_dev(*args,**kwargs):
     CLOBBER = kwargs.get('CLOBBER')
     FAKE_BASIC_2D = kwargs.get('FAKE_BASIC_2D')
     FULL_CLEAN = kwargs.get('FULL_CLEAN')
-    FAST = kwargs.get('FAST')
+    SLOW = kwargs.get('SLOW')
     CONFIG_FILE = kwargs.get('CONFIG_FILE')
     MAKE_ARCS = kwargs.get('MAKE_ARCS')
     MAKE_FLATS = kwargs.get('MAKE_FLATS')
@@ -375,7 +375,7 @@ def pre_reduction_dev(*args,**kwargs):
 
         sys.exit(1)
 
-    if not FAST:
+    if SLOW:
         # do visual inspection of frames via ds9 windows
         usrResp = ''
         while usrResp != 'C':
@@ -577,7 +577,7 @@ def pre_reduction_dev(*args,**kwargs):
 
         list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
         list_flat_r = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
-        inter = 'yes'
+        inter = 'no'
 
         b_amp1_list = []
         b_amp2_list = []
@@ -623,14 +623,14 @@ def pre_reduction_dev(*args,**kwargs):
                                    response='pre_reduced/RESP_blue_amp1', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
-                                   low_rej=5,high_rej=5, order=60, niterat=20, 
+                                   low_rej=5,high_rej=5, order=90, niterat=20, 
                                    grow=0, graphic='stdgraph')
             iraf.specred.response(Flat_blue_amp2, 
                                    normaliz=Flat_blue_amp2, 
                                    response='pre_reduced/RESP_blue_amp2', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
-                                   low_rej=5,high_rej=5, order=60, niterat=20, 
+                                   low_rej=5,high_rej=5, order=90, niterat=20, 
                                    grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
@@ -689,7 +689,7 @@ def pre_reduction_dev(*args,**kwargs):
                                   response='pre_reduced/RESP_red_amp1', 
                                   interac=inter, thresho='INDEF',
                                   sample='*', naverage=2, function='legendre', 
-                                  low_rej=5,high_rej=5, order=80, niterat=20, 
+                                  low_rej=5,high_rej=5, order=90, niterat=20, 
                                   grow=0, graphic='stdgraph')
             if not RED_AMP_BAD:
                 iraf.specred.response(Flat_red_amp2, 
@@ -697,7 +697,7 @@ def pre_reduction_dev(*args,**kwargs):
                                       response='pre_reduced/RESP_red_amp2', 
                                       interac=inter, thresho='INDEF',
                                       sample='*', naverage=2, function='legendre', 
-                                      low_rej=5,high_rej=5, order=80, niterat=20, 
+                                      low_rej=5,high_rej=5, order=90, niterat=20, 
                                       grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
@@ -1149,8 +1149,8 @@ def parse_cmd_args():
                         help='Print diagnostic info',action='store_true')
     parser.add_argument('-k','--clobber',
                         help='Clobber existing files/dirs',action='store_true')
-    parser.add_argument('-f','--fast',
-                        help='Use config as is, don\'t prompt user for anything',action='store_true')
+    parser.add_argument('-s','--slow',
+                        help='Edit configs using prompts',action='store_true')
 
 
     parser.add_argument('--make-arcs',
@@ -1186,7 +1186,7 @@ def parse_cmd_args():
     kwargs['CLOBBER'] = cmdArgs.clobber
     kwargs['FULL_CLEAN'] = cmdArgs.full_clean
     kwargs['FAKE_BASIC_2D'] = cmdArgs.fake_basic_2d
-    kwargs['FAST'] = cmdArgs.fast
+    kwargs['SLOW'] = cmdArgs.slow
     kwargs['ORIGINAL'] = cmdArgs.original
     kwargs['CONFIG_FILE'] = cmdArgs.config_file
     kwargs['MAKE_ARCS'] = cmdArgs.make_arcs

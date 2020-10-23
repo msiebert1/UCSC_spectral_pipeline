@@ -102,8 +102,9 @@ def womcatfinal(blue_data, red_data):
     plt.xlabel('Wavelength')
     plt.ylabel('Flux')
     plt.pause(0.01)
-    print('Change scale?')
-    answer=yesno('n')
+    # print('Change scale?')
+    # answer=yesno('n')
+    answer = input('Change scale? y/[n]: ') or 'n'
     if (answer == 'y'):
         xmin_old,xmax_old=plt.xlim()
         ymin_old,ymax_old=plt.ylim()
@@ -123,8 +124,9 @@ def womcatfinal(blue_data, red_data):
             loopanswer=yesno('y')
             if (loopanswer == 'y'):
                 done=True
-    print('\nEnter method to select wavelength ranges\n')
-    mode=inputter_single('Enter (w)avelengths or mark with the (m)ouse? (w/m) ','wm')
+    # print('\nEnter method to select wavelength ranges\n')
+    # mode=inputter_single('Enter (w)avelengths or mark with the (m)ouse? (w/m) ','wm')
+    mode = input('Enter (w)avelengths or mark with the [m]ouse? ') or 'm'
     print('\nChoose end points of region to compute average\n')
     
     waveb,waver,mode=womwaverange2(waveblue[indexblue:],fluxblue[indexblue:],
@@ -139,7 +141,8 @@ def womcatfinal(blue_data, red_data):
     print("\nAverage for {}:{}".format(waveb,waver))
     print("Blue side: {}".format(mean_blue))
     print("Red side:  {}\n".format(mean_red))
-    brscale=inputter_single('Scale to blue or red (b/r)? ','br')
+    # brscale=inputter_single('Scale to blue or red (b/r)? ','br')
+    brscale = input('Scale to blue or red? [b]/r: ') or 'b'
     if (brscale == 'b'):
         brscalefac=mean_blue/mean_red
         logging.info('Cat scaling to blue by {}'.format(brscalefac))

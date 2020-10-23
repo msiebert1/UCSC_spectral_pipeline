@@ -31,8 +31,9 @@ def womwaverange2(waveb,fluxb,waver,fluxr,mode):
         plt.plot(waveb[indexblue:indexred+1],fluxb[indexblue:indexred+1], \
                  drawstyle='steps-mid',color='k')
         plt.pause(0.01)
-        print('Is this range correct?')
-        answer=yesno('y')
+        # print('Is this range correct?')
+        # answer=yesno('y')
+        answer = input('Is this range correct? [y]/n: ') or 'y'
         if (answer == 'n'):
             plt.cla()
             plt.plot(waveb,fluxb,drawstyle='steps-mid',color='b')

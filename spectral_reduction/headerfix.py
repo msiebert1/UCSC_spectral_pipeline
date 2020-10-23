@@ -53,7 +53,14 @@ reconfile=files[0]
 recon=fits.open(reconfile)
 
 try:
-    observat=recon[0].header['OBSERVAT'].strip().lower()
+    observat=recon[0].header.get('TELESCOP',None)
+    if observat != None:
+        observat = observat.split()[0].lower()
+    else:
+        observat=recon[0].header.get('VERSION',None)
+        if 'kast' in observat:
+            observat='lick'
+
 except KeyError:
     print('OBSERVAT keyword not present in header')
     observat=input('Please enter observatory: ')

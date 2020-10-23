@@ -93,7 +93,7 @@ def mkbstar(bfile,gratcode):
         plt.ylim([1.e-2*medValue,1.e2*medValue])
     plt.pause(0.01)
     print('\nPlotting optimal as black, normal as red')
-    extract=inputter_single('Do you want to use (n)ormal or (o)ptimal extraction? ','no')
+    extract = input('Do you want to use (n)ormal or [o]ptimal extraction? ') or 'o'
     if (extract == 'o'):
         bstar=rawdata[0,ap_choice,:]
     else:
@@ -104,7 +104,8 @@ def mkbstar(bfile,gratcode):
     print('\nAirmass: {}\n'.format(airmass))
     airlimit=0.5
     while (airlimit < 1.0) or (airlimit > 10.):
-        airlimit=inputter('Above what airmass is considered high? ','float',False)
+        # airlimit=inputter('Above what airmass is considered high? ','float',False)
+        airlimit = input('Above what airmass is considered high? [1.1]: ') or 1.1
         
     print('\nNow fit the continuum manually\n')
     plt.clf()
@@ -129,8 +130,9 @@ def mkbstar(bfile,gratcode):
     plt.cla()
     plt.plot(wave,bstar,drawstyle='steps-mid')
     plt.pause(0.01)
-    print('\nDo you want to blotch the B-star?')
-    blotch=yesno('n')
+    # print('\nDo you want to blotch the B-star?')
+    # blotch=yesno('n')
+    blotch = input('Do you want to blotch the B-star? y/[n]: ') or 'n'
     if (blotch == 'y'):
         bstar=bblo(wave,bstar,(airmass > airlimit),fig)
     delkeylist=['WAT0_001', 'WAT1_001', 'WAT2_001', 'WAT0_002', \

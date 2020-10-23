@@ -316,8 +316,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None):
     plt.ylim([ymin,ymax])
     plt.pause(0.01)
     done=False
-    print('Is this OK? ')
-    answer=yesno('n')
+    answer = input('Is this OK? y/[n]: ') or 'n'
     if (answer == 'y'):
         done = True
     splptsy=[z for _,z in sorted(zip(womconfig.tmpsplptsx,womconfig.tmpsplptsy))]
@@ -336,8 +335,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None):
             plt.xlim([xmin,xmax])
             plt.ylim([ymin,ymax])
             plt.pause(0.01)
-            print('Change scale? ')
-            answer=yesno('n')
+            answer = input('Change scale? [y]/n: ') or 'y'
             if (answer == 'y'):
                 plt.cla()
                 plt.plot(wave,flux,drawstyle='steps-mid',color='k')
@@ -386,8 +384,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None):
         splineresult=splev(wave,spline)
         plt.plot(wave,splineresult,drawstyle='steps-mid',color='g')
         plt.pause(0.01)
-        print('Is this fit OK? ')
-        answer=yesno('y')
+        answer = input('Is this fit OK? y/[n]: ') or 'n'
         if (answer == 'y'):
             done=True
 

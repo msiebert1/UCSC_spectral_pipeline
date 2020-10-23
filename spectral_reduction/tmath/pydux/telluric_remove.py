@@ -109,8 +109,9 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
         plt.pause(0.01)
 
         if not shift: 
-            print('Is this OK?')
-            answer=yesno('y')
+            # print('Is this OK?')
+            # answer=yesno('y')
+            answer = input('Is this ok? [y]/n: ') or 'y'
             if (answer == 'n'):
                 angshift=inputter('Enter B-star shift in Angstroms: ','float',False)
             else:

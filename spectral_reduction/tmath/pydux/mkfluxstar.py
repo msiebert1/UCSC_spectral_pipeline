@@ -98,7 +98,8 @@ def mkfluxstar(fluxfile,gratcode):
     plt.ylim([ymin,ymax])
     plt.pause(0.01)
     print('\nPlotting optimal as black, normal as red')
-    extract=inputter_single('Do you want to use (n)ormal or (o)ptimal extraction? ','no')
+    # extract=inputter_single('Do you want to use (n)ormal or (o)ptimal extraction? ','no')
+    extract = input('Do you want to use (n)ormal or [o]ptimal extraction? ') or 'o'
     if (extract == 'o'):
         star=rawdata[0,ap_choice,:]
     else:

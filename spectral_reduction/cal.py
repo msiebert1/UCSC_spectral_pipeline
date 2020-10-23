@@ -77,7 +77,8 @@ def main():
     print('\nWe now need a grating code, such as opt or ir2.')
     print('This will be used to keep track of the fluxstar and')
     print('bstar as in fluxstaropt.fits or bstarir2.fits\n')
-    gratcode = inputter('Enter the grating code (blue/red): ', 'string', False)
+    # gratcode = inputter('Enter the grating code (blue/red): ', 'string', False)
+    gratcode = input('Enter the grating code ([blue]/red): ') or 'blue'
     print(' ')
     if (secondord):
         gratcode2 = inputter('Enter the second-order grating code: ', 'string', False)
@@ -98,8 +99,7 @@ def main():
             done = True
         else:
             print('No such file')
-    print('\nDo you want to fit a flux star?\n')
-    answer_flux = yesno('y')
+    answer_flux = input('Do you want to fit a flux star? y/[n]: ') or 'n'
     if (answer_flux == 'y'):
         plt.close()
         fluxfile = getfitsfile('flux star', '.fits', gratcode=gratcode)
@@ -125,24 +125,25 @@ def main():
             except KeyError:
                 fluxfile2 = 'Unknown'
 
-    print('\nDo you want to apply the flux star(s) to the data?\n')
-    answer = yesno('y')
-    if (answer == 'y'):
-        pydux.calibrate(objectlist, gratcode, secondord, gratcode2, answer_flux=answer_flux)
+    # print('\nDo you want to apply the flux star(s) to the data?\n')
+    # answer = yesno('y')
+    # if (answer == 'y'):
+    pydux.calibrate(objectlist, gratcode, secondord, gratcode2, answer_flux=answer_flux)
 
 
-    print('\nDo you want to fit a b-star?\n')
-    answer = yesno('y')
-    if (answer == 'y'):
+    # print('\nDo you want to fit a b-star?\n')
+    # answer = yesno('y')
+    # answer = input('Do you want to fit a b-star? y/[n]: ') or 'n'
+    if (answer_flux == 'y'):
         plt.close()
-        print('\nDo you want to use the flux star {}'.format(fluxfile))
-        print('as the b-star?\n')
-        same = yesno('y')
-        print(' ')
-        if (same == 'n'):
-            bfile = getfitsfile('b-star', '.fits')
-        else:
-            bfile = fluxfile
+        # print('\nDo you want to use the flux star {}'.format(fluxfile))
+        # print('as the b-star?\n')
+        # same = yesno('y')
+        # print(' ')
+        # if (same == 'n'):
+        #     bfile = getfitsfile('b-star', '.fits')
+        # else:
+        bfile = fluxfile
         bfile = 'c'+gratcode+bfile
         pydux.mkbstar(bfile, gratcode)
         if (secondord):
@@ -156,15 +157,17 @@ def main():
             bfile2 = 'c'+gratcode+bfile2
             pydux.mkbstar(bfile2, gratcode2)
 
-    print('\nFinal calibration (atmos. removal, sky line wave. adjust, etc.)?')
-    answer = yesno('y')
+    # print('\nFinal calibration (atmos. removal, sky line wave. adjust, etc.)?')
+    # answer = yesno('y')
+    answer = input('Final calibration (atmos. removal, sky line wave. adjust, etc.)? [y]/n: ') or 'y'
     if (answer == 'y'):
         plt.close()
         pydux.final(objectlist, gratcode, secondord, gratcode2, user)
 
     if (answer_flux == 'y'):
-        print('\nAre these master calibrations?\n')
-        answer=yesno('y')
+        # print('\nAre these master calibrations?\n')
+        # answer=yesno('y')
+        answer = input('Are these master calibrations? [y]/n: ') or 'y'
         if (answer == 'y'):
             os.system('mv ' + 'fluxstar' + gratcode + '.fits' + ' ../../master_files/')
             os.system('mv ' + 'bstar' + gratcode + '.fits'+ ' ../../master_files/')

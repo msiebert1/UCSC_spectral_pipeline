@@ -40,7 +40,8 @@ kast_blue = {'name': 'kast_blue',
              'approx_extract_line': 145,
              'approx_extract_column': 1000,
              'pixel_scale': .43, #arcsec/pix
-             'spatial_binning': 1.
+             'spatial_binning': 1.,
+             'flat_good_region': [1200, 1300]
              }
 
 
@@ -75,7 +76,8 @@ kast_red = { 'name': 'kast_red',
              'approx_extract_line': 150,
              'approx_extract_column': 1000,
              'pixel_scale': .43, #arcsec/pix
-             'spatial_binning': 1.
+             'spatial_binning': 1.,
+             'flat_good_region': [1200, 1300]
              }
 
 lris_blue = {'name': 'lris_blue',
@@ -104,7 +106,9 @@ lris_blue = {'name': 'lris_blue',
              # 'approx_extract_line': 740, jon old
              'approx_extract_line': 200,
              'pixel_scale': .135, #arcsec/pix
-             'spatial_binning': 1.
+             'spatial_binning': 1.,
+             'flat_regions': [[0,1700]],
+             'flat_good_region': [2500, 2700]
              }
              
 lris_red = { 'name': 'lris_red',
@@ -133,7 +137,9 @@ lris_red = { 'name': 'lris_red',
              'approx_extract_line': 370, #jon old
              # 'approx_extract_line': 69,
              'pixel_scale': .135, #arcsec/pix
-             'spatial_binning': 2.
+             'spatial_binning': 2.,
+             'flat_regions': [[0,300],[1850,2000],[3250,3700]],
+             'flat_good_region': [2500, 2700]
              }
              
 goodman_m1={ 'name': 'goodman_blue',
