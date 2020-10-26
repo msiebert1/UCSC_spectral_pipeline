@@ -27,6 +27,7 @@ kast_blue = {'name': 'kast_blue',
              'archive_sens': path_to_trunk + 'KAST_cals/fluxstarblue.fits',
              'archive_bstar': path_to_trunk + 'KAST_cals/bstarblue.fits',
              # 'archive_arc_extracted': path_to_trunk + 'KAST_cals/Blue_Arc_Ref.ms.fits',
+             'archive_arc': path_to_trunk + 'KAST_cals/ARC_blue.fits',
              'archive_arc_extracted_id': path_to_trunk + 'KAST_cals/idARC_blue.ms',
              # 'archive_arc_aperture': path_to_trunk + 'KAST_cals/apBlue_Arc_Ref',
              'line_list': path_to_trunk+'KAST_cals/lines.dat',
@@ -41,6 +42,7 @@ kast_blue = {'name': 'kast_blue',
              'approx_extract_column': 1000,
              'pixel_scale': .43, #arcsec/pix
              'spatial_binning': 1.,
+             'flat_regions': [[0,300]],
              'flat_good_region': [1200, 1300]
              }
 
@@ -63,6 +65,7 @@ kast_red = { 'name': 'kast_red',
              'archive_sens': path_to_trunk + 'KAST_cals/fluxstarred.fits',
              'archive_bstar': path_to_trunk + 'KAST_cals/bstarred.fits',
              # 'archive_arc_extracted': path_to_trunk + 'KAST_cals/Red_Arc_Ref.ms.fits',
+             'archive_arc': path_to_trunk + 'KAST_cals/ARC_red.fits',
              'archive_arc_extracted_id': path_to_trunk + 'KAST_cals/idARC_red.ms',
              # 'archive_arc_aperture': path_to_trunk + 'KAST_cals/apRed_Arc_Ref',
              'line_list': path_to_trunk+'KAST_cals/lines.dat',
@@ -77,6 +80,7 @@ kast_red = { 'name': 'kast_red',
              'approx_extract_column': 1000,
              'pixel_scale': .43, #arcsec/pix
              'spatial_binning': 1.,
+             'flat_regions': [[0,300],[850,950],[1500,1750],[-400,-1]],
              'flat_good_region': [1200, 1300]
              }
 
@@ -91,8 +95,9 @@ lris_blue = {'name': 'lris_blue',
              'archive_flat_file': path_to_trunk + 'LRIS_cals/RESP_blue.fits',
              'archive_sens': path_to_trunk + 'LRIS_cals/fluxstarblue.fits',
              'archive_bstar': path_to_trunk + 'LRIS_cals/bstarblue.fits',
+             'archive_arc': path_to_trunk + 'LRIS_cals/ARC_blue.fits',
              'archive_arc_extracted': path_to_trunk + 'LRIS_cals/LRIS_Blue_Arc_Ref.ms.fits',
-             'archive_arc_extracted_id': path_to_trunk + 'LRIS_cals/id/idLRIS_Blue_Arc_Ref.ms',
+             'archive_arc_extracted_id': path_to_trunk + 'LRIS_cals/idARC_blue.ms',
              'archive_arc_aperture': path_to_trunk + 'LRIS_cals/apLRIS_Blue_Arc_Ref',
              # 'line_list': path_to_trunk+'LRIS_cals/lines.dat', #this nearly hits pathname length limits
              'line_list': path_to_trunk+'LRIS_cals/lines_lpipe.dat', #this nearly hits pathname length limits
@@ -122,8 +127,9 @@ lris_red = { 'name': 'lris_red',
              'archive_flat_file': path_to_trunk + 'LRIS_cals/RESP_red.fits',
              'archive_sens': path_to_trunk + 'LRIS_cals/fluxstarred.fits',
              'archive_bstar': path_to_trunk + 'LRIS_cals/bstarred.fits',
+             'archive_arc': path_to_trunk + 'LRIS_cals/ARC_red.fits',
              'archive_arc_extracted': path_to_trunk + 'LRIS_cals/LRIS_Red_Arc_Ref.ms.fits',
-             'archive_arc_extracted_id': path_to_trunk + 'LRIS_cals/id/idLRIS_Red_Arc_Ref.ms',
+             'archive_arc_extracted_id': path_to_trunk + 'LRIS_cals/idARC_red.ms',
              'archive_arc_aperture': path_to_trunk + 'LRIS_cals/apLRIS_Red_Arc_Ref',
              # 'line_list': path_to_trunk+'LRIS_cals/lines.dat', #this nearly hits pathname length limits
              'line_list': path_to_trunk+'LRIS_cals/lines_lpipe.dat', #this nearly hits pathname length limits

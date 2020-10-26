@@ -201,7 +201,7 @@ class fitFlatClass(object):
         ax5 = ax_list[4]
         
         # user gave regions
-        if colLo >= 0 and colUp > 0:
+        if np.absolute(colLo) >= 0 and np.absolute(colUp) > 0:
             
             # populate the dummy variable
             self.dummyRegion['colLo'] = colLo
@@ -557,7 +557,7 @@ class fitFlatClass(object):
 
 
         if 'blue' in self.inst.get('name') or 'red' in self.inst.get('name'):
-            std_tol = 0.02 #subject to change
+            std_tol = 0.03 #subject to change
             count = 0
             found_blue = False
             found_red = False
@@ -566,7 +566,7 @@ class fitFlatClass(object):
                 newCols = newCols.astype(int)
                 if i < len(self.flatModelData[0,:]) - 21:
                     std = np.std(np.ravel(self.flatModelData[:,newCols]))
-                    print (i, std)
+                    # print (i, std)
                     if std < std_tol:
                         count+=1
                     if std < std_tol and count > 10 and not found_blue:

@@ -463,13 +463,21 @@ def pre_reduction_dev(*args,**kwargs):
             r_inst = instruments.goodman_red
         if not os.path.isdir('pre_reduced/master_files/'):
             os.mkdir('pre_reduced/master_files/')
+
+        b_arc = b_inst.get('archive_arc')
         b_arcsol = b_inst.get('archive_arc_extracted_id')
         b_resp = b_inst.get('archive_flat_file')
+
+        r_arc = r_inst.get('archive_arc')
         r_arcsol = r_inst.get('archive_arc_extracted_id')
         r_resp = r_inst.get('archive_flat_file')
+
         if os.path.isdir('pre_reduced/master_files/'):
+            os.system('cp ' + b_arc + ' ' + 'pre_reduced/')
             os.system('cp ' + b_arcsol + ' ' + 'pre_reduced/master_files/')
             os.system('cp ' + b_resp + ' ' + 'pre_reduced/')
+
+            os.system('cp ' + r_arc + ' ' + 'pre_reduced/')
             os.system('cp ' + r_arcsol + ' ' + 'pre_reduced/master_files/')
             os.system('cp ' + r_resp + ' ' + 'pre_reduced/')
 
@@ -734,7 +742,7 @@ def pre_reduction_dev(*args,**kwargs):
     elif MAKE_FLATS:
         list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
         list_flat_r = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
-        inter = 'yes'
+        inter = 'no'
 
         # blue flats
         if len(list_flat_b) > 0:
@@ -755,6 +763,8 @@ def pre_reduction_dev(*args,**kwargs):
             # first, combine all the flat files into a master flat
             res = combine_flats(flat_list,OUTFILE=Flat_blue,MEDIAN_COMBINE=True)
             # combine all the flat files for norm region
+            if os.path.isfile('pre_reduced/dummy_blue.fits'):
+                os.remove('pre_reduced/dummy_blue.fits')
             res = combine_flats(norm_list,OUTFILE='pre_reduced/dummy_blue.fits',MEDIAN_COMBINE=True)
         
             #can't get this to work:
@@ -769,14 +779,14 @@ def pre_reduction_dev(*args,**kwargs):
                                    response='pre_reduced/RESP_blue', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
-                                   low_rej=5,high_rej=5, order=60, niterat=20, 
+                                   low_rej=5,high_rej=5, order=90, niterat=20, 
                                    grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
             res = inspect_flat(['pre_reduced/RESP_blue.fits'], OUTFILE='pre_reduced/RESP_blue.fits', DISPAXIS=dispaxis)
 
-            for flat in list_flat_b:
-                os.remove('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
+            # for flat in list_flat_b:
+            #     os.remove('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
 
         # red flats
         if len(list_flat_r) > 0:
@@ -797,6 +807,8 @@ def pre_reduction_dev(*args,**kwargs):
             # first, combine all the flat files into a master flat
             res = combine_flats(flat_list,OUTFILE=Flat_red,MEDIAN_COMBINE=True)
             # combine all the flat files for norm region
+            if os.path.isfile('pre_reduced/dummy_red.fits'):
+                os.remove('pre_reduced/dummy_red.fits')
             res = combine_flats(norm_list,OUTFILE='pre_reduced/dummy_red.fits',MEDIAN_COMBINE=True)
 
             
@@ -806,14 +818,14 @@ def pre_reduction_dev(*args,**kwargs):
                                    response='pre_reduced/RESP_red', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
-                                   low_rej=5,high_rej=5, order=60, niterat=20, 
+                                   low_rej=5,high_rej=5, order=90, niterat=20, 
                                    grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
             res = inspect_flat(['pre_reduced/RESP_red.fits'], OUTFILE='pre_reduced/RESP_red.fits', DISPAXIS=dispaxis)
 
-            for flat in list_flat_r:
-                os.remove('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
+            # for flat in list_flat_r:
+            #     os.remove('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
 
 
 

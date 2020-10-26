@@ -433,16 +433,16 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 waves = input('Enter the new wavelength range desired [5400 10150]: ') or '5400 10150'
                 waveb = float(waves.split()[0])
                 waver = float(waves.split()[1])
-            elif observat == 'lick':
-                waveb, waver = input('Enter the new wavelength range desired [3160 5640]: ') or '3160 5640'
+            elif observat == 'lick' and 'blue' in inputfile:
+                waves = input('Enter the new wavelength range desired [3250 5640]: ') or '3250 5640'
                 waveb = float(waves.split()[0])
                 waver = float(waves.split()[1])
-            elif observat == 'lick':
-                waveb, waver = input('Enter the new wavelength range desired [5400 10150]: ') or '5400 10150'
+            elif observat == 'lick' and 'red' in inputfile:
+                waves = input('Enter the new wavelength range desired [5450 10900]: ') or '5450 10900'
                 waveb = float(waves.split()[0])
                 waver = float(waves.split()[1])
             else:
-                waveb, waver = input('Enter the new wavelength range desired: ') or '3160 5640'
+                waves = input('Enter the new wavelength range desired: ') or '3160 5640'
                 waveb = float(waves.split()[0])
                 waver = float(waves.split()[1])
             # waveb,waver=waveparse(wave,wavesave0,wavesaven)
