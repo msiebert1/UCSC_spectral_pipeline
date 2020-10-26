@@ -62,7 +62,7 @@ folders for individual targets.
 	- run pre_reduction_dev.py, this will create a configuration file and attempt to organize files by category
 	- edit the custom_config.json file manually, correct any mistakes that the pipeline makes in file classification
 	- run pre_reduction_dev.py -c custom_config.json --make-arc --make-flat (or to use archival cals, pre_reduction_dev.py -c custom_config.json -q)
-		-include --red-amp-bad if LRIS bottom amplifier broken
+		- include --red-amp-bad if LRIS bottom amplifier broken
 	-when prompted to edit the response file, enter "p" to fit and replace preset regions of the response
 
 2) Extraction (QUICKLOOK.py -i -a -c)
@@ -77,7 +77,7 @@ folders for individual targets.
 are combined prior to reduction
 - Creates "target_ex" directory containing the d*_ex.fits file used in flux calibration
 
-3) Flux Calibration (headerfix.py, cal.py, wombat.py)
+3) Flux Calibration (cal.py)
 - IMPORTANT: requires a python3 env
 - Run cal.py in the same directory.
 - Flux calibrates and telluric corrects the extracted spectrum from part 2.
