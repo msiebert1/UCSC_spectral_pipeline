@@ -63,7 +63,7 @@ folders for individual targets.
 	- edit the custom_config.json file manually, correct any mistakes that the pipeline makes in file classification
 	- run pre_reduction_dev.py -c custom_config.json --make-arc --make-flat (or to use archival cals, pre_reduction_dev.py -c custom_config.json -q)
 		- include --red-amp-bad if LRIS bottom amplifier broken
-	-when prompted to edit the response file, enter "p" to fit and replace preset regions of the response
+	- when prompted to edit the response file, enter "p" to fit and replace preset regions of the response
 
 2) Extraction (QUICKLOOK.py -i -a -c)
 - IMPORTANT: requires the iraf27 env
