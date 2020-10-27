@@ -585,7 +585,7 @@ def pre_reduction_dev(*args,**kwargs):
 
         list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
         list_flat_r = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
-        inter = 'no'
+        inter = 'yes'
 
         b_amp1_list = []
         b_amp2_list = []
@@ -742,7 +742,7 @@ def pre_reduction_dev(*args,**kwargs):
     elif MAKE_FLATS:
         list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
         list_flat_r = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
-        inter = 'no'
+        inter = 'yes'
 
         # blue flats
         if len(list_flat_b) > 0:

@@ -60,7 +60,7 @@ the files specified below need to be made executable:
 folders for individual targets.
 - Recommended procedure:
 	- run pre_reduction_dev.py, this will create a configuration file and attempt to organize files by category
-	- edit the custom_config.json file manually, correct any mistakes that the pipeline makes in file classification
+	- edit the custom_config.json file manually (rsubl custom_config.json), correct any mistakes that the pipeline makes in file classification
 	- run pre_reduction_dev.py -c custom_config.json --make-arc --make-flat (or to use archival cals, pre_reduction_dev.py -c custom_config.json -q)
 		- include --red-amp-bad if LRIS bottom amplifier broken
 	- when prompted to edit the response file, enter "p" to fit and replace preset regions of the response
