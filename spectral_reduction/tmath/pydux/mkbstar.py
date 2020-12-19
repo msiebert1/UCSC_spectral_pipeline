@@ -89,7 +89,7 @@ def mkbstar(bfile,gratcode):
     try:
         plt.ylim([ymin,ymax])
     except ValueError:
-        medValue = np.median(y0)
+        medValue = np.nanmedian(y0)
         plt.ylim([1.e-2*medValue,1.e2*medValue])
     plt.pause(0.01)
     print('\nPlotting optimal as black, normal as red')
