@@ -53,14 +53,14 @@ if __name__ == "__main__":
         fin.close()
 
         snid = input('Confirm SN name [{name}]: '.format(name=SpecHeader['snid'])) or SpecHeader['snid']
+        inst = SpecHeader['instrument']
+
         if snid != SpecHeader['snid']:
             print (spec)
             with open(spec,'r') as yse_spec:
                 yse_spec_data = yse_spec.readlines()
                 with open(spec.split('.')[0]+'_v2.flm','w') as yse_spec_new:
                     for i, line in enumerate(yse_spec_data):
-                        if 'INSTRUMENT' in line:
-                            inst = line.split('INSTRUMENT')[1].strip()
                         if 'SNID' in line:
                             yse_spec_new.write(line.replace((line.split()[2]),snid))
                         else:
