@@ -618,6 +618,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             yse_txt_header = 'wavelength flux fluxerr\n'
             yse_txt_header = yse_txt_header + 'GROUPS UCSC,YSE\n'
             yse_txt_header = yse_txt_header + 'SNID {name}\n'.format(name=yse_name)
+            yse_txt_header = yse_txt_header + 'OBS_GROUP UCSC\n'
             yse_txt_header = yse_txt_header + 'RA {ra}\n'.format(ra=ra_deg)
             yse_txt_header = yse_txt_header + 'OBS_DATE {date}\n'.format(date=yse_date)
             yse_txt_header = yse_txt_header + 'DEC {dec}\n'.format(dec=dec_deg)

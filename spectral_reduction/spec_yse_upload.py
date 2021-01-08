@@ -66,9 +66,13 @@ if __name__ == "__main__":
                         else:
                             yse_spec_new.write(line)
 
-        print ('Uploading {sp} to yse-pz...'.format(sp=spec))
-        upload_spectrum_to_yse(spec, inst)
-        print ('Done')
+            print ('Uploading {sp} to yse-pz...'.format(sp=yse_spec_new))
+            upload_spectrum_to_yse(yse_spec_new, inst)
+            print ('Done')
+        else:
+            print ('Uploading {sp} to yse-pz...'.format(sp=spec))
+            upload_spectrum_to_yse(spec, inst)
+            print ('Done')
 
 
 
