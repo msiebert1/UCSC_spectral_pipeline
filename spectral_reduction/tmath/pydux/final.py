@@ -235,7 +235,16 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
         waveb = None
         waver = None
         bshift = None
-        for i in range(0,num_apertures):
+        aps = []
+        user_aps = input('Apertures to extract (e.g., 1,2,3) [all]: ')
+        if len(user_aps) > 0:
+            aps_strings = user_aps.split(',')
+            for ap in aps_strings:
+                aps.append(int(ap) - 1) #account for range index off by 1
+        else:
+            aps = range(num_apertures)
+        # for i in range(0,num_apertures):
+        for i in aps:
             # plt.close()
             # fig=plt.figure()
             # plt.plot(multispec[0,i,:], drawstyle='steps-mid',color='r')
@@ -425,26 +434,30 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 wavesaven = 0.0
                 # print('Enter the new wavelength range desired: ')
             
-            if observat == 'keck' and 'blue' in inputfile:
-                waves = input('Enter the new wavelength range desired [3160 5640]: ') or '3160 5640'
-                waveb = float(waves.split()[0])
-                waver = float(waves.split()[1])
-            elif observat == 'keck' and 'red' in inputfile:
-                waves = input('Enter the new wavelength range desired [5400 10150]: ') or '5400 10150'
-                waveb = float(waves.split()[0])
-                waver = float(waves.split()[1])
-            elif observat == 'lick' and 'blue' in inputfile:
-                waves = input('Enter the new wavelength range desired [3250 5640]: ') or '3250 5640'
-                waveb = float(waves.split()[0])
-                waver = float(waves.split()[1])
-            elif observat == 'lick' and 'red' in inputfile:
-                waves = input('Enter the new wavelength range desired [5450 10900]: ') or '5450 10900'
-                waveb = float(waves.split()[0])
-                waver = float(waves.split()[1])
+            if wavesave0 == 0.0:
+                if observat == 'keck' and 'blue' in inputfile:
+                    waves = input('Enter the new wavelength range desired [3160 5640]: ') or '3160 5640'
+                    waveb = float(waves.split()[0])
+                    waver = float(waves.split()[1])
+                elif observat == 'keck' and 'red' in inputfile:
+                    waves = input('Enter the new wavelength range desired [5400 10150]: ') or '5400 10150'
+                    waveb = float(waves.split()[0])
+                    waver = float(waves.split()[1])
+                elif observat == 'lick' and 'blue' in inputfile:
+                    waves = input('Enter the new wavelength range desired [3250 5640]: ') or '3250 5640'
+                    waveb = float(waves.split()[0])
+                    waver = float(waves.split()[1])
+                elif observat == 'lick' and 'red' in inputfile:
+                    waves = input('Enter the new wavelength range desired [5450 10900]: ') or '5450 10900'
+                    waveb = float(waves.split()[0])
+                    waver = float(waves.split()[1])
+                else:
+                    waves = input('Enter the new wavelength range desired: ') or '3160 5640'
+                    waveb = float(waves.split()[0])
+                    waver = float(waves.split()[1])
             else:
-                waves = input('Enter the new wavelength range desired: ') or '3160 5640'
-                waveb = float(waves.split()[0])
-                waver = float(waves.split()[1])
+                waveb = wavesave0
+                waver = wavesaven
             # waveb,waver=waveparse(wave,wavesave0,wavesaven)
             newbin=(waver-waveb)/newdelt +1.0 #should stay the same now
             # frac,whole=np.modf(newbin)
@@ -586,7 +599,38 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
 
             spectxt = objname+'-'+printdate+'_ap'+ str(i+1)+ suffixes['ap'+str(i+1)] +'.flm'
             spectxt=spectxt.strip()
-            np.savetxt(spectxt,np.transpose([nwave,finalobj.copy(),finalsig.copy()]))
+
+            coords=SkyCoord(stringra,stringdec,unit=(u.hourangle,u.deg))
+            ra_deg=coords.ra.deg
+            dec_deg=coords.dec.deg
+
+            yse_date=mshead['DATE-OBS'].strip().replace('T', ' ')
+
+            if observat == 'keck':
+                yse_inst = 'LRIS'
+            else:
+                yse_inst = 'KAST'
+
+            yse_name = objname.split('-')[0].lower()
+            if yse_name.startswith('sn') or yse_name.startswith('at'):
+                yse_name = yse_name[2:]
+
+            yse_txt_header = 'wavelength flux fluxerr\n'
+            yse_txt_header = yse_txt_header + 'GROUPS UCSC,YSE\n'
+            yse_txt_header = yse_txt_header + 'SNID {name}\n'.format(name=yse_name)
+            yse_txt_header = yse_txt_header + 'RA {ra}\n'.format(ra=ra_deg)
+            yse_txt_header = yse_txt_header + 'OBS_DATE {date}\n'.format(date=yse_date)
+            yse_txt_header = yse_txt_header + 'DEC {dec}\n'.format(dec=dec_deg)
+            yse_txt_header = yse_txt_header + 'INSTRUMENT {instrument}'.format(instrument=yse_inst)
+            # wavelength flux 
+            # GROUPS UCSC,YSE 
+            # SNID 2020yvu 
+            # OBS_GROUP UCSC 
+            # RA 345.25112499999994 
+            # OBS_DATE 2020-12-02 06:18:43 
+            # DEC 40.908325 
+            # INSTRUMENT FLOYDS-N 
+            np.savetxt(spectxt,np.transpose([nwave,finalobj.copy(),finalsig.copy()]), header=yse_txt_header)
 
             hdul.close()
 
@@ -601,7 +645,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     files = glob.glob(objname.split('-')[0]+'*.fits')
                     print (files)
                     for f in files:
-                        if objname not in f and ('red' in f or 'blue' in f) and '_ap'+str(i+1) in f:
+                        if objname not in f and ('red' in f or 'blue' in f) and '_ap'+str(i+1)+'_' in f:
+                            print (f)
                             inputfile = f
                     inputfile=input('Name of fits file to be combined? [{}]: '.format(inputfile)) or inputfile
                     print (inputfile)
@@ -723,17 +768,24 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 hdul[0].header=mshead_combined.copy()
                 hdul.writeto(fname_comb,overwrite=True)
                 hdul.close()
-                spectxt = objname+'-'+printdate+'_ap'+ str(i+1) + suffixes['ap'+str(i+1)] +'.flm'
-                spectxt=spectxt.strip()
-                np.savetxt(spectxt,np.transpose([nwave,finalobj.copy(),finalsig.copy()]))
+                spectxt_comb = objname+'-'+printdate+'_ap'+ str(i+1) + suffixes['ap'+str(i+1)] +'.flm'
+                spectxt_comb = spectxt_comb.strip()
+                np.savetxt(spectxt_comb,np.transpose([nwave,finalobj.copy(),finalsig.copy()]), header=yse_txt_header)
               
-            is_final=input('Is this a final reduction? [y]/n: ') or 'y'      
+            is_final=input('Is this a final reduction? [y]/n: ') or 'y'
+            is_yse=input('Will this be uploaded to YSE? y/[n]: ') or 'n'      
             if is_final:
                 if not os.path.isdir('../../final_reductions/'):
                     os.mkdir('../../final_reductions/')
                 os.system('cp ' + fname + ' ' + '../../final_reductions/'+ fname)
                 if fname_comb:
-                    os.system('cp ' + fname_comb + ' ' + '../../final_reductions/'+ fname_comb)      
+                    os.system('cp ' + fname_comb + ' ' + '../../final_reductions/'+ fname_comb)
+            if is_yse:
+                if not os.path.isdir('../../yse_uploads/'):
+                    os.mkdir('../../yse_uploads/')
+                os.system('cp ' + spectxt + ' ' + '../../yse_uploads/'+ spectxt)
+                if fname_comb:
+                    os.system('cp ' + spectxt_comb + ' ' + '../../yse_uploads/'+ spectxt_comb)      
         print('final')
         print(objectlist,gratcode,secondord,gratcode2)
         plt.close()

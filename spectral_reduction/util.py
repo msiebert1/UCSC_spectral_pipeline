@@ -764,9 +764,11 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
                     if 'center' in c_line:
                         center_ap_loc = float(c_line.split()[2])
 
+                #assumes you made an initial aperature and are now using it as a center reference
                 with open('database/'+ap_select) as old_file:
                     ap_data = old_file.readlines()
                     lows, highs, b_samps = get_relevant_ap_data(ap_data, ap_binning, img_binning, inst)
+                    print (lows,highs,b_samps)
                     with open(new_apfile,'w') as new_file:
                         for i in range(len(lows)):
                             low = str(lows[i])

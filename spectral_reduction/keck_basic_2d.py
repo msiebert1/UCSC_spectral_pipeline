@@ -787,7 +787,9 @@ def main(rawFiles,*args,**kwargs):
                     else:
                         outImg = outImg[1800//xbin:2800//xbin,:]
                 else:
-                    if nAmps == 2:
+                    nAmps = 4
+                    print (nAmps)
+                    if nAmps == 2: 
                         if ISDFLAT and not RED_AMP_BAD:
                             outImg_amp1 = outImg[290:575,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
                             outImg_amp2 = outImg[0:290,:-55]
@@ -800,7 +802,19 @@ def main(rawFiles,*args,**kwargs):
                         else:
                             # outImg = outImg[600//xbin:1100//xbin,:]
                             outImg = outImg[0:575,:-55]
-
+                    elif nAmps == 4: 
+                        if ISDFLAT and not RED_AMP_BAD:
+                            outImg_amp1 = outImg[1045:1320,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
+                            outImg_amp2 = outImg[800:1025,:-55]
+                        elif ISDFLAT and RED_AMP_BAD:
+                            # outImg_amp1 = outImg[290:575,:-55]
+                            outImg_amp1 = outImg[1045:1320,:-55]
+                        elif not ISDFLAT and RED_AMP_BAD:
+                            # outImg = outImg[290:575,:-55]
+                            outImg = outImg[1045:1320,:-55]
+                        else:
+                            # outImg = outImg[600//xbin:1100//xbin,:]
+                            outImg = outImg[800:1320,:-55]
                     else:
                         outImg = outImg[1600//xbin:2600//xbin,:-55]
                         outImg_amp1 = outImg[250:575,:] #12/7/18 ignoring middle of red

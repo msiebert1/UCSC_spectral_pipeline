@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import csv
 import glob
+import pdb
 
 path_to_trunk = os.path.expandvars('$UCSC_SPECPIPE/spectral_reduction/trunk/')
 if not os.path.exists(path_to_trunk):
@@ -24,19 +25,19 @@ def make_host_metadata(configDict):
         host_seps = {}
         host_angs = {}
         for row in foundation_host_meta:
+            print (row[0].strip().lower())
             host_seps[row[0].strip().lower()] = row[12].strip()
             host_angs[row[0].strip().lower()] = row[13].strip()
 
     with open(path_to_trunk+'host_galaxy_metadata/Foundation_Offsets_and_Position_Angles_Swope.csv') as swope_file:
         swope_host_meta = csv.reader(swope_file, delimiter=',')
-        host_seps = {}
-        host_angs = {}
+        # host_seps = {}
+        # host_angs = {}
         for row in swope_host_meta:
             if row[0].strip().lower() not in host_seps.keys():
                 host_reds[row[0].strip().lower()] = row[1].strip()
                 host_seps[row[0].strip().lower()] = row[19].strip()
                 host_angs[row[0].strip().lower()] = row[20].strip()
-
 
     #get sn folder name and find host data
     targ_list = []
@@ -46,14 +47,19 @@ def make_host_metadata(configDict):
                 for obj,fileList in objDict.items():
                     if 'host' in obj.lower():
                         targ_list.append(obj.lower().split('_')[0])
-                        print (obj)
+                        print (obj.lower().split('_')[0])
 
+    # pdb.set_trace()
     with open('pre_reduced/HOST_METADATA.txt', 'w') as host_file:
         host_file.write('# SN z sep ang\n')
         for SN in host_seps:
             if SN.lower() in targ_list:
                 print (SN.lower(), host_reds[SN],host_seps[SN],host_angs[SN])
                 host_file.write(SN.lower() + ' ' + host_reds[SN] + ' ' + host_seps[SN] + ' ' + host_angs[SN]+'\n')
+            if SN.lower().replace('-','') in targ_list:
+                print (SN.lower().replace('-',''), host_reds[SN],host_seps[SN],host_angs[SN])
+                host_file.write(SN.lower().replace('-','') + ' ' + host_reds[SN] + ' ' + host_seps[SN] + ' ' + host_angs[SN]+'\n')
+                
 
 def calculate_ap_data(sn, inst, seeing = 1., ap_scale=.0015):
     from astropy import units as u
@@ -136,8 +142,8 @@ def calculate_ap_data(sn, inst, seeing = 1., ap_scale=.0015):
         suffix = ''
         if r_kron_rad < seeing:
             suffix = '_BAD'
-        ap_width_kron = (r_kron_rad/inst.get('pixel_scale'), False, suffix)
-        print ('Adding AP Width (pix): ', ap_width, '= '+str(r_kron_rad)+' arcsec')
+        ap_width_kron = (r_kron_rad/inst.get('pixel_scale')/ap_binning, False, suffix)
+        print ('Adding AP Width Kron (pix): ', ap_width_kron[0], '= '+str(r_kron_rad)+' arcsec')
 
 
         return ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, ap_widths_arcsec, ap_widths_kpc, r_kron_rad

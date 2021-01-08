@@ -98,6 +98,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         newlist = newlist[1:]
     else:
         sides = raw_input("Reduce which side? ([both]/b/r): ")
+
         if sides == 'b':
             newlist = newlist[:-1]
         elif sides == 'r':
@@ -571,11 +572,13 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         else:
             match_aperture = raw_input('Match aperture? y/[n]: ') or 'n'
             if _host:
-                match_aperture = raw_input('Match aperture? y/[n]: ') or 'n'
+                # match_aperture = raw_input('Match aperture? y/[n]: ') or 'n'
                 if match_aperture != 'n':
                     imgex = util.extractspectrum(img, dv, inst, _interactive, 'obj', host_ex = True, match_aperture=match_aperture)
                 else:
-                    ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, ap_widths_arcsec, ap_widths_kpc, r_kron_rad = host_gals.calculate_ap_data(_object0.lower().split('_')[0], inst)
+                    seeing = raw_input('Seeing estimate? [1"]: ') or 1.
+                    seeing =float(seeing)
+                    ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, ap_widths_arcsec, ap_widths_kpc, r_kron_rad = host_gals.calculate_ap_data(_object0.lower().split('_')[0], inst, seeing=seeing)
                     host_gals.write_host_ap(ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, nameout0.split('.')[0], ap_widths_arcsec, ap_widths_kpc, r_kron_rad)
                     imgex = util.extractspectrum(img, dv, inst, _interactive, 'obj', host_ex = True, match_aperture=match_aperture)
             else:

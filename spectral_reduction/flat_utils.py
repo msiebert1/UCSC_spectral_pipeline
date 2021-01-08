@@ -557,7 +557,18 @@ class fitFlatClass(object):
 
 
         if 'blue' in self.inst.get('name') or 'red' in self.inst.get('name'):
-            std_tol = 0.03 #subject to change
+
+            good_range = self.inst.get('flat_good_region')
+            medCols = np.arange(good_range[0],good_range[1],1)
+            medCols = medCols.astype(int)
+
+            match_range = self.inst.get('flat_match_region')
+            stdCols = np.arange(match_range[0],match_range[1],1)
+            stdCols = stdCols.astype(int)
+            std_tol = np.std(np.ravel(self.rawData[:,stdCols])) # match variance in good region of detector
+            # std_tol = 0.03 #subject to change
+            print ('Matching variance to: ', std_tol)
+
             count = 0
             found_blue = False
             found_red = False
@@ -585,12 +596,9 @@ class fitFlatClass(object):
                             found_red = True
                             break
 
-            good_range = self.inst.get('flat_good_region')
-            medCols = np.arange(good_range[0],good_range[1],1)
-            medCols = medCols.astype(int)
-
             print ('Substituting median profile at edges up to column ', blue_ind)
             subdata = np.median(self.rawData[:,medCols], axis=1)
+
             num_blue_cols = blue_ind
             for col in range(num_blue_cols):
                 self.flatCorrData[:,col] = subdata

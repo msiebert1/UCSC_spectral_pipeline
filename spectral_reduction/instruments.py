@@ -60,6 +60,8 @@ kast_red = { 'name': 'kast_red',
              # 'flatsec': '[110:346,80:2296]',
              'trimsec': '[70:370,80:2296]', #8-31-19
              'flatsec': '[110:370,80:2296]', #8-31-19
+             # 'trimsec': '[30:320,80:2120]', #12-04-20
+             # 'flatsec': '[110:330,80:2120]', #12-04-20
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
              'archive_sens': path_to_trunk + 'KAST_cals/fluxstarred.fits',
@@ -113,7 +115,8 @@ lris_blue = {'name': 'lris_blue',
              'pixel_scale': .135, #arcsec/pix
              'spatial_binning': 1.,
              'flat_regions': [[0,1700]],
-             'flat_good_region': [2500, 2700]
+             'flat_good_region': [2500, 2700], 
+             'flat_match_region': [2000,2200]
              }
              
 lris_red = { 'name': 'lris_red',
@@ -145,7 +148,8 @@ lris_red = { 'name': 'lris_red',
              'pixel_scale': .135, #arcsec/pix
              'spatial_binning': 2.,
              'flat_regions': [[0,300],[1850,2000],[3250,3700]],
-             'flat_good_region': [2500, 2700]
+             'flat_good_region': [2500, 2700],
+             'flat_match_region': [3300,3500]
              }
              
 goodman_m1={ 'name': 'goodman_blue',

@@ -10,7 +10,7 @@ import matplotlib
 import instruments
 from astropy.io import fits, ascii
 from pyraf import iraf
-import pyds9 as pyds9
+# import pyds9 as pyds9 Matt: Causes hangups, but i don't think we need it
 import keck_basic_2d
 import manifest_utils as mu
 import host_galaxies as host_gals
