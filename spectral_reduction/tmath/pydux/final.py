@@ -646,7 +646,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     files = glob.glob(objname.split('-')[0]+'*.fits')
                     print (files)
                     for f in files:
-                        if objname not in f and ('red' in f or 'blue' in f) and '_ap'+str(i+1)+'_' in f:
+                        if objname not in f and ('red' in f or 'blue' in f) and '_ap'+str(i+1) in f: # '_ap'+str(i+1)+'_' needed for hosts?
                             print (f)
                             inputfile = f
                     inputfile=input('Name of fits file to be combined? [{}]: '.format(inputfile)) or inputfile
