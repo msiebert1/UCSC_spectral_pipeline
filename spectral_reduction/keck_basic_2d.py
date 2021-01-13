@@ -787,8 +787,8 @@ def main(rawFiles,*args,**kwargs):
                     else:
                         outImg = outImg[1800//xbin:2800//xbin,:]
                 else:
-                    nAmps = 4
-                    print (nAmps)
+                    # nAmps = 4
+                    # print (nAmps)
                     if nAmps == 2: 
                         if ISDFLAT and not RED_AMP_BAD:
                             outImg_amp1 = outImg[290:575,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
