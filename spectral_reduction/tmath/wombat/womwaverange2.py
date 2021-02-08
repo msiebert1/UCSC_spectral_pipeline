@@ -1,4 +1,4 @@
-def womwaverange2(waveb,fluxb,waver,fluxr,mode):
+def womwaverange2(waveb,fluxb,waver,fluxr,mode, combining = False):
     import matplotlib.pyplot as plt
     from tmath.wombat.waveparse import waveparse
     from tmath.wombat.womget_element import womget_element
@@ -18,7 +18,12 @@ def womwaverange2(waveb,fluxb,waver,fluxr,mode):
     done = False
     while (not done):
         if (mode == 'w'):
-            waveblue,wavered=waveparse()
+            # waveblue,wavered=waveparse()
+            waveend = str(waveb[-1])
+            wavebeg = str(waveb[-1] - 50.)
+            waves = input('Enter overlap scaling region [{} {}]: '.format(wavebeg,waveend)) or (wavebeg + ' ' + waveend)
+            waveblue = float(waves.split()[0])
+            wavered = float(waves.split()[1])
         else:
             pickpoints=plt.ginput(2,timeout=-1)
             waveblue=pickpoints[0][0]

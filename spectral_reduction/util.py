@@ -895,16 +895,24 @@ def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
             else:
                 b1 = float(_b_sample.split()[0].split(':')[0])
                 b2 = float(_b_sample.split()[0].split(':')[1])
-                b3 = float(_b_sample.split()[1].split(':')[0])
-                b4 = float(_b_sample.split()[1].split(':')[1])
+                if len(_b_sample.split()) > 1:
+                    b3 = float(_b_sample.split()[1].split(':')[0])
+                    b4 = float(_b_sample.split()[1].split(':')[1])
             b1 = b1*(ap_binning/img_binning) + diff
             b2 = b2*(ap_binning/img_binning) + diff
-            b3 = b3*(ap_binning/img_binning) + diff
-            b4 = b4*(ap_binning/img_binning) + diff
+            if len(_b_sample.split()) > 1:
+                b3 = b3*(ap_binning/img_binning) + diff
+                b4 = b4*(ap_binning/img_binning) + diff
             if 'kast' in inst.get('name'):
-                _b_sample_new = str(sign*b4)+':'+str(sign*b3)+' '+str(sign*b2)+':'+str(sign*b1)
+                if len(_b_sample.split()) > 1:
+                    _b_sample_new = str(sign*b4)+':'+str(sign*b3)+' '+str(sign*b2)+':'+str(sign*b1)
+                else:
+                    _b_sample_new = str(sign*b2)+':'+str(sign*b1)
             else:
-                _b_sample_new = str(b1)+':'+str(b2)+' '+str(b3)+':'+str(b4)
+                if len(_b_sample.split()) > 1:
+                    _b_sample_new = str(b1)+':'+str(b2)+' '+str(b3)+':'+str(b4)
+                else:
+                    _b_sample_new = str(b1)+':'+str(b2)
             b_samps.append(_b_sample_new)
 
     return lows, highs, b_samps

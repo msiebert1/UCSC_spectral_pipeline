@@ -4,6 +4,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.convolution import convolve
 from scipy import signal
+from scipy import interpolate
 
 def sigclipmedian(datain,sigmahi=3.5,sigmalo=3.5):
     data = 1.*datain
@@ -159,6 +160,8 @@ def pyzapspec(infile,
               outfile='',
               maskfile='', 
               WRITE_OUTFILE=False,
+              img_num = 1,
+              redshift = None,
               DEBUG_DIR='../test_data/',DEBUG=False,
               boxsize=9,nsigma=15.,subsigma=2.8,sfactor=1.0,
               nzap=0,mask=0,writemodel=0,verbose=0,skysubtract=0,
@@ -303,14 +306,28 @@ def pyzapspec(infile,
         zapimage_ravel[crcores] = 1
 
 
-    # #this is hacky but MIGHT needed for host analysis 
-    # zapimage[50:80, 1280:1360] = 0 #halpha keck
+    # this uses a crude relationship between redshift and halpha column
+    # to select region of cr mask to ignore 
+    # if redshift:
+        
+    #     zs = [.0204, .037, .0619, .0808]
+    #     cols = [1130, 1220, 1350, 1464]
+    #     f = interpolate.interp1d(zs, cols, kind="linear", fill_value = "extrapolate")
+    #     center_y = 55
+    #     buff_y = 30
+    #     center_x = int(f(redshift))
+    #     buff_x = 50
+    #     print ('Ignoring Halpha region centered at pixel ', center_x)
+    #     zapimage[center_y-buff_y:center_y+buff_y, center_x-buff_x:center_x+buff_x] = 0 #halpha keck
+    #     zapimage_ravel = zapimage.ravel()
+
+    # zapimage[45:65, 1870:1930] = 0 #telluric A-band
     # zapimage_ravel = zapimage.ravel()
 
 
-    # res = writefits(zapimage,'zapimage1.fits',CLOBBER=True)
-    if DEBUG:
-        res = writefits(zapimage,'{}/zapimage.fits'.format(DEBUG_DIR),CLOBBER=True)
+    res = writefits(zapimage,'zapimage{}.fits'.format(img_num),CLOBBER=True)
+    # if DEBUG:
+    #     res = writefits(zapimage,'{}/zapimage.fits'.format(DEBUG_DIR),CLOBBER=True)
 
 
     outStr = 'Flagged {} initial affected pixels before percolation.'.format(newzaps)

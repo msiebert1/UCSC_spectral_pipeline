@@ -72,7 +72,7 @@ def calculate_ap_data(sn, inst, seeing = 1., ap_scale=.0015):
 
     ap_binning = raw_input('Enter aperture spatial binning [1]: ') or 1
     ap_binning = float(ap_binning)
-    print (sn)
+    print ('Finding metadata for: ', sn)
 
     with open('../HOST_METADATA.txt') as host_file:
         for line in host_file.readlines():
@@ -148,9 +148,33 @@ def calculate_ap_data(sn, inst, seeing = 1., ap_scale=.0015):
 
         return ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, ap_widths_arcsec, ap_widths_kpc, r_kron_rad
 
+def check_if_main_amp(host_ap_file, ref_ap_data, name, ap_width, is_sn_ap, sn_direction, sep_pix, num_ap):
+    ap_on_main_amp = True
+
+    for i, r_line in enumerate(ref_ap_data):
+        if 'center' in r_line:
+            center = float(r_line.split()[2])
+        elif 'low' in r_line and 'reject' not in r_line:
+            if is_sn_ap:
+                low = -1.*ap_width/2. + sn_direction*sep_pix
+            else:
+                low = -1.*ap_width/2.
+
+    if 'lris' in name and 'blue' in name:
+        if center + low < 455:
+            ap_on_main_amp = False
+    if 'lris' in name and 'red' in name:
+        if center + low < 0:
+            ap_on_main_amp = False
+
+    #TODO: implement for kast
+
+    return ap_on_main_amp
+
 
 def substitute_ap_data(host_ap_file, ref_ap_data, name, ap_width, is_sn_ap, sn_direction, sep_pix, num_ap):
 
+    # if ap_on_main_amp:
     for i, r_line in enumerate(ref_ap_data):
         if 'begin' in r_line and 'aperture' in r_line:
             host_ap_file.write(r_line.replace((r_line.split()[2] + ' 1'), name + ' ' + str(num_ap)))
@@ -172,6 +196,7 @@ def substitute_ap_data(host_ap_file, ref_ap_data, name, ap_width, is_sn_ap, sn_d
             host_ap_file.write(r_line.replace(r_line.split()[2], high))
         else:
             host_ap_file.write(r_line)
+
 
     host_ap_file.write('\n')
 
@@ -196,28 +221,48 @@ def write_host_ap(ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, name, ap_wi
 
             num_ap = 1
             for i, ap in enumerate(ap_pixs_phys):
-                substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], False, sn_direction, sep_pix, num_ap)
-                ap_dict['ap'+str(num_ap)] = str(ap_widths_kpc[i]*1000.) + '_kpc' + ap[2]
-                num_ap+=1
-                if ap[1]:
-                    substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], True, sn_direction, sep_pix, num_ap)
-                    ap_dict['ap'+str(num_ap)] = str(ap_widths_kpc[i]*1000.) + '_kpc_SN' + ap[2]
+                ap_on_main_amp = check_if_main_amp(host_ap_file, ref_ap_data, name, ap[0], False, sn_direction, sep_pix, num_ap)
+                if ap_on_main_amp:
+                    substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], False, sn_direction, sep_pix, num_ap)
+                    ap_dict['ap'+str(num_ap)] = str(ap_widths_kpc[i]*1000.) + '_kpc' + ap[2]
                     num_ap+=1
+                else:
+                    print ('Rejecting ap:', num_ap, '(does not land on same amplifier)')
+                if ap[1]:
+                    ap_on_main_amp = check_if_main_amp(host_ap_file, ref_ap_data, name, ap[0], True, sn_direction, sep_pix, num_ap)
+                    if ap_on_main_amp:
+                        substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], True, sn_direction, sep_pix, num_ap)
+                        ap_dict['ap'+str(num_ap)] = str(ap_widths_kpc[i]*1000.) + '_kpc_SN' + ap[2]
+                        num_ap+=1
+                    else:
+                        print ('Rejecting ap:', num_ap, '(does not land on same amplifier)')
 
 
             for i, ap in enumerate(ap_pixs_sky):
-                substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], False, sn_direction, sep_pix, num_ap)
-                ap_dict['ap'+str(num_ap)] = str(ap_widths_arcsec[i]) + '_arcsec' + ap[2]
-                num_ap+=1
-                if ap[1]:
-                    substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], True, sn_direction, sep_pix, num_ap)
-                    ap_dict['ap'+str(num_ap)] = str(ap_widths_arcsec[i]) + '_arcsec_SN' + ap[2]
+                ap_on_main_amp = check_if_main_amp(host_ap_file, ref_ap_data, name, ap[0], False, sn_direction, sep_pix, num_ap)
+                if ap_on_main_amp:
+                    substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], False, sn_direction, sep_pix, num_ap)
+                    ap_dict['ap'+str(num_ap)] = str(ap_widths_arcsec[i]) + '_arcsec' + ap[2]
                     num_ap+=1
+                else:
+                    print ('Rejecting ap:', num_ap, '(does not land on same amplifier)')
+                if ap[1]:
+                    ap_on_main_amp = check_if_main_amp(host_ap_file, ref_ap_data, name, ap[0], True, sn_direction, sep_pix, num_ap)
+                    if ap_on_main_amp:
+                        substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], True, sn_direction, sep_pix, num_ap)
+                        ap_dict['ap'+str(num_ap)] = str(ap_widths_arcsec[i]) + '_arcsec_SN' + ap[2]
+                        num_ap+=1
+                    else:
+                        print ('Rejecting ap:', num_ap, '(does not land on same amplifier)')
 
             if ap_width_kron[0]:
-                substitute_ap_data(host_ap_file, ref_ap_data, name, ap_width_kron[0], False, sn_direction, sep_pix, num_ap)
-                ap_dict['ap'+str(num_ap)] = str(r_kron_rad) + '_rkron' + ap[2]
-                num_ap+=1
+                ap_on_main_amp = check_if_main_amp(host_ap_file, ref_ap_data, name, ap_width_kron[0], False, sn_direction, sep_pix, num_ap)
+                if ap_on_main_amp:
+                    substitute_ap_data(host_ap_file, ref_ap_data, name, ap_width_kron[0], False, sn_direction, sep_pix, num_ap)
+                    ap_dict['ap'+str(num_ap)] = str(r_kron_rad) + '_rkron' + ap[2]
+                    num_ap+=1
+                else:
+                    print ('Rejecting ap:', num_ap, '(does not land on same amplifier)')
 
     with open('HOST_AP_DATA.txt','w') as host_ap_file:
         for ap in ap_dict.keys():

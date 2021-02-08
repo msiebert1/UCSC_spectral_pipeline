@@ -153,13 +153,14 @@ class fitFlatClass(object):
         
         return
         
-    def run_presets(self,name,inst):
+    def run_presets(self,name,inst, varsub=True):
 
         regions = []
         for reg in inst.get('flat_regions'):
             self.add_fit_region(name,colLo=reg[0],colUp=reg[1])
             self.fit_sky_background()
-            self.subsitute_model_flat()
+            self.subsitute_model_flat(varsub=varsub)
+
 
         return 0
 
@@ -201,7 +202,7 @@ class fitFlatClass(object):
         ax5 = ax_list[4]
         
         # user gave regions
-        if np.absolute(colLo) >= 0 and np.absolute(colUp) > 0:
+        if colLo >= 0 and colUp > 0:
             
             # populate the dummy variable
             self.dummyRegion['colLo'] = colLo
@@ -545,7 +546,7 @@ class fitFlatClass(object):
         
         
         
-    def subsitute_model_flat(self):
+    def subsitute_model_flat(self, varsub = False):
         ''' Substitutes the model in the masked regions '''
 
         # insert into the full object image (no trasposing needed??)
@@ -556,7 +557,7 @@ class fitFlatClass(object):
             self.flatCorrData[:,newCols] = 1.*self.flatModelData[:,newCols] 
 
 
-        if 'blue' in self.inst.get('name') or 'red' in self.inst.get('name'):
+        if varsub and ('blue' in self.inst.get('name') or 'red' in self.inst.get('name')):
 
             good_range = self.inst.get('flat_good_region')
             medCols = np.arange(good_range[0],good_range[1],1)
@@ -566,7 +567,7 @@ class fitFlatClass(object):
             stdCols = np.arange(match_range[0],match_range[1],1)
             stdCols = stdCols.astype(int)
             std_tol = np.std(np.ravel(self.rawData[:,stdCols])) # match variance in good region of detector
-            # std_tol = 0.03 #subject to change
+            std_tol = 0.03 #subject to change
             print ('Matching variance to: ', std_tol)
 
             count = 0
@@ -993,10 +994,11 @@ def inspect_flat(flat_list,*args,**kwargs):
         
         # this really should be a dict of key/value pairs
         # and then the prompt is dynamically generated
-        validResps = ['P','A','R','F','S','U','H',  # standard options
+        validResps = ['P','P2','A','R','F','S','U','H',  # standard options
                       'AHARD','RHARD','REFINE', # poweruser/hidden options
                       'W','D','Q','Q!']              # stardard ends 
         promptStr =  'Enter (p) to run preset regions, fits, and substitutions.\n'
+        promptStr +=  'Enter (p2) same as p with no variance-based median substitution.\n'
         promptStr += 'Enter (a) to add an exclusion region.\n'
         promptStr += 'Enter (r) to remove a region.\n'
         promptStr += 'Enter (f) to fit the exclusion regions.\n'
@@ -1015,7 +1017,11 @@ def inspect_flat(flat_list,*args,**kwargs):
             #run preset regions, fits, and substitutions for inst
             if usrResp == 'P':
                 name = usrResp
-                flatFitObj.run_presets(name,inst)
+                flatFitObj.run_presets(name,inst, varsub = True)
+
+            if usrResp == 'P2':
+                name = usrResp
+                flatFitObj.run_presets(name,inst, varsub = False)
 
             # add region by marking it
             if usrResp == 'A':

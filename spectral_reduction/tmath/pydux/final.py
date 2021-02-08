@@ -370,7 +370,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     else:
                         skyshiftdone = True
                 else:
-                    wave=wave+angshift
+                    # wave=wave+angshift #sky shift already applied, don't need this
                     skyshiftdone = True
 
             plt.close()
@@ -539,16 +539,16 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
 
             outputdone = False
             while (not outputdone):
-                print('\nThe file is: {}'.format(inputfile))
+                objname = objectname + '-' + gratcode
+                fname=objname+'-'+printdate+'_ap'+str(i+1)+ suffixes['ap'+str(i+1)] +'.fits'
+                sname=objname+'-'+printdate+'_ap'+str(i+1)+ suffixes['ap'+str(i+1)] +'-sigma.fits'
+                print('\nThe file is: {}'.format(fname))
                 print('The object is: {}'.format(objectname))
                 print('The DATE-OBS is: {}'.format(date))
                 print('The aperture is: {}'.format(i+1))
                 print('The previous name was: {}'.format(objname))
                 print('\nEnter the object name for the final fits file: ')
                 # objname=inputter('(UT date and .fits will be added): ','string',False)
-                objname = objectname + '-' + gratcode
-                fname=objname+'-'+printdate+'_ap'+str(i+1)+ suffixes['ap'+str(i+1)] +'.fits'
-                sname=objname+'-'+printdate+'_ap'+str(i+1)+ suffixes['ap'+str(i+1)] +'-sigma.fits'
                 outputdone=True
                 if (os.path.isfile(fname)):
                     print('{} already exists!!!!'.format(fname))
@@ -644,11 +644,17 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 done=False
                 while (not done):
                     files = glob.glob(objname.split('-')[0]+'*.fits')
-                    print (files)
+                    # print (files)
                     for f in files:
-                        if objname not in f and ('red' in f or 'blue' in f) and '_ap'+str(i+1) in f: # '_ap'+str(i+1)+'_' needed for hosts?
-                            print (f)
-                            inputfile = f
+                        file_secs = f.split('_')
+                        if 'ap' in file_secs[-1]: # this is messy but whatever
+                            if objname not in f and ('red' in f or 'blue' in f) and '_ap'+str(i+1) in f:
+                                print (f)
+                                inputfile = f
+                        else:
+                            if objname not in f and ('red' in f or 'blue' in f) and '_ap'+str(i+1)+'_' in f:
+                                print (f)
+                                inputfile = f
                     inputfile=input('Name of fits file to be combined? [{}]: '.format(inputfile)) or inputfile
                     print (inputfile)
                     inputfile=inputfile.strip()
@@ -737,7 +743,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 mshead_combined.set('CRVAL1',  nwave[0])
                 mshead_combined.set('CDELT1', nwave[1] - nwave[0])
                 mshead_combined.set('CTYPE1', 'LINEAR')
-                mshead_combined.set('W_RANGE', waverange)
+                # mshead_combined.set('W_RANGE', waverange)
+                mshead_combined.set('W_RANGE', str(nwave[0]) + ' ' + str(nwave[-1]))
                 mshead_combined.set('BSTAR_Z', bstarairmass)
                 mshead_combined.set('BSTARNUM', bstarnum)
                 mshead_combined.set('BSTAROBJ', bstarname)
@@ -775,13 +782,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
               
             is_final=input('Is this a final reduction? [y]/n: ') or 'y'
             is_yse=input('Will this be uploaded to YSE? y/[n]: ') or 'n'      
-            if is_final:
+            if is_final == 'y':
                 if not os.path.isdir('../../final_reductions/'):
                     os.mkdir('../../final_reductions/')
                 os.system('cp ' + fname + ' ' + '../../final_reductions/'+ fname)
                 if fname_comb:
                     os.system('cp ' + fname_comb + ' ' + '../../final_reductions/'+ fname_comb)
-            if is_yse:
+            if is_yse == 'y':
                 if not os.path.isdir('../../yse_uploads/'):
                     os.mkdir('../../yse_uploads/')
                 os.system('cp ' + spectxt + ' ' + '../../yse_uploads/'+ spectxt)

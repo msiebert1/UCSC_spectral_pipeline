@@ -1,4 +1,4 @@
-def waveparse():
+def waveparse(combining = False):
     import re
     done=False
     while (not done):

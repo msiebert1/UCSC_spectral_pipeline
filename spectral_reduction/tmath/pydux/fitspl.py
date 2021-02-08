@@ -63,6 +63,7 @@ def fitspl(wave,flux,airlimit,fig, cal = None):
         womconfig.nsplinepoints=len(masterx)
         womconfig.tmpsplptsx=masterx
         womconfig.tmpsplptsy=mastery
+
         spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
 
     splineresult=splev(wave,spline)
@@ -300,6 +301,17 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None):
         womconfig.nsplinepoints=len(masterx)
         womconfig.tmpsplptsx=list(masterx)
         womconfig.tmpsplptsy=list(mastery)
+
+        rescale = input('Rescale spline points? y/[n]: ') or 'n'
+        scales = []
+        if rescale == 'y':
+            for i, x in enumerate(masterx):
+                # print (x)
+                # print (np.absolute(wave-x), np.argmin(np.absolute(wave-x)), wave[np.argmin(np.absolute(wave-x))])
+                # print (flux[np.argmin(np.absolute(wave-x))], mastery[i], flux[np.argmin(np.absolute(wave-x))]/mastery[i])
+                scales.append(flux[np.argmin(np.absolute(wave-x))]/mastery[i])
+            womconfig.tmpsplptsy=list(np.median(scales)*mastery)
+
         # print (type(womconfig.tmpsplptsx))
         spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
 

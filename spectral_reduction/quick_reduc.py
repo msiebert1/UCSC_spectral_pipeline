@@ -142,8 +142,17 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         print ('IMAGES: ', imgs)
         if len(imgs) > 1:
             img_str = ''
+            k=1
             for i in imgs:
                 if _cosmic:
+                    if _host and 'red' in nameout0:
+                        with open('../HOST_METADATA.txt') as host_file:
+                            for line in host_file.readlines():
+                                if line.split()[0] == _object0.lower().split('_')[0]:
+                                    redshift, sep, ang, r_kron_rad = float(line.split()[1]), float(line.split()[2]), float(line.split()[3]), float(line.split()[4])
+                    else:
+                        redshift=None
+
                     print('\n### starting cosmic removal')
                     files = glob.glob('*.fits')
                     if 'cosmic_{}'.format(i) not in glob.glob('*.fits'):
@@ -151,6 +160,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                         outimg,outmask,header = pyzapspec.pyzapspec(i,
                                                                     outfile='cosmic_{}'.format(i),
                                                                     WRITE_OUTFILE = True,
+                                                                    img_num=k, redshift=redshift,
                                                                     boxsize=inst.get('pyzap_boxsize',7),
                                                                     nsigma=inst.get('pyzap_nsigma',16),
                                                                     subsigma=inst.get('pyzap_subsigma',3))
@@ -162,11 +172,19 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     print('\n### No cosmic removal, saving normalized image for inspection???')
 
                     img_str = img_str + i + ','
+                k+=1
             print (img_str)
             iraf.imcombine(img_str, output=timg)
         else:
             i = imgs[0]
             if _cosmic:
+                if _host and 'red' in nameout0:
+                    with open('../HOST_METADATA.txt') as host_file:
+                        for line in host_file.readlines():
+                            if line.split()[0] == _object0.lower().split('_')[0]:
+                                redshift, sep, ang, r_kron_rad = float(line.split()[1]), float(line.split()[2]), float(line.split()[3]), float(line.split()[4])
+                else:
+                    redshift=None
                 print('\n### starting cosmic removal')
                 files = glob.glob('*.fits')
                 if 'cosmic_{}'.format(i) not in glob.glob('*.fits'):
@@ -174,6 +192,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     outimg,outmask,header = pyzapspec.pyzapspec(i,
                                                                 outfile='cosmic_{}'.format(i),
                                                                 WRITE_OUTFILE = True,
+                                                                redshift=redshift,
                                                                 boxsize=inst.get('pyzap_boxsize',7),
                                                                 nsigma=inst.get('pyzap_nsigma',16),
                                                                 subsigma=inst.get('pyzap_subsigma',3))
@@ -201,6 +220,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         # flathead.set('CCDSEC',  '[80:2296,66:346]')
         # tfits.flush()
         # flatfits.flush()
+
         iraf.ccdproc(timg, output='',
                            overscan='no',
                            trim='no',
@@ -209,6 +229,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                            readaxi='line',
                            flat=flat_file,
                            Stdout=1)
+
         # iraf.ccdproc(timg, output='',
         #                    overscan='no',
         #                    trim='no',
