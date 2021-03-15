@@ -88,7 +88,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
              'soar','ctio','vlt','lco','lco-imacs','lapalma']
     licksky=['lick','kpno','flwo','mmto','sso']
     if (observat in kecksky):
-        mskyfile=reduxdir+'kecksky.fits'
+        # mskyfile=reduxdir+'kecksky.fits'
+        mskyfile=reduxdir+'licksky.fits'
     elif (observat in licksky):
         mskyfile=reduxdir+'licksky.fits'
     else:
@@ -528,7 +529,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             seconddone = True
             ymin,ymax=finalscaler(finalobj)
             plt.close()
-            fig=plt.figure()
+            fig=plt.figure(figsize = [15,8])
             plt.plot(nwave,finalobj,drawstyle='steps-mid')
             # plt.plot(spectres_data[0],spectres_data[1],drawstyle='steps-mid', color='green')
             plt.xlabel('Wavelength')

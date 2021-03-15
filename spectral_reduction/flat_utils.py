@@ -566,19 +566,25 @@ class fitFlatClass(object):
             match_range = self.inst.get('flat_match_region')
             stdCols = np.arange(match_range[0],match_range[1],1)
             stdCols = stdCols.astype(int)
-            std_tol = np.std(np.ravel(self.rawData[:,stdCols])) # match variance in good region of detector
+            # std_tol = np.std(np.ravel(self.rawData[:,stdCols])) # match variance in good region of detector
             std_tol = 0.03 #subject to change
             print ('Matching variance to: ', std_tol)
 
             count = 0
             found_blue = False
             found_red = False
+
+            midrowa = int((len(self.flatModelData)/2.)-25.)
+            midrowb = int((len(self.flatModelData)/2.)+25.)
+            # print (midrowa,midrowb)
             for i in range(len(self.flatModelData[0,:])):
                 newCols = np.arange(i,i+20,1)
                 newCols = newCols.astype(int)
+
                 if i < len(self.flatModelData[0,:]) - 21:
-                    std = np.std(np.ravel(self.flatModelData[:,newCols]))
-                    # print (i, std)
+                    std = np.std(np.ravel(self.flatModelData[:,newCols])[midrowa:midrowb])
+                    # std = np.std(np.ravel(self.flatModelData[:,newCols]))
+                    print (i, std)
                     if std < std_tol:
                         count+=1
                     if std < std_tol and count > 10 and not found_blue:

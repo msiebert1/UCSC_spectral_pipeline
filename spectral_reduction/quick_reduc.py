@@ -1,6 +1,6 @@
 from __future__    import print_function
 
-def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _arc, _fast, _host):
+def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _arc, _fast, _host, _nflat, _cedit):
     import string
     import os
     import re
@@ -138,13 +138,15 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         print ('NAMEOUT:', nameout0)
         timg = nameout0
         print('\n### now processing :',timg,' for -> ',inst.get('name'))
-
+        if os.path.isfile(timg):
+            util.delete(timg)
         print ('IMAGES: ', imgs)
+
         if len(imgs) > 1:
             img_str = ''
             k=1
             for i in imgs:
-                if _cosmic:
+                if _cosmic or _cedit:
                     if _host and 'red' in nameout0:
                         with open('../HOST_METADATA.txt') as host_file:
                             for line in host_file.readlines():
@@ -157,10 +159,13 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     files = glob.glob('*.fits')
                     if 'cosmic_{}'.format(i) not in glob.glob('*.fits'):
 
+                        br = instruments.blue_or_red(i)[0]
                         outimg,outmask,header = pyzapspec.pyzapspec(i,
                                                                     outfile='cosmic_{}'.format(i),
                                                                     WRITE_OUTFILE = True,
+                                                                    br = br,
                                                                     img_num=k, redshift=redshift,
+                                                                    cedit=_cedit,
                                                                     boxsize=inst.get('pyzap_boxsize',7),
                                                                     nsigma=inst.get('pyzap_nsigma',16),
                                                                     subsigma=inst.get('pyzap_subsigma',3))
@@ -177,7 +182,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
             iraf.imcombine(img_str, output=timg)
         else:
             i = imgs[0]
-            if _cosmic:
+            if _cosmic or _cedit:
                 if _host and 'red' in nameout0:
                     with open('../HOST_METADATA.txt') as host_file:
                         for line in host_file.readlines():
@@ -187,12 +192,16 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     redshift=None
                 print('\n### starting cosmic removal')
                 files = glob.glob('*.fits')
+
                 if 'cosmic_{}'.format(i) not in glob.glob('*.fits'):
 
+                    br = instruments.blue_or_red(i)[0]
                     outimg,outmask,header = pyzapspec.pyzapspec(i,
                                                                 outfile='cosmic_{}'.format(i),
                                                                 WRITE_OUTFILE = True,
+                                                                br = br,
                                                                 redshift=redshift,
+                                                                cedit=_cedit,
                                                                 boxsize=inst.get('pyzap_boxsize',7),
                                                                 nsigma=inst.get('pyzap_nsigma',16),
                                                                 subsigma=inst.get('pyzap_subsigma',3))
@@ -221,22 +230,24 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         # tfits.flush()
         # flatfits.flush()
 
-        iraf.ccdproc(timg, output='',
-                           overscan='no',
-                           trim='no',
-                           zerocor="no",
-                           flatcor="yes",
-                           readaxi='line',
-                           flat=flat_file,
-                           Stdout=1)
-
-        # iraf.ccdproc(timg, output='',
-        #                    overscan='no',
-        #                    trim='no',
-        #                    zerocor="no",
-        #                    flatcor="no",
-        #                    readaxi='line',
-        #                    Stdout=1)
+        if not _nflat:
+            iraf.ccdproc(timg, output='',
+                               overscan='no',
+                               trim='no',
+                               zerocor="no",
+                               flatcor="yes",
+                               readaxi='line',
+                               flat=flat_file,
+                               Stdout=1)
+        else:
+            print ('NOT FLAT FIELDING')
+            iraf.ccdproc(timg, output='',
+                               overscan='no',
+                               trim='no',
+                               zerocor="no",
+                               flatcor="no",
+                               readaxi='line',
+                               Stdout=1)
 
         if 'kast_red' in inst.get('name'):
             tfits = fits.open(timg)
@@ -250,332 +261,6 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                 hdu.writeto(timg,output_verify='ignore', clobber=True)
 
         img = timg
-
-
-        if inst.get('arm') == 'blue' and len(list_arc_b)>0:
-            arcfile = list_arc_b[0]
-        elif inst.get('arm') == 'red' and len(list_arc_r)>0:
-            arcfile = list_arc_r[0]
-        else:
-            arcfile=None
-
-        if arcfile is not None and not arcfile.endswith(".fits"):
-            arcfile=arcfile+'.fits'
-
-        if not os.path.isdir('database/'):
-            os.mkdir('database/')
-
-        #There is a bug in identify when the path to the coordlist is too long
-        #This is my hacky workaround for now, the file  is deleted later
-        os.system('cp ' + inst.get('line_list') + ' .')
-        line_list = inst.get('line_list').split('/')[-1]
-
-        if _arc_identify:
-            if not os.path.isdir('../master_files/'):
-                os.mkdir('../master_files/')
-
-            arcref = None
-
-            if br == 'blue':
-                arcfile = 'ARC_blue.fits' #THIS IS A HACK
-                wave_sol_file = 'idARC_blue.ms'
-            elif br == 'red':
-                arcfile = 'ARC_red.fits' #THIS IS A HACK
-                wave_sol_file = 'idARC_red.ms'
-
-            masters = [os.path.basename(x) for x in glob.glob('../master_files/*')]
-            if wave_sol_file in masters:
-                wave_sol= raw_input("Use your master wavelength solution? [y]/n: ") or 'y'
-                if wave_sol.strip().lower() == 'y':
-                    print ('Copying master file')
-                    arc_ex=re.sub('.fits', '.ms.fits', arcfile)
-                    os.system('cp ' + '../master_files/' + wave_sol_file + ' ./database/')
-                else:
-                    os.system('cp ' + '../' + arcfile + ' .')
-                    arc_ex=re.sub('.fits', '.ms.fits', arcfile)
-                    print('\n### arcfile : ',arcfile)
-                    print('\n### arcfile extraction : ',arc_ex)
-                    print(inst.get('line_list'))
-                    # remove the file from the extract destination
-                    if os.path.isfile(arc_ex):
-                        os.remove(arc_ex)
-
-                    iraf.specred.apall(arcfile,
-                                        output=arc_ex,
-                                        line = inst.get('approx_extract_line'),
-                                        nsum=10,
-                                        interactive='no',
-                                        extract='yes',
-                                        find='yes',
-                                        nfind=1 ,
-                                        format='multispec',
-                                        trace='no',
-                                        back='no',
-                                        recen='no')
-                    iraf.longslit.identify(images=arc_ex,
-                                            section='line {}'.format(inst.get('approx_extract_line')),
-                                            coordli=line_list,
-                                            function = 'spline3',
-                                            order=3,
-                                            mode='h')
-            else:
-                os.system('cp ' + '../' + arcfile + ' .')
-                arc_ex=re.sub('.fits', '.ms.fits', arcfile)
-                print('\n### arcfile : ',arcfile)
-                print('\n### arcfile extraction : ',arc_ex)
-                print(inst.get('line_list'))
-                # remove the file from the extract destination
-                if os.path.isfile(arc_ex):
-                    os.remove(arc_ex)
-
-                print (arcfile, inst.get('approx_extract_line'))
-                iraf.specred.apall(arcfile,
-                                    output=arc_ex,
-                                    line = inst.get('approx_extract_line'),
-                                    nsum=10,
-                                    interactive='no',
-                                    extract='yes',
-                                    find='yes',
-                                    nfind=1 ,
-                                    format='multispec',
-                                    trace='no',
-                                    back='no',
-                                    recen='no')
-                iraf.longslit.identify(images=arc_ex,
-                                        section='line {}'.format(inst.get('approx_extract_line')),
-                                        coordli=line_list,
-                                        function = 'spline3',
-                                        order=3,
-                                        mode='h')
-                os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')
-                    # os.system('cp ' + '../' + arcfile + ' .')
-                    # arc_ex=re.sub('.fits', '.ms.fits', arcfile)
-
-                    # arcref = inst.get('archive_arc_extracted')
-                    # arcref_img = string.split(arcref, '/')[-1]
-                    # arcref_img = arcref_img.replace('.ms.fits', '')
-                    # arcrefid = inst.get('archive_arc_extracted_id')
-                    # os.system('cp ' + arcref + ' .')
-                    # arcref = string.split(arcref, '/')[-1]
-                    # os.system('cp ' + arcrefid + ' ./database')
-
-                    # aperture = inst.get('archive_arc_aperture')
-                    # os.system('cp ' + aperture + ' ./database')
-
-                    # print('\n###  arcfile : ',arcfile)
-                    # print('\n###  arcfile extraction : ',arc_ex)
-                    # print('\n###  arc reference : ',arcref)
-
-                    # # read for some meta data to get the row right
-                    # tmpHDU = pyfits.open(arcfile)
-                    # header = tmpHDU[0].header
-                    # try:
-                    #     spatialBin = int(header['binning'].split(',')[0])
-                    # except KeyError:
-                    #     spatialBin = 1
-                    # apLine = 700//spatialBin
-
-                    # iraf.specred.apall(arcfile,
-                    #                    output=arc_ex,
-                    #                    ref=arcref_img,
-                    #                    line = apLine,
-                    #                    nsum=10,
-                    #                    interactive='no',
-                    #                    extract='yes',
-                    #                    find='yes',
-                    #                    nfind=1 ,
-                    #                    format='multispec',
-                    #                    trace='no',
-                    #                    back='no',
-                    #                    recen='no')
-
-
-                    # iraf.longslit.reidentify(referenc=arcref,
-                    #                          images=arc_ex,
-                    #                          interac='YES',
-                    #                          section='middle line',
-                    #                          coordli='lines.dat',
-                    #                          shift='INDEF',
-                    #                          search='INDEF',
-                    #                          mode='h',
-                    #                          verbose='YES',
-                    #                          step=1,
-                    #                          nsum=10,
-                    #                          nlost=2,
-                    #                          cradius=5,
-                    #                          refit='yes',
-                    #                          overrid='yes',
-                    #                          newaps='no')
-
-            # else:
-            #     # os.system('cp ' + '../' + arcfile + ' .')
-            #     # arc_ex=re.sub('.fits', '.ms.fits', arcfile)
-            #     # print('\n### arcfile : ',arcfile)
-            #     # print('\n### arcfile extraction : ',arc_ex)
-            #     # print(inst.get('line_list'))
-            #     # iraf.specred.apall(arcfile,
-            #     #                     output=arc_ex,
-            #     #                     line = 'INDEF',
-            #     #                     nsum=10,
-            #     #                     interactive='no',
-            #     #                     extract='yes',
-            #     #                     find='yes',
-            #     #                     nfind=1 ,
-            #     #                     format='multispec',
-            #     #                     trace='no',
-            #     #                     back='no',
-            #     #                     recen='no')
-            #     # iraf.longslit.identify(images=arc_ex,
-            #     #                         section=inst.get('section'),
-            #     #                         coordli='lines.dat',
-            #     #                         function = 'spline3',
-            #     #                         order=3,
-            #     #                         mode='h')
-            #     # iraf.longslit.reidentify(referenc=arcref,
-            #     #                      images=arc_ex,
-            #     #                      interac='YES',
-            #     #                      section='middle line',
-            #     #                      coordli='lines.dat',
-            #     #                      shift='INDEF',
-            #     #                      search='INDEF',
-            #     #                      mode='h',
-            #     #                      verbose='YES',
-            #     #                      step=1,
-            #     #                      nsum=10,
-            #     #                      nlost=2,
-            #     #                      cradius=5,
-            #     #                      refit='yes',
-            #     #                      overrid='yes',
-            #     #                      newaps='no')
-            #     os.system('cp ' + '../' + arcfile + ' .')
-            #     arc_ex=re.sub('.fits', '.ms.fits', arcfile)
-
-            #     arcref = inst.get('archive_arc_extracted')
-            #     arcref_img = string.split(arcref, '/')[-1]
-            #     arcref_img = arcref_img.replace('.ms.fits', '')
-            #     arcrefid = inst.get('archive_arc_extracted_id')
-            #     os.system('cp ' + arcref + ' .')
-            #     arcref = string.split(arcref, '/')[-1]
-            #     os.system('cp ' + arcrefid + ' ./database')
-
-            #     aperture = inst.get('archive_arc_aperture')
-            #     os.system('cp ' + aperture + ' ./database')
-
-            #     print('\n###  arcfile : ',arcfile)
-            #     print('\n###  arcfile extraction : ',arc_ex)
-            #     print('\n###  arc reference : ',arcref)
-
-            #     # read for some meta data to get the row right
-            #     tmpHDU = pyfits.open(arcfile)
-            #     header = tmpHDU[0].header
-            #     try:
-            #         spatialBin = int(header['binning'].split(',')[0])
-            #     except KeyError:
-            #         spatialBin = 1
-            #     apLine = 700//spatialBin
-
-            #     iraf.specred.apall(arcfile,
-            #                        output=arc_ex,
-            #                        ref=arcref_img,
-            #                        line = apLine,
-            #                        nsum=10,
-            #                        interactive='no',
-            #                        extract='yes',
-            #                        find='yes',
-            #                        nfind=1 ,
-            #                        format='multispec',
-            #                        trace='no',
-            #                        back='no',
-            #                        recen='no')
-
-
-            #     iraf.longslit.reidentify(referenc=arcref,
-            #                              images=arc_ex,
-            #                              interac='YES',
-            #                              section='middle line',
-            #                              coordli='lines.dat',
-            #                              shift='INDEF',
-            #                              search='INDEF',
-            #                              mode='h',
-            #                              verbose='YES',
-            #                              step=1,
-            #                              nsum=10,
-            #                              nlost=2,
-            #                              cradius=5,
-            #                              refit='yes',
-            #                              overrid='yes',
-            #                              newaps='no')
-            #     os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')
-        else:
-            if br == 'blue':
-                arcfile = 'ARC_blue.fits' #THIS IS A HACK
-                wave_sol_file = 'idARC_blue.ms'
-            elif br == 'red':
-                arcfile = 'ARC_red.fits' #THIS IS A HACK
-                wave_sol_file = 'idARC_red.ms'
-
-            os.system('cp ' + '../' + arcfile + ' .')
-            arc_ex=re.sub('.fits', '.ms.fits', arcfile)
-
-            arcref = inst.get('archive_arc_extracted')
-            arcref_img = string.split(arcref, '/')[-1]
-            arcref_img = arcref_img.replace('.ms.fits', '')
-            arcrefid = inst.get('archive_arc_extracted_id')
-            os.system('cp ' + arcref + ' .')
-            arcref = string.split(arcref, '/')[-1]
-            os.system('cp ' + arcrefid + ' ./database')
-
-            aperture = inst.get('archive_arc_aperture')
-            os.system('cp ' + aperture + ' ./database')
-
-            print('\n###  arcfile : ',arcfile)
-            print('\n###  arcfile extraction : ',arc_ex)
-            print('\n###  arc reference : ',arcref)
-
-            # read for some meta data to get the row right
-            tmpHDU = pyfits.open(arcfile)
-            header = tmpHDU[0].header
-            try:
-                spatialBin = int(header['binning'].split(',')[0])
-            except KeyError:
-                spatialBin = 1
-            apLine = 700//spatialBin
-
-            iraf.specred.apall(arcfile,
-                               output=arc_ex,
-                               ref=arcref_img,
-                               line = apLine,
-                               nsum=10,
-                               interactive='no',
-                               extract='yes',
-                               find='yes',
-                               nfind=1 ,
-                               format='multispec',
-                               trace='no',
-                               back='no',
-                               recen='no')
-
-
-            iraf.longslit.reidentify(referenc=arcref,
-                                     images=arc_ex,
-                                     interac='NO',
-                                     section='middle line',
-                                     coordli=line_list,
-                                     shift='INDEF',
-                                     search='INDEF',
-                                     mode='h',
-                                     verbose='YES',
-                                     step=1,
-                                     nsum=10,
-                                     nlost=2,
-                                     cradius=5,
-                                     refit='yes',
-                                     overrid='yes',
-                                     newaps='no')
-
-            os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')
-        util.delete(line_list)
-
 
 
         print('\n### extraction using apall')
@@ -609,6 +294,149 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
             save_ap = raw_input('Save as a master aperture ? y/[n]: ')
             if save_ap == 'y':
                 os.system('cp ' + 'database/ap' + img[0:-5] + ' ../master_files/ap'+img[0:-5])
+
+
+
+            if inst.get('arm') == 'blue' and len(list_arc_b)>0:
+                arcfile = list_arc_b[0]
+            elif inst.get('arm') == 'red' and len(list_arc_r)>0:
+                arcfile = list_arc_r[0]
+            else:
+                arcfile=None
+
+            if arcfile is not None and not arcfile.endswith(".fits"):
+                arcfile=arcfile+'.fits'
+
+            if not os.path.isdir('database/'):
+                os.mkdir('database/')
+
+            #There is a bug in identify when the path to the coordlist is too long
+            #This is my hacky workaround for now, the file  is deleted later
+            os.system('cp ' + inst.get('line_list') + ' .')
+            line_list = inst.get('line_list').split('/')[-1]
+
+            if _arc_identify:
+                if not os.path.isdir('../master_files/'):
+                    os.mkdir('../master_files/')
+
+                arcref = None
+
+                if br == 'blue':
+                    arcfile = 'ARC_blue.fits' #THIS IS A HACK
+                    wave_sol_file = 'idARC_blue.ms'
+                    wave_sol_img = 'ARC_blue.ms.fits'
+                elif br == 'red':
+                    arcfile = 'ARC_red.fits' #THIS IS A HACK
+                    wave_sol_file = 'idARC_red.ms'
+                    wave_sol_img = 'ARC_red.ms.fits'
+
+                masters = [os.path.basename(x) for x in glob.glob('../master_files/*')]
+                if wave_sol_file in masters:
+                    wave_sol= raw_input("Use your master wavelength solution? [y]/n: ") or 'y'
+                    if wave_sol.strip().lower() == 'y':
+                        print ('Copying master file')
+                        arc_ex=re.sub('.fits', '.ms.fits', arcfile)
+                        os.system('cp ' + '../master_files/' + wave_sol_file + ' ./database/')
+                    else:
+                        if br == 'blue':
+                            for im in glob.glob('*.fits'):
+                                if 'blue' in im and '_ex' not in im:
+                                    ref_img = im
+                        elif br == 'red':
+                            for im in glob.glob('*.fits') :
+                                if 'red' in im and '_ex' not in im:
+                                    ref_img = im
+
+
+                        ref_img= raw_input("Reference image [{}]: ".format(ref_img)) or ref_img
+
+                        os.system('cp ' + '../' + arcfile + ' .')
+                        arc_ex=re.sub('.fits', '.ms.fits', arcfile)
+                        print('\n### arcfile : ',arcfile)
+                        print('\n### arcfile extraction : ',arc_ex)
+                        print(inst.get('line_list'))
+                        # remove the file from the extract destination
+                        if os.path.isfile(arc_ex):
+                            os.remove(arc_ex)
+
+                        os.system('cp ' + '../master_files/' + wave_sol_file + ' ./database/')
+                        os.system('cp ' + '../master_files/' + wave_sol_img + ' ./database/')
+
+                        iraf.specred.apall(arcfile,
+                                            output=arc_ex,
+                                            references = ref_img,
+                                            line = 'INDEF',
+                                            # nsum=10,
+                                            interactive='no',
+                                            extract='yes',
+                                            find='no',
+                                            format='multispec',
+                                            trace='no',
+                                            back='no',
+                                            recen='no')
+                        iraf.longslit.identify(images=arc_ex,
+                                                # section='line {}'.format(inst.get('approx_extract_line')),
+                                                coordli=line_list,
+                                                function = 'spline3',
+                                                order=3,
+                                                mode='h')
+                        # iraf.longslit.reidentify(referenc=wave_sol_img,
+                        #                          images=arc_ex,
+                        #                          coordli=line_list,
+                        #                          shift='INDEF',
+                        #                          search='INDEF',
+                        #                          interac='YES',
+                        #                          mode='h',
+                        #                          verbose='YES',
+                        #                          step=1,
+                        #                          nsum=10,
+                        #                          nlost=2,
+                        #                          cradius=5,
+                        #                          refit='yes',
+                        #                          overrid='yes',
+                        #                          newaps='no')
+                else:
+                    if br == 'blue':
+                        for im in glob.glob('*.fits'):
+                            if 'blue' in im and '_ex' not in im:
+                                ref_img = im
+                    elif br == 'red':
+                        for im in glob.glob('*.fits'):
+                            if 'red' in im and '_ex' not in im:
+                                ref_img = im
+
+                    ref_img= raw_input("Reference image [{}]: ".format(ref_img)) or ref_img
+
+                    os.system('cp ' + '../' + arcfile + ' .')
+                    arc_ex=re.sub('.fits', '.ms.fits', arcfile)
+                    print('\n### arcfile : ',arcfile)
+                    print('\n### arcfile extraction : ',arc_ex)
+                    print(inst.get('line_list'))
+                    # remove the file from the extract destination
+                    if os.path.isfile(arc_ex):
+                        os.remove(arc_ex)
+
+                    iraf.specred.apall(arcfile,
+                                        output=arc_ex,
+                                        references = ref_img,
+                                        line = 'INDEF',
+                                        # nsum=10,
+                                        interactive='no',
+                                        extract='yes',
+                                        find='no',
+                                        format='multispec',
+                                        trace='no',
+                                        back='no',
+                                        recen='no')
+                    iraf.longslit.identify(images=arc_ex,
+                                            # section='line {}'.format(inst.get('approx_extract_line')),
+                                            coordli=line_list,
+                                            function = 'spline3',
+                                            order=3,
+                                            mode='h')
+                    os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')
+                    os.system('cp ' + wave_sol_img + ' ../master_files/')
+            util.delete(line_list)
 
             with open('database/ap' + img[0:-5]) as apfile:
                 ap_data = apfile.readlines()

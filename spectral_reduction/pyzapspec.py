@@ -5,6 +5,8 @@ from astropy.io import fits
 from astropy.convolution import convolve
 from scipy import signal
 from scipy import interpolate
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 def sigclipmedian(datain,sigmahi=3.5,sigmalo=3.5):
     data = 1.*datain
@@ -161,7 +163,9 @@ def pyzapspec(infile,
               maskfile='', 
               WRITE_OUTFILE=False,
               img_num = 1,
+              br = 'b',
               redshift = None,
+              cedit = None,
               DEBUG_DIR='../test_data/',DEBUG=False,
               boxsize=9,nsigma=15.,subsigma=2.8,sfactor=1.0,
               nzap=0,mask=0,writemodel=0,verbose=0,skysubtract=0,
@@ -308,24 +312,48 @@ def pyzapspec(infile,
 
     # this uses a crude relationship between redshift and halpha column
     # to select region of cr mask to ignore 
-    # if redshift:
+    if redshift or cedit:
         
-    #     zs = [.0204, .037, .0619, .0808]
-    #     cols = [1130, 1220, 1350, 1464]
-    #     f = interpolate.interp1d(zs, cols, kind="linear", fill_value = "extrapolate")
-    #     center_y = 55
-    #     buff_y = 30
-    #     center_x = int(f(redshift))
-    #     buff_x = 50
-    #     print ('Ignoring Halpha region centered at pixel ', center_x)
-    #     zapimage[center_y-buff_y:center_y+buff_y, center_x-buff_x:center_x+buff_x] = 0 #halpha keck
-    #     zapimage_ravel = zapimage.ravel()
+        # zs = [.0204, .037, .0619, .0808]
+        # cols = [1130, 1220, 1350, 1464]
+        # f = interpolate.interp1d(zs, cols, kind="linear", fill_value = "extrapolate")
+        # center_y = 55
+        # buff_y = 30
+        # center_x = int(f(redshift))
+        # buff_x = 50
+        # zapimage[center_y-buff_y:center_y+buff_y, center_x-buff_x:center_x+buff_x] = 0 #mask halpha keck
+        # print ('Ignoring region centered at pixel ', center_x)
+
+        fixed = False
+        trace_y = float(raw_input('Enter approximate row of trace [360]: ') or 360.)
+        center_y = 360
+        buff_y = 30
+        while not fixed:
+            rect = patches.Rectangle((0, 360 - int(buff_y)), len(zapimage[0]), 2*buff_y, linewidth=1, edgecolor='r', facecolor='none')
+            plt.figure(figsize=[15,8])
+            plt.imshow(zapimage)
+            plt.gca().add_patch(rect)
+            plt.gca().invert_yaxis()
+            plt.show()
+            col_str = raw_input('Enter a new column mask region of trace [900 1100] (n for none): ') or '900 1100'
+            if col_str == 'n':
+                fixed = True
+            else:
+                col_left = int(col_str.split()[0])
+                col_right = int(col_str.split()[1])
+                zapimage[center_y-buff_y:center_y+buff_y, col_left:col_right] = 0
+                new_reg = raw_input('Enter another region [y]/n: ') or 'y'
+                if new_reg != 'y':
+                    fixed = True
+        plt.close()
+
+        zapimage_ravel = zapimage.ravel()
 
     # zapimage[45:65, 1870:1930] = 0 #telluric A-band
     # zapimage_ravel = zapimage.ravel()
 
 
-    res = writefits(zapimage,'zapimage{}.fits'.format(img_num),CLOBBER=True)
+    res = writefits(zapimage,'zapimage{}{}.fits'.format(br, img_num),CLOBBER=True)
     # if DEBUG:
     #     res = writefits(zapimage,'{}/zapimage.fits'.format(DEBUG_DIR),CLOBBER=True)
 

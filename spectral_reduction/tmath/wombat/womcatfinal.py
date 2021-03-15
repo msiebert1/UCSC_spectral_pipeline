@@ -13,6 +13,7 @@ def womcatfinal(blue_data, red_data):
     from tmath.wombat import HOPSIZE
     from matplotlib.widgets import Cursor
     from tmath.wombat.womspectres import spectres
+    from tmath.wombat.womashrebin import womashrebin
 
     plt.ion()
     screen_width, screen_height = get_screen_size()
@@ -72,6 +73,19 @@ def womcatfinal(blue_data, red_data):
         wavered = red_interp[0]
         fluxred = red_interp[1]
         varred = red_interp[2]**2.
+
+        # blue_interp_flux = womashrebin(waveblue,fluxblue,interp_wave[blue_range])
+        # red_interp_flux = womashrebin(wavered,fluxred,interp_wave[red_range])
+        # blue_interp_err = womashrebin(waveblue,varblue,interp_wave[blue_range])
+        # red_interp_err = womashrebin(wavered,varred,interp_wave[red_range])
+
+        # waveblue = interp_wave[blue_range]
+        # fluxblue = blue_interp_flux
+        # varblue = blue_interp_err
+        # wavered = interp_wave[red_range]
+        # fluxred = red_interp_flux
+        # varred = red_interp_err
+
     else:
         print ("Interpolating to {} A/pix".format(blue_dw))
         interp_wave = np.arange(math.ceil(waveblue[0])+1.*blue_dw, math.floor(wavered[-1])-1.*blue_dw, dtype=float, step=blue_dw)
@@ -87,16 +101,31 @@ def womcatfinal(blue_data, red_data):
         fluxred = red_interp[1]
         varred = red_interp[2]**2.
 
+        # blue_interp_flux = womashrebin(waveblue,fluxblue,interp_wave[blue_range])
+        # red_interp_flux = womashrebin(wavered,fluxred,interp_wave[red_range])
+        # blue_interp_err = womashrebin(waveblue,varblue,interp_wave[blue_range])
+        # red_interp_err = womashrebin(wavered,varred,interp_wave[red_range])
+
+        # waveblue = interp_wave[blue_range]
+        # fluxblue = blue_interp_flux
+        # varblue = blue_interp_err
+        # wavered = interp_wave[red_range]
+        # fluxred = red_interp_flux
+        # varred = red_interp_err
+
     indexblue=womget_element(waveblue,wavered[0])
     indexred=womget_element(wavered,waveblue[-1])
     fluxcor=1.0
     blue_mean=np.mean(fluxblue[indexblue:])
     red_mean=np.mean(fluxred[0:indexred+1])
-    if (blue_mean/red_mean < 0.8) or (blue_mean/red_mean > 1.2):
-        fluxcor=blue_mean/red_mean
-        print("Averages very different, scaling red to blue for plot")
-        print("Red multiplied by {}".format(fluxcor))
+    # if (blue_mean/red_mean < 0.8) or (blue_mean/red_mean > 1.2):
+    fluxcor=blue_mean/red_mean
+        # print("Averages very different, scaling red to blue for plot")
+    print("Red multiplied by {}".format(fluxcor))
     plt.cla()
+    plt.plot(waveblue[indexblue-250:],fluxblue[indexblue-250:],drawstyle='steps-mid',color='k')
+    plt.plot(wavered[0:indexred+250],fluxred[0:indexred+250]*fluxcor,drawstyle='steps-mid',color='k')
+
     plt.plot(waveblue[indexblue:],fluxblue[indexblue:],drawstyle='steps-mid',color='b')
     plt.plot(wavered[0:indexred],fluxred[0:indexred]*fluxcor,drawstyle='steps-mid',color='r')
     plt.xlabel('Wavelength')
@@ -126,12 +155,13 @@ def womcatfinal(blue_data, red_data):
                 done=True
     # print('\nEnter method to select wavelength ranges\n')
     # mode=inputter_single('Enter (w)avelengths or mark with the (m)ouse? (w/m) ','wm')
-    mode = input('Enter (w)avelengths or mark with the [m]ouse? ') or 'm'
+    mode = input('Enter (w)avelengths, mark with the [m]ouse, or (i)nteractive scaling? ') or 'm'
     print('\nChoose end points of region to compute average\n')
-    
+
     waveb,waver,mode=womwaverange2(waveblue[indexblue:],fluxblue[indexblue:],
                                    wavered[0:indexred],fluxred[0:indexred]*fluxcor
                                    ,mode)
+
     indexblueb=womget_element(waveblue,waveb)
     indexbluer=womget_element(waveblue,waver)
     indexredb=womget_element(wavered,waveb)
@@ -153,6 +183,42 @@ def womcatfinal(blue_data, red_data):
         logging.info('Cat scaling to red by {}'.format(brscalefac))
         fluxblue=fluxblue*brscalefac
         varblue=varblue*brscalefac**2
+
+    if mode == 'i':
+        #undo scaling and start over
+        fluxred=fluxred/brscalefac
+        varred=varred/(brscalefac**2)
+        found_scale_fac = False
+        new_fac = brscalefac
+        buff = 1000
+        while not found_scale_fac:
+            plt.cla()
+            # plt.plot(waveblue[indexblue-buff:],fluxblue[indexblue-buff:],drawstyle='steps-mid',color='k')
+            # plt.plot(wavered[0:indexred+buff],fluxred[0:indexred+buff]*new_fac,drawstyle='steps-mid',color='k')
+
+            # plt.plot(waveblue[indexblue:],fluxblue[indexblue:],drawstyle='steps-mid',color='b')
+            # plt.plot(wavered[0:indexred],fluxred[0:indexred]*new_fac,drawstyle='steps-mid',color='r')
+
+            plt.plot(waveblue,fluxblue,drawstyle='steps-mid',color='k')
+            plt.plot(wavered,fluxred*new_fac,drawstyle='steps-mid',color='k')
+
+            plt.plot(waveblue,fluxblue,drawstyle='steps-mid',color='b')
+            plt.plot(wavered,fluxred*new_fac,drawstyle='steps-mid',color='r')
+            plt.xlabel('Wavelength')
+            plt.ylabel('Flux')
+            plt.pause(0.01)
+            good = input('Is this ok? y/[n]: ') or 'n'
+            if good == 'y':
+                found_scale_fac = True
+            else:
+                new_fac_str = input('Enter scaling factor [1.0]: ') or '1.0'
+                new_fac = float(new_fac_str)
+        if (brscale == 'b'):
+            logging.info('Cat scaling to blue by {}'.format(new_fac))
+            fluxred=fluxred*new_fac
+            varred=varred*new_fac**2
+
+
 
     # print("\nPlotting blue side as blue, red side as red\n") 
     # plt.cla()
@@ -232,6 +298,7 @@ def womcatfinal(blue_data, red_data):
     # logging.info('over wavelength range {} to {}'.format(waveblue[indexblueb],
     #                                                      waveblue[indexbluer]))
     plt.clf()
+
     axarr=fig.subplots(2)
     
     axarr[0].plot(overwave,overflux,drawstyle='steps-mid',color='k')

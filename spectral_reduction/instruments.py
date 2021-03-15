@@ -103,7 +103,7 @@ lris_blue = {'name': 'lris_blue',
              'archive_arc_extracted_id': path_to_trunk + 'LRIS_cals/idARC_blue.ms',
              'archive_arc_aperture': path_to_trunk + 'LRIS_cals/apLRIS_Blue_Arc_Ref',
              # 'line_list': path_to_trunk+'LRIS_cals/lines.dat', #this nearly hits pathname length limits
-             'line_list': path_to_trunk+'LRIS_cals/lines_lpipe.dat', #this nearly hits pathname length limits
+             'line_list': path_to_trunk+'LRIS_cals/lines.dat', #this nearly hits pathname length limits
              'extinction_file': path_to_trunk + 'LRIS_cals/lick_extinction.dat', # JB: need to fix
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
@@ -145,8 +145,7 @@ lris_red = { 'name': 'lris_red',
              'pyzap_boxsize': 5,
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 8,
-             'approx_extract_line': 370, #jon old
-             # 'approx_extract_line': 69,
+             'approx_extract_line': 350,
              'pixel_scale': .135, #arcsec/pix
              'spatial_binning': 2.,
              'flat_regions': [[0,300],[1850,2000],[3250,3700]],

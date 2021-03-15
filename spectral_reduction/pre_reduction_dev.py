@@ -287,6 +287,7 @@ def pre_reduction_dev(*args,**kwargs):
     MAKE_FLATS = kwargs.get('MAKE_FLATS')
     QUICK = kwargs.get('QUICK')
     RED_AMP_BAD = kwargs.get('RED_AMP_BAD')
+    OLD_LRIS = kwargs.get('OLD_LRIS')
     HOST = kwargs.get('HOST')
 
     # init iraf stuff
@@ -350,8 +351,9 @@ def pre_reduction_dev(*args,**kwargs):
         for obsfile in observations:
             header = fits.open(obsfile)[0].header
             imageType = mu.determine_image_type(header, inst_name, STANDARD_STAR_LIBRARY)
-
+            # print (obsfile)
             channel, inst_dict = instruments.blue_or_red(obsfile)
+
             obj = header.get('OBJECT').strip()
             if imageType == 'SCI' or imageType == 'STD':
                 if obj in configDict[imageType][channel.upper()].keys():
@@ -521,10 +523,10 @@ def pre_reduction_dev(*args,**kwargs):
                             # res = keck_basic_2d.main([rawFile])
                             if imgType != 'CAL_FLAT':
                                 print (imgType)
-                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED)
+                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
                             else:
                                 print (imgType)
-                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED)
+                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
                         else:
                             res = basic_2d_proc(rawFile,imgType=imgType,CLOBBER=CLOBBER)
                     else:
@@ -581,7 +583,9 @@ def pre_reduction_dev(*args,**kwargs):
 
 
     # combine the flats
-    if MAKE_FLATS and 'lris' in inst['name']:
+    if MAKE_FLATS and 'lris' in inst['name'] and not OLD_LRIS:
+
+        sides = raw_input("Make flat for which side? ([both]/b/r): ") 
 
         list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
         list_flat_r = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
@@ -601,7 +605,8 @@ def pre_reduction_dev(*args,**kwargs):
 
 
         # blue flats
-        if len(list_flat_b) > 0:
+
+        if len(list_flat_b) > 0 and sides != 'r':
             # br, inst = instruments.blue_or_red(list_flat_b[0])
             br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(b_amp1_list[0]))
             dispaxis = inst.get('dispaxis')
@@ -663,7 +668,7 @@ def pre_reduction_dev(*args,**kwargs):
             os.remove('pre_reduced/RESP_blue_amp2.fits')
 
         # red flats
-        if len(list_flat_r) > 0:
+        if len(list_flat_r) > 0 and sides != 'b':
             # br, inst = instruments.blue_or_red(list_flat_r[0])
             br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(r_amp1_list[0]))
             dispaxis = inst.get('dispaxis')
@@ -721,7 +726,7 @@ def pre_reduction_dev(*args,**kwargs):
                 amp1_flatten = np.asarray(hdu_amp1[0].data).flatten()
                 amp2_flatten = np.asarray(hdu_amp2[0].data).flatten()
                 concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
-                if not MASK_MIDDLE_RED:
+                if MASK_MIDDLE_RED:
                     resp_red_data = np.reshape(concat_amps, (575,4061))
                     resp_red_data[278:294,:] = 1.
                 else:
@@ -740,12 +745,15 @@ def pre_reduction_dev(*args,**kwargs):
                 os.remove('pre_reduced/RESP_red_amp1.fits')
 
     elif MAKE_FLATS:
+
+        sides = raw_input("Make flat for which side? ([both]/b/r): ") 
+
         list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
         list_flat_r = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
         inter = 'yes'
 
         # blue flats
-        if len(list_flat_b) > 0:
+        if len(list_flat_b) > 0 and sides != 'r':
             # br, inst = instruments.blue_or_red(list_flat_b[0])
             br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(list_flat_b[0]))
             dispaxis = inst.get('dispaxis')
@@ -756,7 +764,11 @@ def pre_reduction_dev(*args,**kwargs):
             norm_list = []
             for flat in list_flat_b:
                 flat_list.append('pre_reduced/to'+ flat)
-                norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
+                if OLD_LRIS:
+                    name_split = flat.split('.')
+                    norm_list.append('pre_reduced/to'+ name_split[0]+ '.'+ name_split[1]+'.'+ name_split[2]+'_norm.fits')
+                else:
+                    norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
             if os.path.isfile(Flat_blue):
                 os.remove(Flat_blue)
 
@@ -789,7 +801,7 @@ def pre_reduction_dev(*args,**kwargs):
             #     os.remove('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
 
         # red flats
-        if len(list_flat_r) > 0:
+        if len(list_flat_r) > 0 and sides != 'b':
             # br, inst = instruments.blue_or_red(list_flat_r[0])
             br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(list_flat_r[0]))
             dispaxis = inst.get('dispaxis')
@@ -800,7 +812,11 @@ def pre_reduction_dev(*args,**kwargs):
             norm_list = []
             for flat in list_flat_r:
                 flat_list.append('pre_reduced/to'+ flat)
-                norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
+                if OLD_LRIS:
+                    name_split = flat.split('.')
+                    norm_list.append('pre_reduced/to'+ name_split[0]+ '.'+ name_split[1]+'.'+ name_split[2]+'_norm.fits')
+                else:
+                    norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
             if os.path.isfile(Flat_red):
                 os.remove(Flat_red)
 
@@ -1173,6 +1189,8 @@ def parse_cmd_args():
                         help='Obtain relevant host galaxy metadata', action='store_true')
     parser.add_argument('--red-amp-bad',
                         help='Red side amplifier is bad so trim', action='store_true')
+    parser.add_argument('--old-lris',
+                        help='Reducing lris data from before new red ccd', action='store_true')
 
     basicProcCG.add_argument('--fake-basic-2d',
                         help='Fake the basic 2D reductions', action='store_true')
@@ -1206,6 +1224,7 @@ def parse_cmd_args():
     kwargs['QUICK'] = cmdArgs.quicklook
     kwargs['HOST'] = cmdArgs.host
     kwargs['RED_AMP_BAD'] = cmdArgs.red_amp_bad
+    kwargs['OLD_LRIS'] = cmdArgs.old_lris
 
     return (args,kwargs)
 
