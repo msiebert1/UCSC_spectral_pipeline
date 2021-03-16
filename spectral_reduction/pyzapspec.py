@@ -325,8 +325,7 @@ def pyzapspec(infile,
         # print ('Ignoring region centered at pixel ', center_x)
 
         fixed = False
-        trace_y = float(raw_input('Enter approximate row of trace [360]: ') or 360.)
-        center_y = 360
+        trace_y = int(raw_input('Enter approximate row of trace [360]: ') or 360)
         buff_y = 30
         while not fixed:
             rect = patches.Rectangle((0, 360 - int(buff_y)), len(zapimage[0]), 2*buff_y, linewidth=1, edgecolor='r', facecolor='none')
@@ -341,7 +340,7 @@ def pyzapspec(infile,
             else:
                 col_left = int(col_str.split()[0])
                 col_right = int(col_str.split()[1])
-                zapimage[center_y-buff_y:center_y+buff_y, col_left:col_right] = 0
+                zapimage[trace_y-buff_y:trace_y+buff_y, col_left:col_right] = 0
                 new_reg = raw_input('Enter another region [y]/n: ') or 'y'
                 if new_reg != 'y':
                     fixed = True
