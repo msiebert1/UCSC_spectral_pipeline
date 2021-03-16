@@ -333,7 +333,8 @@ def pyzapspec(infile,
             plt.imshow(zapimage)
             plt.gca().add_patch(rect)
             plt.gca().invert_yaxis()
-            plt.show()
+            plt.draw()
+            plt.show(block=False)
             col_str = raw_input('Enter a new column mask region of trace [900 1100] (n for none): ') or '900 1100'
             if col_str == 'n':
                 fixed = True
@@ -344,8 +345,7 @@ def pyzapspec(infile,
                 new_reg = raw_input('Enter another region [y]/n: ') or 'y'
                 if new_reg != 'y':
                     fixed = True
-        plt.close()
-
+            plt.close()
         zapimage_ravel = zapimage.ravel()
 
     # zapimage[45:65, 1870:1930] = 0 #telluric A-band
