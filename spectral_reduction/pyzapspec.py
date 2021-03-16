@@ -328,7 +328,7 @@ def pyzapspec(infile,
         trace_y = int(raw_input('Enter approximate row of trace [360]: ') or 360)
         buff_y = 30
         while not fixed:
-            rect = patches.Rectangle((0, 360 - int(buff_y)), len(zapimage[0]), 2*buff_y, linewidth=1, edgecolor='r', facecolor='none')
+            rect = patches.Rectangle((0, trace_y - int(buff_y)), len(zapimage[0]), 2*buff_y, linewidth=1, edgecolor='r', facecolor='none')
             plt.figure(figsize=[15,8])
             plt.imshow(zapimage)
             plt.gca().add_patch(rect)
