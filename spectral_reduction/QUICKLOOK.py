@@ -41,6 +41,8 @@ if __name__ == "__main__":
                       action="store_true",help='do not flat field')
     parser.add_option("--cedit", dest="cedit",
                       action="store_true",help='cosmic ray removal with manual trace editing')
+    parser.add_option("--ex", dest="extract",
+                      action="store_true",help='combined, cr rejected files already exist. skip straight to flatfielding and extraction')
 
     option, args = parser.parse_args()
 
@@ -52,6 +54,7 @@ if __name__ == "__main__":
     _host= option.host
     _nflat= option.nflat
     _cedit= option.cedit
+    _ex= option.extract
 
     if len(args) > 1:
         files=[]
@@ -93,7 +96,7 @@ if __name__ == "__main__":
 
     if len(files_science) > 0:
         print('\n#######################################\n### start of reduction')
-        outputfile = quick_reduc.reduce(files_science, files_arc, files_flat, _cosmic, _interactive_extraction,_arc,_fast,_host,_nflat,_cedit)
+        outputfile = quick_reduc.reduce(files_science, files_arc, files_flat, _cosmic, _interactive_extraction,_arc,_fast,_host,_nflat,_cedit,_ex)
         stoptime = time.time()
         print('\n### wow, only ' + str(stoptime - starttime) + ' seconds')
         print('\n### end of reduction')

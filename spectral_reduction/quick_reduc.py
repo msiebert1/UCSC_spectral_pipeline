@@ -1,6 +1,6 @@
 from __future__    import print_function
 
-def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _arc, _fast, _host, _nflat, _cedit):
+def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _arc, _fast, _host, _nflat, _cedit, _ex):
     import string
     import os
     import re
@@ -138,14 +138,56 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         print ('NAMEOUT:', nameout0)
         timg = nameout0
         print('\n### now processing :',timg,' for -> ',inst.get('name'))
-        if os.path.isfile(timg):
+        if os.path.isfile(timg) and not _ex:
             util.delete(timg)
         print ('IMAGES: ', imgs)
 
-        if len(imgs) > 1:
-            img_str = ''
-            k=1
-            for i in imgs:
+        if not _ex:
+            if os.path.isfile(timg):
+                util.delete(timg)
+
+            if len(imgs) > 1:
+                img_str = ''
+                k=1
+                for i in imgs:
+                    # util.create_bpmask([[],[]], br = 'red')
+                    # raise TypeError
+                    if _cosmic or _cedit:
+                        if _host and 'red' in nameout0:
+                            with open('../HOST_METADATA.txt') as host_file:
+                                for line in host_file.readlines():
+                                    if line.split()[0] == _object0.lower().split('_')[0]:
+                                        redshift, sep, ang, r_kron_rad = float(line.split()[1]), float(line.split()[2]), float(line.split()[3]), float(line.split()[4])
+                        else:
+                            redshift=None
+
+                        print('\n### starting cosmic removal')
+                        files = glob.glob('*.fits')
+                        if 'cosmic_{}'.format(i) not in glob.glob('*.fits'):
+
+                            br = instruments.blue_or_red(i)[0]
+                            outimg,outmask,header = pyzapspec.pyzapspec(i,
+                                                                        outfile='cosmic_{}'.format(i),
+                                                                        WRITE_OUTFILE = True,
+                                                                        br = br,
+                                                                        img_num=k, redshift=redshift,
+                                                                        cedit=_cedit,
+                                                                        boxsize=inst.get('pyzap_boxsize',7),
+                                                                        nsigma=inst.get('pyzap_nsigma',16),
+                                                                        subsigma=inst.get('pyzap_subsigma',3))
+                        img = 'cosmic_{}'.format(i)
+                        img_str = img_str + img + ','
+
+                        print('\n### cosmic removal finished')
+                    else:
+                        print('\n### No cosmic removal, saving normalized image for inspection???')
+
+                        img_str = img_str + i + ','
+                    k+=1
+                print (img_str)
+                iraf.imcombine(img_str, output=timg)
+            else:
+                i = imgs[0]
                 if _cosmic or _cedit:
                     if _host and 'red' in nameout0:
                         with open('../HOST_METADATA.txt') as host_file:
@@ -154,9 +196,9 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                     redshift, sep, ang, r_kron_rad = float(line.split()[1]), float(line.split()[2]), float(line.split()[3]), float(line.split()[4])
                     else:
                         redshift=None
-
                     print('\n### starting cosmic removal')
                     files = glob.glob('*.fits')
+
                     if 'cosmic_{}'.format(i) not in glob.glob('*.fits'):
 
                         br = instruments.blue_or_red(i)[0]
@@ -164,58 +206,24 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                                                     outfile='cosmic_{}'.format(i),
                                                                     WRITE_OUTFILE = True,
                                                                     br = br,
-                                                                    img_num=k, redshift=redshift,
+                                                                    redshift=redshift,
                                                                     cedit=_cedit,
                                                                     boxsize=inst.get('pyzap_boxsize',7),
                                                                     nsigma=inst.get('pyzap_nsigma',16),
                                                                     subsigma=inst.get('pyzap_subsigma',3))
                     img = 'cosmic_{}'.format(i)
-                    img_str = img_str + img + ','
 
                     print('\n### cosmic removal finished')
+
                 else:
+                    img = i #TH: Needs to redefine img other the script will make a imcopy of the last item in imglist.
                     print('\n### No cosmic removal, saving normalized image for inspection???')
 
-                    img_str = img_str + i + ','
-                k+=1
-            print (img_str)
-            iraf.imcombine(img_str, output=timg)
+                if os.path.isfile(timg):
+                    os.system('rm -rf ' + timg)
+                iraf.imcopy(img, output=timg)
         else:
-            i = imgs[0]
-            if _cosmic or _cedit:
-                if _host and 'red' in nameout0:
-                    with open('../HOST_METADATA.txt') as host_file:
-                        for line in host_file.readlines():
-                            if line.split()[0] == _object0.lower().split('_')[0]:
-                                redshift, sep, ang, r_kron_rad = float(line.split()[1]), float(line.split()[2]), float(line.split()[3]), float(line.split()[4])
-                else:
-                    redshift=None
-                print('\n### starting cosmic removal')
-                files = glob.glob('*.fits')
-
-                if 'cosmic_{}'.format(i) not in glob.glob('*.fits'):
-
-                    br = instruments.blue_or_red(i)[0]
-                    outimg,outmask,header = pyzapspec.pyzapspec(i,
-                                                                outfile='cosmic_{}'.format(i),
-                                                                WRITE_OUTFILE = True,
-                                                                br = br,
-                                                                redshift=redshift,
-                                                                cedit=_cedit,
-                                                                boxsize=inst.get('pyzap_boxsize',7),
-                                                                nsigma=inst.get('pyzap_nsigma',16),
-                                                                subsigma=inst.get('pyzap_subsigma',3))
-                img = 'cosmic_{}'.format(i)
-
-                print('\n### cosmic removal finished')
-
-            else:
-                img = i #TH: Needs to redefine img other the script will make a imcopy of the last item in imglist.
-                print('\n### No cosmic removal, saving normalized image for inspection???')
-
-            if os.path.isfile(timg):
-                os.system('rm -rf ' + timg)
-            iraf.imcopy(img, output=timg)
+            print ('Skipping CR rejection and imagine combining')
 
         # should just do this by hand
 

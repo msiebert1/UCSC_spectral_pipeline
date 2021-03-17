@@ -3,6 +3,8 @@ try:      from astropy.io import fits as pyfits
 except:   import pyfits
 import numpy as np
 import glob
+import os
+
 
 #---------------------------------------------------------------------------
 # 
@@ -989,6 +991,48 @@ def continumsub(imagefile, _order1, _order2):
                    order=_order2, ask='YES')
     delete('tsky.fits')
     return imagefile
+
+# def create_bpmask(coord_pairs, br = 'red'):
+#     if br =='red':
+#         os.system('cp ' + '../RESP_red.fits ./bpmask_temp.fits' )
+#     else:
+#         os.system('cp ' + '../RESP_blue.fits ./bpmask_temp.fits' )
+#     temp_fits = pyfits.open('bpmask_temp.fits')
+#     temp_img = temp_fits[0].data
+#     bpmask_temp = np.zeros((np.shape(temp_img)[0], np.shape(temp_img)[1]))
+
+#     for patch in coord_pairs:
+#         #900:1100
+#         #330:390
+#         row_btm = patch[0][1]
+#         row_top = patch[1][1]
+#         col_left = patch[0][0]
+#         col_right = patch[1][0]
+
+#         zapimage[trace_y-buff_y:trace_y+buff_y, col_left:col_right] = 1
+
+#     writefits(zapimage,'zapimage{}{}.fits'.format(br, img_num),CLOBBER=True)
+
+
+# def writefits(image,outfile,header='HEADER',CLOBBER=False):
+
+#     # create hdu for data
+#     if header == 'HEADER':
+#         hdu = pyfits.PrimaryHDU(image)
+#     else:
+#         hdu = pyfits.PrimaryHDU(image,header)
+
+#     # check the output location, clear if necessary
+#     if os.path.isfile(outfile):
+#         if CLOBBER:
+#             os.remove(outfile)
+#         else:
+#             print('File exists, set CLOBBER=True or move the file')
+#             return 1
+#     #Create HDU list and write in one go  
+#     hdu.writeto(outfile,output_verify='ignore')  
+#     return 0
+
 
 def checkwavelength_arc(xx1, yy1, xx2, yy2, xmin, xmax, inter=True):
     # print "LOGX:: Entering `checkwavelength_arc` method/function in
