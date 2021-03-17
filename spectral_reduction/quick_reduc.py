@@ -223,7 +223,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     os.system('rm -rf ' + timg)
                 iraf.imcopy(img, output=timg)
         else:
-            print ('Skipping CR rejection and imagine combining')
+            print ('Skipping CR rejection and image combining')
 
         # should just do this by hand
 
