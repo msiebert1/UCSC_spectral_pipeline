@@ -583,9 +583,10 @@ def pre_reduction_dev(*args,**kwargs):
 
 
     # combine the flats
-    if MAKE_FLATS and 'lris' in inst['name'] and not OLD_LRIS:
+    if MAKE_FLATS and 'lris' in inst['name']:
+    # if MAKE_FLATS and 'lris' in inst['name'] and not OLD_LRIS: #from bad commit
 
-        sides = raw_input("Make flat for which side? ([both]/b/r): ") 
+        # sides = raw_input("Make flat for which side? ([both]/b/r): ") #from bad commit
 
         list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
         list_flat_r = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
@@ -605,8 +606,9 @@ def pre_reduction_dev(*args,**kwargs):
 
 
         # blue flats
+        if len(list_flat_b) > 0:
+        # if len(list_flat_b) > 0 and sides != 'r': #from bad commit
 
-        if len(list_flat_b) > 0 and sides != 'r':
             # br, inst = instruments.blue_or_red(list_flat_b[0])
             br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(b_amp1_list[0]))
             dispaxis = inst.get('dispaxis')
@@ -668,7 +670,10 @@ def pre_reduction_dev(*args,**kwargs):
             os.remove('pre_reduced/RESP_blue_amp2.fits')
 
         # red flats
-        if len(list_flat_r) > 0 and sides != 'b':
+        if len(list_flat_r) > 0:
+
+        # if len(list_flat_r) > 0 and sides != 'b':  #from bad commit
+
             # br, inst = instruments.blue_or_red(list_flat_r[0])
             br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(r_amp1_list[0]))
             dispaxis = inst.get('dispaxis')
@@ -726,7 +731,8 @@ def pre_reduction_dev(*args,**kwargs):
                 amp1_flatten = np.asarray(hdu_amp1[0].data).flatten()
                 amp2_flatten = np.asarray(hdu_amp2[0].data).flatten()
                 concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
-                if MASK_MIDDLE_RED:
+                if not MASK_MIDDLE_RED: 
+                # if MASK_MIDDLE_RED: #from bad commit
                     resp_red_data = np.reshape(concat_amps, (575,4061))
                     resp_red_data[278:294,:] = 1.
                 else:
@@ -746,14 +752,15 @@ def pre_reduction_dev(*args,**kwargs):
 
     elif MAKE_FLATS:
 
-        sides = raw_input("Make flat for which side? ([both]/b/r): ") 
+        # sides = raw_input("Make flat for which side? ([both]/b/r): ")  #from bad commit
 
         list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
         list_flat_r = configDict['CAL_FLAT']['RED']['CALIBRATION_FLAT']
         inter = 'yes'
 
         # blue flats
-        if len(list_flat_b) > 0 and sides != 'r':
+        if len(list_flat_b) > 0:
+        # if len(list_flat_b) > 0 and sides != 'r':  #from bad commit
             # br, inst = instruments.blue_or_red(list_flat_b[0])
             br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(list_flat_b[0]))
             dispaxis = inst.get('dispaxis')
@@ -764,11 +771,12 @@ def pre_reduction_dev(*args,**kwargs):
             norm_list = []
             for flat in list_flat_b:
                 flat_list.append('pre_reduced/to'+ flat)
-                if OLD_LRIS:
-                    name_split = flat.split('.')
-                    norm_list.append('pre_reduced/to'+ name_split[0]+ '.'+ name_split[1]+'.'+ name_split[2]+'_norm.fits')
-                else:
-                    norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
+                norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
+                # if OLD_LRIS: #from bad commit
+                #     name_split = flat.split('.')
+                #     norm_list.append('pre_reduced/to'+ name_split[0]+ '.'+ name_split[1]+'.'+ name_split[2]+'_norm.fits')
+                # else:
+                #     norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
             if os.path.isfile(Flat_blue):
                 os.remove(Flat_blue)
 
@@ -801,7 +809,9 @@ def pre_reduction_dev(*args,**kwargs):
             #     os.remove('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
 
         # red flats
-        if len(list_flat_r) > 0 and sides != 'b':
+        if len(list_flat_r) > 0: 
+        # if len(list_flat_r) > 0 and sides != 'b': #from bad commit
+
             # br, inst = instruments.blue_or_red(list_flat_r[0])
             br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(list_flat_r[0]))
             dispaxis = inst.get('dispaxis')
@@ -812,11 +822,12 @@ def pre_reduction_dev(*args,**kwargs):
             norm_list = []
             for flat in list_flat_r:
                 flat_list.append('pre_reduced/to'+ flat)
-                if OLD_LRIS:
-                    name_split = flat.split('.')
-                    norm_list.append('pre_reduced/to'+ name_split[0]+ '.'+ name_split[1]+'.'+ name_split[2]+'_norm.fits')
-                else:
-                    norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
+                norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
+                # if OLD_LRIS: # from bad commit
+                #     name_split = flat.split('.')
+                #     norm_list.append('pre_reduced/to'+ name_split[0]+ '.'+ name_split[1]+'.'+ name_split[2]+'_norm.fits')
+                # else:
+                #     norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
             if os.path.isfile(Flat_red):
                 os.remove(Flat_red)
 

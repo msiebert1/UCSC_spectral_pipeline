@@ -2,6 +2,7 @@
 from __future__ import print_function
 import os,sys,pdb,shutil,glob,argparse
 import numpy as np
+import matplotlib.pyplot as plt
 
 from astropy.io import fits
 from astropy.io import ascii
@@ -138,7 +139,7 @@ def sec2slice(subarray, one_indexed=False, include_end=False, require_dim=None, 
     return tuple(slices[::-1] if transpose else slices)
 
 
-def read_lris(raw_file, det=None, TRIM=False):
+def read_lris(raw_file, det=None, TRIM=False, OLD_LRIS=False):
     """
     Modified from pypeit.spectrographs.keck_lris.read_lris -- Jon Brown
     
@@ -178,12 +179,6 @@ def read_lris(raw_file, det=None, TRIM=False):
     hdu = fits.open(fil[0])
     head0 = hdu[0].header
 
-    # Get post, pre-pix values
-    precol = head0['PRECOL']
-    postpix = head0['POSTPIX']
-    preline = head0['PRELINE']
-    postline = head0['POSTLINE']
-    
     # get the detector
     # this just checks if its the blue one and assumes red if not
     # note the red fits headers don't even have this keyword???
@@ -191,6 +186,15 @@ def read_lris(raw_file, det=None, TRIM=False):
         redchip = False
     else:
         redchip = True
+
+    # Get post, pre-pix values
+    if redchip and OLD_LRIS:
+        precol = head0['PREPIX']
+    else:
+        precol = head0['PRECOL']
+    postpix = head0['POSTPIX']
+    preline = head0['PRELINE']
+    postline = head0['POSTLINE']
         
 
     # Setup for datasec, oscansec
@@ -209,27 +213,98 @@ def read_lris(raw_file, det=None, TRIM=False):
     ymax = 0
     xmin = 10000
     ymin = 10000
-    for i in np.arange(1, n_ext+1):
-        theader = hdu[i].header
-        detsec = theader['DETSEC']
-        if detsec != '0':
-            # parse the DETSEC keyword to determine the size of the array.
-            x1, x2, y1, y2 = np.array(load_sections(detsec, fmt_iraf=False)).flatten()
 
-            # find the range of detector space occupied by the data
-            # [xmin:xmax,ymin:ymax]
-            xt = max(x2, x1)
-            xmax = max(xt, xmax)
-            yt =  max(y2, y1)
-            ymax = max(yt, ymax)
+    # Update PRECOL and POSTPIX
+    precol = precol // xbin
+    postpix = postpix // xbin
 
-            # find the min size of the array
-            xt = min(x1, x2)
-            xmin = min(xmin, xt)
-            yt = min(y1, y2)
-            ymin = min(ymin, yt)
-            # Save
-            xcol.append(xt)
+    if OLD_LRIS:
+        rawdata = hdu[0].data.transpose()
+        tsize = rawdata.shape
+
+        nx = tsize[0]
+        ny = tsize[1]
+        array = np.zeros( (nx, ny) )
+
+        if redchip:
+            n_ext=2
+        else:
+            n_ext=4
+        nxt = tsize[0]
+        buf = rawdata.shape
+        nxpre = buf[0]
+
+        if redchip:
+            ampsize=1024
+        else:
+            ampsize = int(head0['AMPPSIZE'].split(':')[1].split(',')[0])
+
+        old_gain_blue = [1.55, 1.56, 1.63, 1.70]
+        old_gain_red = [1.022, 0.955, 0.877, 0.916]
+        for kk in np.arange(n_ext, dtype=np.int):
+
+            # temp = hdu[ext].data.transpose()
+            # ampdata = temp[precol:precol+xshape,:]
+            amp_s = n_ext*precol+kk*ampsize
+            amp_e = n_ext*precol+kk*ampsize + ampsize
+            ampdata = rawdata[amp_s:amp_e,:]
+
+            pre_s = kk*precol
+            pre_e = (kk+1)*precol
+            predata = rawdata[pre_s:pre_e, :]
+
+            post_s = nxt-((n_ext-kk)*postpix)
+            post_e = nxt-(n_ext-1-kk)*postpix
+            postdata = rawdata[post_s:post_e, :]
+            # raise TypeError
+
+            osfit = np.median(postdata, axis=0)
+            ossub = signal.savgol_filter(osfit, 65,5)
+
+            if not redchip:
+                array[pre_s:pre_e, :]   = (predata - ossub)*old_gain_blue[kk]
+                array[post_s:post_e, :] = (postdata - ossub)*old_gain_blue[kk]
+                array[amp_s:amp_e, :]   = (ampdata - ossub)*old_gain_blue[kk]
+            else:
+                array[pre_s:pre_e, :]   = (predata - ossub)*old_gain_red[kk]
+                array[post_s:post_e, :] = (postdata - ossub)*old_gain_red[kk]
+                array[amp_s:amp_e, :]   = (ampdata - ossub)*old_gain_red[kk]
+
+        obzero = head0['BZERO']
+        head0['O_BZERO'] = obzero
+        head0['BZERO'] = 32768-obzero
+        if not redchip:
+            array = np.rot90(array, k=2)
+        else:
+            array = np.rot90(array, k=1)
+        # if redchip:
+        #     plt.imshow(array)
+        #     plt.clim(-2,50)
+        #     plt.show()
+        return array, head0
+
+    else:
+        for i in np.arange(1, n_ext+1):
+            theader = hdu[i].header
+            detsec = theader['DETSEC']
+            if detsec != '0':
+                # parse the DETSEC keyword to determine the size of the array.
+                x1, x2, y1, y2 = np.array(load_sections(detsec, fmt_iraf=False)).flatten()
+
+                # find the range of detector space occupied by the data
+                # [xmin:xmax,ymin:ymax]
+                xt = max(x2, x1)
+                xmax = max(xt, xmax)
+                yt =  max(y2, y1)
+                ymax = max(yt, ymax)
+
+                # find the min size of the array
+                xt = min(x1, x2)
+                xmin = min(xmin, xt)
+                yt = min(y1, y2)
+                ymin = min(ymin, yt)
+                # Save
+                xcol.append(xt)
 
     # determine the output array size...
     nx = xmax - xmin + 1
@@ -238,10 +313,6 @@ def read_lris(raw_file, det=None, TRIM=False):
     # change size for binning...
     nx = nx // xbin
     ny = ny // ybin
-
-    # Update PRECOL and POSTPIX
-    precol = precol // xbin
-    postpix = postpix // xbin
 
     # Deal with detectors
     if det in [1,2]:
@@ -265,12 +336,14 @@ def read_lris(raw_file, det=None, TRIM=False):
     gain_array = np.zeros( (nx, ny) )
     order = np.argsort(np.array(xcol))
 
+
+
     # insert extensions into master image...
     for kk, i in enumerate(order[det_idx]):
 
         # grab complete extension...
         data, gaindata, predata, postdata, x1, y1 = lris_read_amp(hdu, i+1, redchip=redchip)
-                            
+
         # insert components into output array...
         if not TRIM:
             # insert predata...
@@ -453,6 +526,7 @@ def lris_read_amp(inp, ext, redchip=False, applygain=True):
         postdata = np.fliplr(postdata)
         
     # construct gain image
+    # old red gain data from ryan gain = [1.022, 0.955, 0.877, 0.916]
     if redchip:
         # get the amplifier
         if header['extname'].strip().upper() == 'VIDINP1':
@@ -494,8 +568,8 @@ def lris_read_amp(inp, ext, redchip=False, applygain=True):
     gaindata = 0.*data + gain
             
     return data, gaindata, predata, postdata, x1, y1
-    
-    
+
+
 def subtract_overscan(rawframe, numamplifiers, datasec, oscansec, gain_image=None,
                       method='savgol', params=[5, 65]):
     """
@@ -703,6 +777,7 @@ def main(rawFiles,*args,**kwargs):
     TRIM = kwargs.get('TRIM',False) 
     ISDFLAT = kwargs.get('ISDFLAT',False) 
     RED_AMP_BAD = kwargs.get('RED_AMP_BAD',False) 
+    OLD_LRIS = kwargs.get('OLD_LRIS',False) 
     MASK_MIDDLE_BLUE = kwargs.get('MASK_MIDDLE_BLUE',False)
     MASK_MIDDLE_RED = kwargs.get('MASK_MIDDLE_RED',False)
 
@@ -743,27 +818,39 @@ def main(rawFiles,*args,**kwargs):
         if (not os.path.isfile(oScanFile) and not os.path.isfile(oScanFile_amp1) and not os.path.isfile(oScanFile_amp2)) or CLOBBER:
             
             # read file
-            img,gain_img,head,secs = read_lris(rawFile)
+            if OLD_LRIS:
+                noBiasImg,head = read_lris(rawFile, OLD_LRIS=OLD_LRIS)
+                xbin, ybin = [int(ibin) for ibin in head['BINNING'].split(',')]
+                if head['INSTRUME'] == 'LRISBLUE':
+                    redchip = False
+                else:
+                    redchip = True
+                if redchip:
+                    nAmps = 4
+                else:
+                    nAmps = 2
+            else:
+                img,gain_img,head,secs = read_lris(rawFile, OLD_LRIS=OLD_LRIS)
             # img,gain_img,head,secs = read_lris(rawFile, TRIM=TRIM)
             # print (secs)
-            dsec,osec = np.array(secs[0]),np.array(secs[1])
-            xbin, ybin = [int(ibin) for ibin in head['BINNING'].split(',')]
-                        
-            # get number of extensions for nAmps
-            tmpHDU = fits.open(rawFile)
-            nAmps = len(tmpHDU) - 1
-            
-            # perform oscan/bias subtraction
-            # noBiasImg = subtract_overscan(img,nAmps,
-            #                               dsec,osec,
-            #                               gain_image=gain_img,
-            #                               method='median',    # median should be fine
-            #                               params=[5,65])       # default savgol params
-            noBiasImg = subtract_overscan(img,nAmps,
-                                          dsec,osec,
-                                          gain_image=gain_img,
-                                          method='polynomial',    # median should be fine
-                                          params=[5,65])       # default savgol params
+                dsec,osec = np.array(secs[0]),np.array(secs[1])
+                xbin, ybin = [int(ibin) for ibin in head['BINNING'].split(',')]
+                            
+                # get number of extensions for nAmps
+                tmpHDU = fits.open(rawFile)
+                nAmps = len(tmpHDU) - 1
+                
+                # perform oscan/bias subtraction
+                # noBiasImg = subtract_overscan(img,nAmps,
+                #                               dsec,osec,
+                #                               gain_image=gain_img,
+                #                               method='median',    # median should be fine
+                #                               params=[5,65])       # default savgol params
+                noBiasImg = subtract_overscan(img,nAmps,
+                                              dsec,osec,
+                                              gain_image=gain_img,
+                                              method='polynomial',    # median should be fine
+                                              params=[5,65])       # default savgol params
                                           
             # mask bad pixels
             if BPM:
@@ -775,50 +862,65 @@ def main(rawFiles,*args,**kwargs):
                 
                                               
             # rotate/flip/transpose (wavelength increasing w/ increasing row)
-            if REORIENT:
+            if REORIENT and not OLD_LRIS:
                 outImg = noBiasImg.T
+            else:
+                outImg = noBiasImg
             
             # trim
             if TRIM:
-                if rawFile[0] == 'b':
-                    if ISDFLAT:
+                if rawFile[0] == 'b' or 'LB' in rawFile:
+                    if ISDFLAT and not OLD_LRIS:
                         outImg_amp1 = outImg[2260//xbin:2800//xbin,:]
                         outImg_amp2 = outImg[1800//xbin:2260//xbin,:]
                     else:
-                        outImg = outImg[1800//xbin:2800//xbin,:]
+                        if OLD_LRIS:
+                            outImg = outImg[1800//xbin:2800//xbin,1520:]
+                        else:
+                            outImg = outImg[1800//xbin:2800//xbin,:]
                 else:
-                    # nAmps = 4
-                    # print (nAmps)
-                    if nAmps == 2: 
-                        if ISDFLAT and not RED_AMP_BAD:
-                            outImg_amp1 = outImg[290:575,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
-                            outImg_amp2 = outImg[0:290,:-55]
-                        elif ISDFLAT and RED_AMP_BAD:
-                            # outImg_amp1 = outImg[290:575,:-55]
-                            outImg_amp1 = outImg[290:545,:-55]
-                        elif not ISDFLAT and RED_AMP_BAD:
-                            # outImg = outImg[290:575,:-55]
-                            outImg = outImg[290:545,:-55]
-                        else:
-                            # outImg = outImg[600//xbin:1100//xbin,:]
-                            outImg = outImg[0:575,:-55]
-                    elif nAmps == 4: 
-                        if ISDFLAT and not RED_AMP_BAD:
-                            outImg_amp1 = outImg[1045:1320,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
-                            outImg_amp2 = outImg[800:1025,:-55]
-                        elif ISDFLAT and RED_AMP_BAD:
-                            # outImg_amp1 = outImg[290:575,:-55]
-                            outImg_amp1 = outImg[1045:1320,:-55]
-                        elif not ISDFLAT and RED_AMP_BAD:
-                            # outImg = outImg[290:575,:-55]
-                            outImg = outImg[1045:1320,:-55]
-                        else:
-                            # outImg = outImg[600//xbin:1100//xbin,:]
-                            outImg = outImg[800:1320,:-55]
+                    if OLD_LRIS:
+                        # outImg = outImg[40:2088,115:920]
+                        outImg = outImg[85:885, 40:2088]
+                        # plt.imshow(outImg)
+                        # plt.clim(0,1000)
+                        # plt.show()
+                        # raise TypeError
                     else:
-                        outImg = outImg[1600//xbin:2600//xbin,:-55]
-                        outImg_amp1 = outImg[250:575,:] #12/7/18 ignoring middle of red
-                        outImg_amp2 = outImg[0:250,:]
+                        # nAmps = 4
+                        # print (nAmps)
+                        if nAmps == 2: 
+                            if ISDFLAT and not RED_AMP_BAD:
+                                outImg_amp1 = outImg[290:575,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
+                                outImg_amp2 = outImg[0:290,:-55]
+                            elif ISDFLAT and RED_AMP_BAD:
+                                # outImg_amp1 = outImg[290:575,:-55]
+                                outImg_amp1 = outImg[290:545,:-55]
+                            elif not ISDFLAT and RED_AMP_BAD:
+                                # outImg = outImg[290:575,:-55]
+                                outImg = outImg[290:545,:-55]
+                            else:
+                                # outImg = outImg[600//xbin:1100//xbin,:]
+                                outImg = outImg[0:575,:-55]
+                                # outImg_amp1 = outImg[290:575,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
+                                # outImg_amp2 = outImg[30:270,:-55] #ignores rows 270-290
+                        elif nAmps == 4: 
+                            if ISDFLAT and not RED_AMP_BAD:
+                                outImg_amp1 = outImg[1045:1320,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
+                                outImg_amp2 = outImg[800:1025,:-55]
+                            elif ISDFLAT and RED_AMP_BAD:
+                                # outImg_amp1 = outImg[290:575,:-55]
+                                outImg_amp1 = outImg[1045:1320,:-55]
+                            elif not ISDFLAT and RED_AMP_BAD:
+                                # outImg = outImg[290:575,:-55]
+                                outImg = outImg[1045:1320,:-55]
+                            else:
+                                # outImg = outImg[600//xbin:1100//xbin,:]
+                                outImg = outImg[800:1320,:-55]
+                        else:
+                            outImg = outImg[1600//xbin:2600//xbin,:-55]
+                            outImg_amp1 = outImg[250:575,:] #12/7/18 ignoring middle of red
+                            outImg_amp2 = outImg[0:250,:]
                         # This is a weird case. Red is being read out in full frame
                         # and if its a mask, the slits aren't on the normal longlist
                         # sections; we probably don't want to trim at all. Just save
@@ -843,11 +945,14 @@ def main(rawFiles,*args,**kwargs):
                         
             # adjust the header (these keywords aren't present by default)
             head['EXPTIME'] = head['ELAPTIME']
-            head['DATE-OBS'] = head['DATE_BEG']
+            if not OLD_LRIS:
+                head['DATE-OBS'] = head['DATE_BEG']
+            else:
+                head['DATE-OBS'] = head['DATE-OBS']
             head['BASIC-2D'] = 'DONE'
                 
             # write the images  
-            if ISDFLAT:  
+            if ISDFLAT and not OLD_LRIS:  
                 oScanFile_amp1 = oScanFile.split('.')[0]+'_amp1.'+oScanFile.split('.')[1]
                 hdu = fits.PrimaryHDU(outImg_amp1,head)
                 if os.path.isfile(oScanFile_amp1):
@@ -866,6 +971,17 @@ def main(rawFiles,*args,**kwargs):
                     if os.path.isfile(oScanFile_amp2):
                         os.remove(oScanFile_amp2)
                     hdu.writeto(oScanFile_amp2,output_verify='ignore')
+            elif ISDFLAT and OLD_LRIS:
+                hdu = fits.PrimaryHDU(outImg,head)
+                if os.path.isfile(oScanFile):
+                    os.remove(oScanFile)
+                hdu.writeto(oScanFile,output_verify='ignore')
+
+                name_split = rawFile.split('.')
+                oScanFile = 'pre_reduced/to'+ name_split[0]+ '.'+ name_split[1]+'.'+ name_split[2]+'_norm.fits'
+                if os.path.isfile(oScanFile):
+                    os.remove(oScanFile)
+                hdu.writeto(oScanFile,output_verify='ignore')
             else:
                 hdu = fits.PrimaryHDU(outImg,head)
                 if os.path.isfile(oScanFile):
