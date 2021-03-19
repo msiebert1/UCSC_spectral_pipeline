@@ -188,7 +188,7 @@ def read_lris(raw_file, det=None, TRIM=False, OLD_LRIS=False):
         redchip = True
 
     # Get post, pre-pix values
-    if redchip:
+    if redchip and OLD_LRIS:
         precol = head0['PREPIX']
     else:
         precol = head0['PRECOL']
@@ -835,9 +835,6 @@ def main(rawFiles,*args,**kwargs):
             # print (secs)
                 dsec,osec = np.array(secs[0]),np.array(secs[1])
                 xbin, ybin = [int(ibin) for ibin in head['BINNING'].split(',')]
-
-                print (dsec,osec)
-                print (xbin, ybin)
                             
                 # get number of extensions for nAmps
                 tmpHDU = fits.open(rawFile)
