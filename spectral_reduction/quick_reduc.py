@@ -348,11 +348,11 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     else:
                         if br == 'blue':
                             for im in glob.glob('*.fits'):
-                                if 'blue' in im and '_ex' not in im:
+                                if 'blue' in im and '_ex' not in im and 'zap' not in im:
                                     ref_img = im
                         elif br == 'red':
                             for im in glob.glob('*.fits') :
-                                if 'red' in im and '_ex' not in im:
+                                if 'red' in im and '_ex' not in im and 'zap' not in im:
                                     ref_img = im
 
 
@@ -385,7 +385,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                         iraf.longslit.identify(images=arc_ex,
                                                 # section='line {}'.format(inst.get('approx_extract_line')),
                                                 coordli=line_list,
-                                                function = 'spline3',
+                                                function = 'legendre',
                                                 order=3,
                                                 mode='h')
                         # iraf.longslit.reidentify(referenc=wave_sol_img,
@@ -406,11 +406,11 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                 else:
                     if br == 'blue':
                         for im in glob.glob('*.fits'):
-                            if 'blue' in im and '_ex' not in im:
+                            if 'blue' in im and '_ex' not in im and 'zap' not in im:
                                 ref_img = im
                     elif br == 'red':
                         for im in glob.glob('*.fits'):
-                            if 'red' in im and '_ex' not in im:
+                            if 'red' in im and '_ex' not in im and 'zap' not in im:
                                 ref_img = im
 
                     ref_img= raw_input("Reference image [{}]: ".format(ref_img)) or ref_img
@@ -439,7 +439,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     iraf.longslit.identify(images=arc_ex,
                                             # section='line {}'.format(inst.get('approx_extract_line')),
                                             coordli=line_list,
-                                            function = 'spline3',
+                                            function = 'legendre',
                                             order=3,
                                             mode='h')
                     os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')

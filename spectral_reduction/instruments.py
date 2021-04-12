@@ -15,12 +15,14 @@ kast_blue = {'name': 'kast_blue',
              'filter': 'temp',
              'slit': 'temp',
              'dispaxis': 1,
-             'biassec': '[1:2048,318:350]',
+             'biassec': '[1:2048,318:350]', #matt: i think this is wrong
              # 'trimsec': '[50:2010,7:287]',
              # 'trimsec': '[80:1850,7:287]',
              # 'flatsec': '[80:1850,50:287]',
-             'trimsec': '[80:1850,40:330]', #8-31-19
-             'flatsec': '[80:1850,80:330]', #8-31-19
+             'trimsec': '[80:1850,40:330]', #8-31-19 good
+             'flatsec': '[80:1850,80:330]', #8-31-19 good
+             # 'trimsec': '[80:1850,20:300]', #3-31-21 ToO
+             # 'flatsec': '[80:1850,20:300]', #3-31-21 ToO
              # 'trimsec': '[26:1976,22:302]', # temporary
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_blue_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_blue.fits',
@@ -56,10 +58,13 @@ kast_red = { 'name': 'kast_red',
              'slit': 'temp',
              'dispaxis': 2, 
              'biassec': '[360:405,1:2725]',
+             # 'biassec': '[380:400,70:2296]',#3-31-21 ToO
              # 'trimsec': '[66:346,80:2296]',
              # 'flatsec': '[110:346,80:2296]',
              'trimsec': '[70:370,80:2296]', #8-31-19
              'flatsec': '[110:370,80:2296]', #8-31-19
+             # 'trimsec': '[75:365,70:2296]', #3-31-21 ToO
+             # 'flatsec': '[75:365,70:2296]', #3-31-21 ToO
              # 'trimsec': '[30:320,80:2120]', #12-04-20
              # 'flatsec': '[110:330,80:2120]', #12-04-20
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
