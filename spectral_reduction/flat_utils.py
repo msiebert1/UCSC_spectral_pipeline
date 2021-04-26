@@ -166,7 +166,7 @@ class fitFlatClass(object):
 
 
 
-    def add_fit_region(self,name,colLo=-1,colUp=-1):
+    def add_fit_region(self,name,colLo=None,colUp=None):
         '''
         Add a fitting region to the current sky model object
 
@@ -202,7 +202,8 @@ class fitFlatClass(object):
         ax5 = ax_list[4]
         
         # user gave regions
-        if colLo >= 0 and colUp > 0:
+        # if colLo >= 0 and colUp > 0:
+        if colLo is not None and colUp is not None:
             
             # populate the dummy variable
             self.dummyRegion['colLo'] = colLo
