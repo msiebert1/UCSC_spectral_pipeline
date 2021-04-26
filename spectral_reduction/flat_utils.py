@@ -563,9 +563,9 @@ class fitFlatClass(object):
             medCols = np.arange(good_range[0],good_range[1],1)
             medCols = medCols.astype(int)
 
-            match_range = self.inst.get('flat_match_region')
-            stdCols = np.arange(match_range[0],match_range[1],1)
-            stdCols = stdCols.astype(int)
+            # match_range = self.inst.get('flat_match_region')
+            # stdCols = np.arange(match_range[0],match_range[1],1)
+            # stdCols = stdCols.astype(int)
             # std_tol = np.std(np.ravel(self.rawData[:,stdCols])) # match variance in good region of detector
             std_tol = 0.03 #subject to change
             print ('Matching variance to: ', std_tol)

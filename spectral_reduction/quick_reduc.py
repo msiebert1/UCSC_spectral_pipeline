@@ -459,11 +459,14 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                             for i in range(count):
                                 for line in lines:
                                     if 'identify' in line:
-                                        arcex_new.write(line.replace('Ap 1', 'Ap '+ str(i+1)))
+                                        # arcex_new.write(line.replace('Ap 1', 'Ap '+ str(i+1)))
+                                        arcex_new.write(line.replace(line[-6:], 'Ap '+ str(i+1) + '\n'))
                                     elif 'image' in line:
-                                        arcex_new.write(line.replace('Ap 1', 'Ap '+ str(i+1)))
+                                        # arcex_new.write(line.replace('Ap 1', 'Ap '+ str(i+1)))
+                                        arcex_new.write(line.replace(line[-6:], 'Ap '+ str(i+1) + '\n'))
                                     elif 'aperture' in line:
-                                        arcex_new.write(line.replace('1', str(i+1)))
+                                        # arcex_new.write(line.replace('1', str(i+1)))
+                                        arcex_new.write(line.replace(line[-3:], str(i+1) + '\n'))
                                     else:
                                         arcex_new.write(line)
                                 arcex_new.write('\n')

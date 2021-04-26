@@ -754,7 +754,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 mshead_combined.set('ATMSHIFT', bangshift)
                 mshead_combined.set('EXTRACT', extractcode)
                 mshead_combined.set('REDUCER', user)
-                mshead_combined.set('RED_DATE', datetime.now().strftime("%Y-%M-%d %I:%M%p"), 'EPOCH OF REDUCTION')
+                print (str(datetime.now()).split()[0], 'EPOCH OF REDUCTION')
+                mshead_combined.set('RED_DATE', str(datetime.now()).split()[0], 'EPOCH OF REDUCTION')
                 mshead_combined.set('OBJECT', objectname)
                 if (secondord): #not implemented
                     mshead_combined.set('SECOND', 'yes',  'Second order correction attempted')
