@@ -81,6 +81,7 @@ def womgau(hop):
         sumallfluxgaussian=np.sum(fluxgaussian*deltafit)
         sumfluxcont=np.sum(fluxcont[calcindexblue:calcindexred+1]*deltafit)
         sumallfluxcont=np.sum(fluxcont*deltafit)
+        sumallfluxcont_test=np.sum(fluxcont)
         # propagate uncertainty (from old version) not sure this is correct
         height_pct=coefferr[0]/coeff[0]
         sigma_pct=coefferr[2]/coeff[2]
@@ -110,14 +111,27 @@ def womgau(hop):
     logging.info('Center      {:16.8f}+/-{:16.8f}'.format(coeff[1],coefferr[1]))
     logging.info('Sigma       {:16.8f}+/-{:16.8f}'.format(coeff[2],coefferr[2]))
     if (continuum == 'c'):
+        FWHM = 2.35482*np.abs(coeff[2])
+        rest_wave = input('Rest wavelength [N/A]: ') or None
+        if rest_wave:
+            rest_wave = float(rest_wave)
+            w1 = rest_wave - FWHM/2. 
+            w2 = rest_wave + FWHM/2.
+            c = 299792.458
+            v1 = -1.*c*((rest_wave/w1)**2. - 1)/(1+((rest_wave/w1)**2.))
+            v2 = -1.*c*((rest_wave/w2)**2. - 1)/(1+((rest_wave/w2)**2.))
+
         logging.info('Slope       {:16.8f}+/-{:16.8f}'.format(coeff[3],coefferr[3]))
         logging.info('Y-intercept {:16.8f}+/-{:16.8f}'.format(coeff[4],coefferr[4]))
         logging.info('FWHM        {:16.8f}+/-{:16.8f}'.format(2.35482*np.abs(coeff[2]),2.35482*coefferr[2]))
+        logging.info('FWHM (velocity)        {:16.8f} km/s'.format(v2-v1))
         logging.info('Flux between dotted lines (Gaussian): {:16.8f}+/-{:16.8f}'.format(sumfluxgaussian, sumfluxgaussiansig))
         logging.info('EW between dotted lines (Gaussian): {:16.8f}'.format(sumfluxgaussian/linecont))
         logging.info('Flux for full (Gaussian): {:16.8f}+/-{:16.8f}'.format(sumallfluxgaussian, sumallfluxgaussiansig))
         logging.info('EW for full (Gaussian): {:16.8f}'.format(sumallfluxgaussian/linecont))
         logging.info('Continuum flux at line center: {:16.8f}'.format(linecont))
+
+        
     logging.info('Chi^2: {}'.format(chi))
     logging.info('Reduced chi^2: {}'.format(redchi))
     logging.info('All fluxes might need to be scaled by 1e-15')

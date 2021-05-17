@@ -5,6 +5,7 @@ import os
 import csv
 import glob
 import pdb
+import instruments
 
 path_to_trunk = os.path.expandvars('$UCSC_SPECPIPE/spectral_reduction/trunk/')
 if not os.path.exists(path_to_trunk):
@@ -201,13 +202,18 @@ def substitute_ap_data(host_ap_file, ref_ap_data, name, ap_width, is_sn_ap, sn_d
     host_ap_file.write('\n')
 
 
-def write_host_ap(ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, name, ap_widths_arcsec, ap_widths_kpc, r_kron_rad):
+def write_host_ap(ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, name, ap_widths_arcsec, ap_widths_kpc, r_kron_rad, inst, img):
     #TODO: update to loop through apertures sizes
 
     aps = glob.glob('../master_files/ap*')
     for ap in (aps):
-        print (ap.split('/')[-1])
-    ref_ap = raw_input('Choose aperture for reference: ')
+        if instruments.blue_or_red(img)[0] == 'blue' and 'blue' in ap:
+            if img.split('_')[0] in ap:
+                ap_r = ap.split('/')[-1]
+        elif instruments.blue_or_red(img)[0] == 'red' and 'red' in ap:
+            if img.split('_')[0] in ap:
+                ap_r = ap.split('/')[-1]
+    ref_ap = raw_input('Choose aperture for reference [{}]: '.format(ap_r)) or ap_r
 
     sn_direction = raw_input('Choose SN direction [1]: ') or 1
     sn_direction = float(sn_direction)

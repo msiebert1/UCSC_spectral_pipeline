@@ -74,8 +74,10 @@ if __name__ == "__main__":
         for img in listfile:
             _type = ''
             hdr0 = util.readhdr(img)
-            _type=util.readkey3(hdr0, 'object')
-            if _type.startswith("arc"):
+            # _type=util.readkey3(hdr0, 'object')
+            _type=hdr0.get('object', None)
+            # if _type.startswith("arc"):
+            if _type != None and _type.startswith("arc"):
                 files_arc.append(img)
             elif 'RESP' in img:
                 files_flat.append(img)

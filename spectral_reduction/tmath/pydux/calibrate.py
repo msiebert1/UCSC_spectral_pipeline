@@ -1,6 +1,7 @@
 def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
     from astropy.io import fits
     import numpy as np
+    import os
     import matplotlib.pyplot as plt
     import inspect
     from tmath.pydux.xcor import xcor
@@ -29,7 +30,10 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
     fluxwavedelt=float(fluxhead['CDELT1'])
     fluxwave=np.arange(len(fluxstar))*fluxwavedelt+fluxwavezero
     fluxairmass=float(fluxhead['AIRMASS'])
-    fluxname=fluxhead['OBJECT']
+    # fluxname=fluxhead['OBJECT']
+    fluxname = fluxhead.get('OBJECT',None)
+    if fluxname == None:
+        fluxname = os.getcwd().split('/')[-2]
     try:
         fluxnum=int(fluxhead['OBSNUM'])
     except KeyError:
@@ -57,10 +61,17 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
         multifits=fits.open(msfile)
         multispec=multifits[0].data
         mshead=multifits[0].header
-        objectname=mshead['OBJECT']
+        # objectname=mshead['OBJECT']
+        objectname = mshead.get('OBJECT',None)
+        if objectname == None:
+            objectname = os.getcwd().split('/')[-2]
         print('The object is: {}'.format(objectname))
         airmass=float(mshead['AIRMASS'])
-        exptime=float(mshead['EXPTIME'])
+        # exptime=float(mshead['EXPTIME'])
+        exptime=mshead.get('EXPTIME',None)
+        if exptime == None:
+            exptime=mshead.get('TTIME')
+        exptime = float(exptime)
         if (exptime < 1):
             exptime=1.0
         num_apertures=multispec.shape[1]

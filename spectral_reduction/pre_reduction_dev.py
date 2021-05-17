@@ -523,10 +523,16 @@ def pre_reduction_dev(*args,**kwargs):
                             # res = keck_basic_2d.main([rawFile])
                             if imgType != 'CAL_FLAT':
                                 print (imgType)
-                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
+                                if inst['name'] == 'lris_blue': #hacking for new red chip
+                                    res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
+                                else:
+                                    res = keck_basic_2d.main_new_red_amp([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
                             else:
                                 print (imgType)
-                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
+                                if inst['name'] == 'lris_blue': #hacking for new red chip
+                                    res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
+                                else:
+                                    res = keck_basic_2d.main_new_red_amp([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
                         else:
                             res = basic_2d_proc(rawFile,imgType=imgType,CLOBBER=CLOBBER)
                     else:
@@ -702,6 +708,7 @@ def pre_reduction_dev(*args,**kwargs):
                 res = combine_flats(flat_list_amp1,OUTFILE=Flat_red_amp1,MEDIAN_COMBINE=True)
 
             #What is the output here? Check for overwrite
+            print (Flat_red_amp1)
             iraf.specred.response(Flat_red_amp1, 
                                   normaliz=Flat_red_amp1, 
                                   response='pre_reduced/RESP_red_amp1', 

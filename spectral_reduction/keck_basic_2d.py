@@ -6,7 +6,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.io import ascii
 from scipy import signal, ndimage
-
+import matplotlib.pyplot as plt
 
 def load_sections(string, fmt_iraf=True):
     """
@@ -336,6 +336,51 @@ def read_lris(raw_file, det=None, TRIM=False):
     
     # Return, transposing array back to goofy Python indexing
     return array.T,gain_array.T, head0, (dsec, osec)
+
+def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
+    """
+    Modified from pypeit.spectrographs.keck_lris.read_lris -- Jon Brown
+    
+    Read a raw LRIS data frame (one or more detectors)
+    Packed in a multi-extension HDU
+    Based on readmhdufits.pro
+
+    Parameters
+    ----------
+    raw_file : str
+      Filename
+    det : int, optional
+      Detector number; Default = both
+    TRIM : bool, optional
+      Trim the image?
+
+    Returns
+    -------
+    array : ndarray
+      Combined image 
+    header : FITS header
+    sections : list
+      List of datasec, oscansec, ampsec sections
+    """
+
+    # Check for file; allow for extra .gz, etc. suffix
+    fil = glob.glob(raw_file)
+
+    # Read
+    outStr = "Reading LRIS file: {:s}".format(fil)
+    print(outStr)
+    hdu = fits.open(fil[0])
+    data = hdu[0].data
+    data = np.asarray(data, dtype=float)
+    header = hdu[0].header
+
+    data_trim = np.delete(data, np.arange(0,1402), axis=1)
+    data_trim = np.delete(data_trim, np.arange(654,2832), axis=1)
+    data_trim = np.delete(data_trim, np.arange(4030,4188), axis=0)
+    data_trim = np.delete(data_trim, np.arange(0,20), axis=0)
+    
+    data_trim = np.flip(data_trim, axis=0)
+    return data_trim
 
 def lris_read_amp(inp, ext, redchip=False, applygain=True):
     """
@@ -875,6 +920,111 @@ def main(rawFiles,*args,**kwargs):
         else:
             outStr = 'File exists: {}'.format(oScanFile)
             print(outStr)
+   
+    return 0
+
+def main_new_red_amp(rawFiles,*args,**kwargs):
+    '''
+    Run basic 2D CCD reduction on Keck LRIS data
+
+    Parameters
+    ----------
+    CLOBBER : bool, optional (default=False)
+        Overwrite the individual files in pre_reduced, but
+        do not wipe subdirectories
+    FULL_CLEAN : bool, optional (default=False)
+        Completely wipe pre_reduced and all subdirectories
+    BPM : bool, optional (default=False)
+        Mask bad pixels (not currently implemented)
+    PIXEL_FLOOR : bool, optional (default=False)
+        Removes negative pixel values
+    REORIENT : bool, optional (default=True)
+        Transposes to wavelength increasing rightward. LRIS images
+        are by default (spatial, spectral), and in general should
+        be transposed to (spectral, spatial).
+    TRIM : bool, optional (default=True)
+        Trim to some hard coded section of the detector
+    MASK_MIDDLE_BLUE : bool (default=False)
+        Mask the middle section of the blue images
+    MASK_MIDDLE_RED : bool (default=False)
+        Mask the middle section of the red images (useful if
+        there's wildly disparate values that make the iraf
+        windowing tedious)
+        
+    Returns
+    -------
+    int : 0, and writes files to disk
+    '''
+
+    # unpack supported kwargs
+    CLOBBER = kwargs.get('CLOBBER',False) # 
+    FULL_CLEAN = kwargs.get('FULL_CLEAN',False) # this will completely wipe pre_reduced.
+    BPM = kwargs.get('BPM',False) # no bad pixel mask available (at least for our binning)
+    PIXEL_FLOOR = kwargs.get('PIXEL_FLOOR',False) 
+    REORIENT = kwargs.get('REORIENT',True) 
+    TRIM = kwargs.get('TRIM',False) 
+    ISDFLAT = kwargs.get('ISDFLAT',False) 
+    RED_AMP_BAD = kwargs.get('RED_AMP_BAD',False) 
+    MASK_MIDDLE_BLUE = kwargs.get('MASK_MIDDLE_BLUE',False)
+    MASK_MIDDLE_RED = kwargs.get('MASK_MIDDLE_RED',False)
+
+    # pre_reduced does not exist, needs to be made
+    if not os.path.isdir('pre_reduced/'):
+        os.mkdir('pre_reduced/')
+        
+    # pre_reduced exists, but we want to clobber/do a clean reduction
+    elif FULL_CLEAN:
+        
+        promptStr = 'Do you really want to wipe pre_reduced? [y/n]: '
+        usrRespOrig = raw_input(promptStr)
+        if usrRespOrig and usrRespOrig[0].strip().upper() == 'Y':
+
+            # remove all pre_reduced files
+            shutil.rmtree('pre_reduced')
+            os.mkdir('pre_reduced/')
+      
+    # pre_reduced exists, need to document what is there
+    else:
+        
+        # get files
+        preRedFiles = glob.glob('pre_reduced/*.fits')
+    
+  
+    # get all raw files, sort them
+    # rawFiles = sorted(glob.glob('???????_????.fits'))
+
+    # loop over raw files, if the destination exists, do nothing
+    # otherwise, do the bias/reorient/trim/output
+    for i in xrange(len(rawFiles)):
+        
+        rawFile = rawFiles[i]
+        oScanFile = 'pre_reduced/to{}'.format(rawFile)
+        oScanFile_amp1 = oScanFile.split('.')[0]+'_amp1.'+oScanFile.split('.')[1]
+        oScanFile_amp2 = oScanFile.split('.')[0]+'_amp2.'+oScanFile.split('.')[1]
+
+        # if ISDFLAT:
+        #     os.system('cp ' + rawFile + ' ' +oScanFile_amp1)
+        # else:
+        #     os.system('cp ' + rawFile + ' pre_reduced/to{}'.format(rawFile))
+        
+        # img,gain_img,head,secs = read_lris_new_red_amp(rawFile)
+
+
+        hdu = fits.open(rawFile)
+        header = hdu[0].header
+
+        data_trim = read_lris_new_red_amp(rawFile)
+
+        hdu = fits.PrimaryHDU(data_trim,header)
+
+        if ISDFLAT:
+            if os.path.isfile(oScanFile_amp1):
+                os.remove(oScanFile_amp1)
+            hdu.writeto(oScanFile_amp1,output_verify='ignore')
+        else:
+            if os.path.isfile(oScanFile):
+                os.remove(oScanFile)
+            hdu.writeto(oScanFile,output_verify='ignore')
    
     return 0
   
