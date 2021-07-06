@@ -110,9 +110,19 @@ def womgau(hop):
     logging.info('Center      {:16.8f}+/-{:16.8f}'.format(coeff[1],coefferr[1]))
     logging.info('Sigma       {:16.8f}+/-{:16.8f}'.format(coeff[2],coefferr[2]))
     if (continuum == 'c'):
+        FWHM = 2.35482*np.abs(coeff[2])
+        rest_wave = input('Rest wavelength [N/A]: ') or None
+        if rest_wave:
+            rest_wave = float(rest_wave)
+            w1 = rest_wave - FWHM/2. 
+            w2 = rest_wave + FWHM/2.
+            c = 299792.458
+            v1 = -1.*c*((rest_wave/w1)**2. - 1)/(1+((rest_wave/w1)**2.))
+            v2 = -1.*c*((rest_wave/w2)**2. - 1)/(1+((rest_wave/w2)**2.))
         logging.info('Slope       {:16.8f}+/-{:16.8f}'.format(coeff[3],coefferr[3]))
         logging.info('Y-intercept {:16.8f}+/-{:16.8f}'.format(coeff[4],coefferr[4]))
         logging.info('FWHM        {:16.8f}+/-{:16.8f}'.format(2.35482*np.abs(coeff[2]),2.35482*coefferr[2]))
+        logging.info('FWHM (velocity)        {:16.8f} km/s'.format(v2-v1))
         logging.info('Flux between dotted lines (Gaussian): {:16.8f}+/-{:16.8f}'.format(sumfluxgaussian, sumfluxgaussiansig))
         logging.info('EW between dotted lines (Gaussian): {:16.8f}'.format(sumfluxgaussian/linecont))
         logging.info('Flux for full (Gaussian): {:16.8f}+/-{:16.8f}'.format(sumallfluxgaussian, sumallfluxgaussiansig))
