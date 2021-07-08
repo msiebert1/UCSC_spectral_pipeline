@@ -113,10 +113,11 @@ def womgau(hop):
     if (continuum == 'c'):
         FWHM = 2.35482*np.abs(coeff[2])
         rest_wave = input('Rest wavelength [N/A]: ') or None
+        redshift = input('Redshift [N/A]: ') or None
         if rest_wave:
             rest_wave = float(rest_wave)
-            w1 = rest_wave - FWHM/2. 
-            w2 = rest_wave + FWHM/2.
+            w1 = (rest_wave - FWHM/2.)/(1.+float(redshift)) 
+            w2 = (rest_wave + FWHM/2.)/(1.+float(redshift)) 
             c = 299792.458
             v1 = -1.*c*((rest_wave/w1)**2. - 1)/(1+((rest_wave/w1)**2.))
             v2 = -1.*c*((rest_wave/w2)**2. - 1)/(1+((rest_wave/w2)**2.))

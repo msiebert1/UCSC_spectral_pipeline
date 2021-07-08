@@ -374,11 +374,15 @@ def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
     data = np.asarray(data, dtype=float)
     header = hdu[0].header
 
-    data_trim = np.delete(data, np.arange(0,1402), axis=1)
-    data_trim = np.delete(data_trim, np.arange(654,2832), axis=1)
-    data_trim = np.delete(data_trim, np.arange(4030,4188), axis=0)
-    data_trim = np.delete(data_trim, np.arange(0,20), axis=0)
-    
+    # data_trim = np.delete(data, np.arange(0,1402), axis=1)
+    # data_trim = np.delete(data_trim, np.arange(654,2832), axis=1)
+    # data_trim = np.delete(data_trim, np.arange(4030,4188), axis=0)
+    # data_trim = np.delete(data_trim, np.arange(0,20), axis=0)
+
+    data_trim = np.delete(data, np.arange(0,701), axis=1)
+    data_trim = np.delete(data_trim, np.arange(325,480), axis=1)
+    data_trim = np.delete(data_trim, np.arange(630,1351), axis=1)
+    data_trim = np.delete(data_trim, np.arange(4125,4187), axis=0)
     data_trim = np.flip(data_trim, axis=0)
     return data_trim
 
@@ -831,6 +835,7 @@ def main(rawFiles,*args,**kwargs):
                         outImg_amp2 = outImg[1800//xbin:2260//xbin,:]
                     else:
                         outImg = outImg[1800//xbin:2800//xbin,:]
+                        # outImg = outImg[1800//xbin:2800//xbin,660:2100] # ToO 07052021
                 else:
                     # nAmps = 4
                     # print (nAmps)
@@ -847,7 +852,7 @@ def main(rawFiles,*args,**kwargs):
                         else:
                             # outImg = outImg[600//xbin:1100//xbin,:]
                             outImg = outImg[0:575,:-55]
-                    elif nAmps == 4: 
+                    elif nAmps == 4:
                         if ISDFLAT and not RED_AMP_BAD:
                             outImg_amp1 = outImg[1045:1320,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
                             outImg_amp2 = outImg[800:1025,:-55]
@@ -861,7 +866,8 @@ def main(rawFiles,*args,**kwargs):
                             # outImg = outImg[600//xbin:1100//xbin,:]
                             outImg = outImg[800:1320,:-55]
                     else:
-                        outImg = outImg[1600//xbin:2600//xbin,:-55]
+                        outImg = outImg[0:575,:-55]
+                        # outImg = outImg[1600//xbin:2600//xbin,:-55]
                         outImg_amp1 = outImg[250:575,:] #12/7/18 ignoring middle of red
                         outImg_amp2 = outImg[0:250,:]
                         # This is a weird case. Red is being read out in full frame
@@ -1015,13 +1021,26 @@ def main_new_red_amp(rawFiles,*args,**kwargs):
 
         data_trim = read_lris_new_red_amp(rawFile)
 
-        hdu = fits.PrimaryHDU(data_trim,header)
+        # print (np.shape(data_trim))
 
         if ISDFLAT:
+            outImg_amp1 = data_trim[:,0:325] #12/7/18 ignoring middle of red
+            hdu = fits.PrimaryHDU(outImg_amp1,header)
             if os.path.isfile(oScanFile_amp1):
                 os.remove(oScanFile_amp1)
             hdu.writeto(oScanFile_amp1,output_verify='ignore')
+
+            outImg_amp2 = data_trim[:,325:]
+            hdu = fits.PrimaryHDU(outImg_amp2,header)
+            if os.path.isfile(oScanFile_amp2):
+                os.remove(oScanFile_amp2)
+            hdu.writeto(oScanFile_amp2,output_verify='ignore')
         else:
+            if RED_AMP_BAD:
+                outImg = data_trim[:,0:325]
+            else:
+                outImg = data_trim
+            hdu = fits.PrimaryHDU(outImg,header)
             if os.path.isfile(oScanFile):
                 os.remove(oScanFile)
             hdu.writeto(oScanFile,output_verify='ignore')

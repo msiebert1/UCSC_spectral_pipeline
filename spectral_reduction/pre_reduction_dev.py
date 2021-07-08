@@ -354,7 +354,8 @@ def pre_reduction_dev(*args,**kwargs):
             # print (obsfile)
             channel, inst_dict = instruments.blue_or_red(obsfile)
 
-            obj = header.get('OBJECT').strip()
+            # obj = header.get('OBJECT').strip()
+            obj = 'None'
             if imageType == 'SCI' or imageType == 'STD':
                 if obj in configDict[imageType][channel.upper()].keys():
                     configDict[imageType][channel.upper()][obj].append(obsfile)
@@ -743,7 +744,8 @@ def pre_reduction_dev(*args,**kwargs):
                     resp_red_data = np.reshape(concat_amps, (575,4061))
                     resp_red_data[278:294,:] = 1.
                 else:
-                    resp_red_data = np.reshape(concat_amps, (575,4061)) #depends on num amps? (500 for 4)
+                    # resp_red_data = np.reshape(concat_amps, (575,4061)) #depends on num amps? (500 for 4)(4126, 631)
+                    resp_red_data = np.reshape(concat_amps, (631, 4126))
 
                 header = hdu_amp1[0].header
                 if os.path.isfile('pre_reduced/RESP_red.fits'):
