@@ -527,6 +527,6 @@ def abcalc(wave, objectname):
     # use scipy interp here as the very non-linear wavelength scale
     # precludes the use of womashrebin --- this is going finer anyway
     abcurve=womscipyrebin(waveab, ab[:, idstar], wave)
-    return abcurve
+    return abcurve, idstar
 
 

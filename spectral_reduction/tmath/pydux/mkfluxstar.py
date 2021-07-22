@@ -110,7 +110,7 @@ def mkfluxstar(fluxfile,gratcode):
     extinction=womscipyrebin(extwave,extvals,wave)
     extfactor=np.exp(extinction*sitefactor*airmass)
     star=star*extfactor
-    abcurve=abcalc(wave,objectname)
+    abcurve, idstar=abcalc(wave,objectname)
     wdata=10.0**(0.4*abcurve)
     fstar=star*wdata/exptime
     print('Now fit the continuum manually\n')
@@ -119,7 +119,7 @@ def mkfluxstar(fluxfile,gratcode):
     cursor = Cursor(ax, useblit=True, color='k', linewidth=1 )
     airlimit=1.5
 
-    splineresult=fitspl_dev(wave,np.log10(fstar),(airmass>airlimit),fig, cal='fluxstar{}'.format(gratcode))
+    splineresult=fitspl_dev(wave,np.log10(fstar),(airmass>airlimit),fig, cal='fluxstar{}'.format(gratcode), fluxstarid = idstar)
     splineresult=10**(splineresult)
     plt.cla()
     plt.plot(wave,fstar,drawstyle='steps-mid', color='r')
@@ -147,5 +147,5 @@ def mkfluxstar(fluxfile,gratcode):
     hdul.writeto(outfile,overwrite=True)
     print('mkfluxstar')
     print(fluxfile, gratcode)
-    return
+    return idstar
 

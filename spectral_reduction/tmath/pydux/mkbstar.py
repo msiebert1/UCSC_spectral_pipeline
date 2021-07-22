@@ -1,4 +1,4 @@
-def mkbstar(bfile,gratcode):
+def mkbstar(bfile,gratcode, idstar=None):
     import numpy as np
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Cursor
@@ -106,13 +106,14 @@ def mkbstar(bfile,gratcode):
     while (airlimit < 1.0) or (airlimit > 10.):
         # airlimit=inputter('Above what airmass is considered high? ','float',False)
         airlimit = input('Above what airmass is considered high? [1.1]: ') or 1.1
+        airlimit = float(airlimit)
         
     print('\nNow fit the continuum manually\n')
     plt.clf()
     ax=fig.add_subplot(111)
     cursor = Cursor(ax, useblit=True, color='k', linewidth=1 )
     airlimit=1.5
-    splineresult=fitspl_dev(wave,np.log10(bstar),(airmass>airlimit),fig, cal='bstar{}'.format(gratcode))
+    splineresult=fitspl_dev(wave,np.log10(bstar),(airmass>airlimit),fig, cal='bstar{}'.format(gratcode), bstarid=idstar)
     splineresult=10**(splineresult)
     plt.cla()
     plt.plot(wave,splineresult,drawstyle='steps-mid')
