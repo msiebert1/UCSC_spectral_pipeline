@@ -307,7 +307,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = No
                 masterx, mastery = np.genfromtxt(spl_f)
                 break
         if len(masterx)>0:
-            womconfig.nsplinepoints=masterx
+            womconfig.nsplinepoints=len(masterx)
             womconfig.tmpsplptsx=list(masterx)
             womconfig.tmpsplptsy=[]
             for i,wave_master in enumerate(list(masterx)):

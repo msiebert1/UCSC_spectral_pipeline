@@ -1,6 +1,6 @@
 def finalscaler(flux):
     import numpy as np
-    
+    import copy
 #    sortflux=np.sort(flux)
 #    der=np.gradient(sortflux)
 #    locs=np.where(np.abs(der) < 1.*np.abs(np.mean(der)))
@@ -12,8 +12,9 @@ def finalscaler(flux):
     half=5
     nsig=3.
     boxsize=11
-    for i in range(half,len(flux)-half):
-        sample=flux[i-half:i+half+1]
+    flux_temp = copy.deepcopy(flux)
+    for i in range(half,len(flux_temp)-half):
+        sample=flux_temp[i-half:i+half+1]
         medval=np.median(sample)
         varpix=(sample[half]-medval)**2
         sum=-1.0*varpix
@@ -22,10 +23,10 @@ def finalscaler(flux):
             sum=sum+diff*diff
         sum=sum/(boxsize-1)
         if (varpix > nsig*nsig*sum):
-            flux[i]=medval
+            flux_temp[i]=medval
 
-    ymin=np.percentile(flux,.1)
-    ymax=np.percentile(flux,99.9)
+    ymin=np.percentile(flux_temp,.1)
+    ymax=np.percentile(flux_temp,99.9)
 
     return ymin, ymax
 

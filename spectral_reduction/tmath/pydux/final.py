@@ -535,6 +535,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             plt.xlabel('Wavelength')
             plt.ylabel('Flux')
             plt.title(objectname)
+            plt.ylim(ymin,ymax)
             plt.savefig(objectname + '-' + gratcode + '_ap' + str(i+1) + suffixes['ap'+str(i+1)] +'.png')
             plt.show()
 
@@ -714,9 +715,14 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 plt.xlabel('Wavelength')
                 plt.ylabel('Flux')
                 plt.title(objectname)
+                ymin,ymax=finalscaler(finalobj)
+                plt.ylim(ymin,ymax)
                 plt.savefig(objectname + '_combined_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'.png')
                 
                 outputdone = False
+                plt.close()
+                plt.plot(finalobj, drawstyle='steps-mid')
+                plt.show()
                 while (not outputdone):
                     print('\nThe file is: {}'.format(inputfile))
                     print('The object is: {}'.format(objectname))
@@ -773,6 +779,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 outdata[:,0]=finalobj.copy()
                 outdata[:,1]=finalsig.copy()
                 outhdu=fits.PrimaryHDU(outdata)
+
                 hdul=fits.HDUList([outhdu])
                 mshead_combined.set('NAXIS2',2)
                 hdul[0].header=mshead_combined.copy()

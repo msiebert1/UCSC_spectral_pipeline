@@ -75,9 +75,18 @@ def calculate_ap_data(sn, inst, seeing = 1., ap_scale=.0015):
     print ('Finding metadata for: ', sn)
 
     with open('../HOST_METADATA.txt') as host_file:
-        for line in host_file.readlines():
+        print (sn)
+        z = np.nan
+        lines = host_file.readlines()
+        for line in lines:
             if line.split()[0] == sn:
                 z, sep, ang, r_kron_rad = float(line.split()[1]), float(line.split()[2]), float(line.split()[3]), float(line.split()[4])
+
+        if np.isnan(z):
+            sn = raw_input('Object name mismatch, type correct name: ')
+            for line in lines:
+                if line.split()[0] == sn:
+                    z, sep, ang, r_kron_rad = float(line.split()[1]), float(line.split()[2]), float(line.split()[3]), float(line.split()[4])
 
 
         cosmo_data = cosmo.calculate(z)
@@ -109,14 +118,16 @@ def calculate_ap_data(sn, inst, seeing = 1., ap_scale=.0015):
                 ap_width = theta/inst.get('pixel_scale')
             ap_width = ap_width/ap_binning
 
-
-            if sep_pix < ap_width:
-                print ('Adding AP Width (pix): ', ap_width, '= '+str(w*1000.)+' kpc')
-                print ('SN POSITION OVERLAPS, NOT ADDING')
-                ap_pixs_phys.append((ap_width,False,suffix))
-            else:
-                print ('Adding AP Width (pix): ', ap_width, '= '+str(w*1000.)+' kpc')
-                ap_pixs_phys.append((ap_width,True,suffix))
+            #I don't think I need this
+            # if sep_pix < ap_width:
+            #     print ('Adding AP Width (pix): ', ap_width, '= '+str(w*1000.)+' kpc')
+            #     print ('SN POSITION OVERLAPS, NOT ADDING')
+            #     ap_pixs_phys.append((ap_width,False,suffix))
+            # else:
+            #     print ('Adding AP Width (pix): ', ap_width, '= '+str(w*1000.)+' kpc')
+            #     ap_pixs_phys.append((ap_width,True,suffix))
+            print ('Adding AP Width (pix): ', ap_width, '= '+str(w*1000.)+' kpc')
+            ap_pixs_phys.append((ap_width,True,suffix))
 
 
 
@@ -131,13 +142,16 @@ def calculate_ap_data(sn, inst, seeing = 1., ap_scale=.0015):
                 ap_width = th/inst.get('pixel_scale')
             ap_width = ap_width/ap_binning
 
-            if sep_pix < ap_width:
-                print ('Adding AP Width (pix): ', ap_width, '= '+str(th)+' arcsec')
-                print ('SN POSITION OVERLAPS, NOT ADDING')
-                ap_pixs_sky.append((ap_width,False,suffix))
-            else:
-                print ('Adding AP Width (pix): ', ap_width, '= '+str(th)+' arcsec')
-                ap_pixs_sky.append((ap_width,True,suffix))
+            #I don't think I need this
+            # if sep_pix < ap_width:
+            #     print ('Adding AP Width (pix): ', ap_width, '= '+str(th)+' arcsec')
+            #     print ('SN POSITION OVERLAPS, NOT ADDING')
+            #     ap_pixs_sky.append((ap_width,False,suffix))
+            # else:
+            #     print ('Adding AP Width (pix): ', ap_width, '= '+str(th)+' arcsec')
+            #     ap_pixs_sky.append((ap_width,True,suffix))
+            print ('Adding AP Width (pix): ', ap_width, '= '+str(th)+' arcsec')
+            ap_pixs_sky.append((ap_width,True,suffix))
 
         suffix = ''
         if r_kron_rad < seeing:
@@ -238,22 +252,22 @@ def write_host_ap(ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, name, ap_wi
                         print ('Rejecting ap:', num_ap, '(does not land on same amplifier)')
 
 
-            for i, ap in enumerate(ap_pixs_sky):
-                ap_on_main_amp = check_if_main_amp(host_ap_file, ref_ap_data, name, ap[0], False, sn_direction, sep_pix, num_ap)
-                if ap_on_main_amp:
-                    substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], False, sn_direction, sep_pix, num_ap)
-                    ap_dict['ap'+str(num_ap)] = str(ap_widths_arcsec[i]) + '_arcsec' + ap[2]
-                    num_ap+=1
-                else:
-                    print ('Rejecting ap:', num_ap, '(does not land on same amplifier)')
-                if ap[1]:
-                    ap_on_main_amp = check_if_main_amp(host_ap_file, ref_ap_data, name, ap[0], True, sn_direction, sep_pix, num_ap)
-                    if ap_on_main_amp:
-                        substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], True, sn_direction, sep_pix, num_ap)
-                        ap_dict['ap'+str(num_ap)] = str(ap_widths_arcsec[i]) + '_arcsec_SN' + ap[2]
-                        num_ap+=1
-                    else:
-                        print ('Rejecting ap:', num_ap, '(does not land on same amplifier)')
+            # for i, ap in enumerate(ap_pixs_sky):
+            #     ap_on_main_amp = check_if_main_amp(host_ap_file, ref_ap_data, name, ap[0], False, sn_direction, sep_pix, num_ap)
+            #     if ap_on_main_amp:
+            #         substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], False, sn_direction, sep_pix, num_ap)
+            #         ap_dict['ap'+str(num_ap)] = str(ap_widths_arcsec[i]) + '_arcsec' + ap[2]
+            #         num_ap+=1
+            #     else:
+            #         print ('Rejecting ap:', num_ap, '(does not land on same amplifier)')
+            #     if ap[1]:
+            #         ap_on_main_amp = check_if_main_amp(host_ap_file, ref_ap_data, name, ap[0], True, sn_direction, sep_pix, num_ap)
+            #         if ap_on_main_amp:
+            #             substitute_ap_data(host_ap_file, ref_ap_data, name, ap[0], True, sn_direction, sep_pix, num_ap)
+            #             ap_dict['ap'+str(num_ap)] = str(ap_widths_arcsec[i]) + '_arcsec_SN' + ap[2]
+            #             num_ap+=1
+            #         else:
+            #             print ('Rejecting ap:', num_ap, '(does not land on same amplifier)')
 
             if ap_width_kron[0]:
                 ap_on_main_amp = check_if_main_amp(host_ap_file, ref_ap_data, name, ap_width_kron[0], False, sn_direction, sep_pix, num_ap)

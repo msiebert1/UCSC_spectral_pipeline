@@ -780,6 +780,7 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
 
             # otherwise just sum them
             else:
+                print (file)
                 flat_comb_image += np.copy(data)
 
     # if median combining, squash the stack of median
