@@ -720,9 +720,6 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 plt.savefig(objectname + '_combined_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'.png')
                 
                 outputdone = False
-                plt.close()
-                plt.plot(finalobj, drawstyle='steps-mid')
-                plt.show()
                 while (not outputdone):
                     print('\nThe file is: {}'.format(inputfile))
                     print('The object is: {}'.format(objectname))

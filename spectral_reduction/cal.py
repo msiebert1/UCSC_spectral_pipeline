@@ -80,6 +80,8 @@ def main():
     # gratcode = inputter('Enter the grating code (blue/red): ', 'string', False)
     gratcode = input('Enter the grating code ([blue]/red): ') or 'blue'
     print(' ')
+    if gratcode == 'r':
+        gratcode = 'red'
     if (secondord):
         gratcode2 = inputter('Enter the second-order grating code: ', 'string', False)
     print(' ')
