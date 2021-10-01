@@ -373,17 +373,25 @@ def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
     data = hdu[0].data
     data = np.asarray(data, dtype=float)
     header = hdu[0].header
+    gain_array = np.zeros(np.shape(data))
+    # print (np.shape(data))
+    gain_array[:,1:2057] = 1.022 #https://www2.keck.hawaii.edu/inst/lris/lris-red-upgrade-notes.html#dewar1
+    gain_array[:,2171:4227] = 0.916 #https://www2.keck.hawaii.edu/inst/lris/lris-red-upgrade-notes.html#dewar1
 
-    # data_trim = np.delete(data, np.arange(0,1402), axis=1)
-    # data_trim = np.delete(data_trim, np.arange(654,2832), axis=1)
-    # data_trim = np.delete(data_trim, np.arange(4030,4188), axis=0)
-    # data_trim = np.delete(data_trim, np.arange(0,20), axis=0)
+    data_osub = subtract_overscan_new_red_chip(data,gain_image=gain_array)
 
-    data_trim = np.delete(data, np.arange(0,701), axis=1)
-    data_trim = np.delete(data_trim, np.arange(325,480), axis=1)
-    data_trim = np.delete(data_trim, np.arange(630,1351), axis=1)
-    data_trim = np.delete(data_trim, np.arange(4125,4187), axis=0)
-    data_trim = np.flip(data_trim, axis=0)
+    trim_inds = []
+    for i in range(1400,2057):
+        trim_inds.append(i)
+    for i in range(2171,2790):
+        trim_inds.append(i)
+
+    data_trim = data_osub[5:4120,trim_inds]
+    # plt.imshow(data_trim, vmin=0,vmax=500)
+    # plt.show()
+    # raise TypeError
+    data_trim = np.flip(data_trim)
+
     return data_trim
 
 def lris_read_amp(inp, ext, redchip=False, applygain=True):
@@ -544,7 +552,52 @@ def lris_read_amp(inp, ext, redchip=False, applygain=True):
             
     return data, gaindata, predata, postdata, x1, y1
     
+def subtract_overscan_new_red_chip(data, osec1loc = [2065,2117], osec2loc = [2118, 2170], gain_image=None,
+                                    method='savgol', params=[5, 65]):
     
+    # print(osec1loc[0], osec1loc[1])
+    osec1_data = data[:,osec1loc[0]:osec1loc[1]]
+    osec2_data = data[:,osec2loc[0]:osec2loc[1]]
+
+    # plt.imshow(osec1_data, vmin = 80, vmax = 1000)
+    # plt.show()
+
+    osfit1 = np.median(osec1_data) if method.lower() == 'median' \
+                        else np.median(osec1_data, axis=1)
+    osfit2 = np.median(osec2_data) if method.lower() == 'median' \
+                        else np.median(osec2_data, axis=1)
+
+    if method.lower() == 'polynomial':
+        # TODO: Use np.polynomial.polynomial.polyfit instead?
+        c = np.polyfit(np.arange(osfit1.size), osfit1, params[0])
+        ossub1 = np.polyval(c, np.arange(osfit1.size))
+    elif method.lower() == 'savgol':
+        ossub1 = signal.savgol_filter(osfit1, params[1], params[0])
+        data[:,:osec1loc[1]] -= ossub1[:,None]
+    elif method.lower() == 'median':
+        # Subtract scalar and continue
+        data[:,:osec1loc[1]] -= osfit1
+    else:
+        raise ValueError('Unrecognized overscan subtraction method: {0}'.format(method))
+
+    if method.lower() == 'polynomial':
+        # TODO: Use np.polynomial.polynomial.polyfit instead?
+        c = np.polyfit(np.arange(osfit2.size), osfit2, params[0])
+        ossub2 = np.polyval(c, np.arange(osfit2.size))
+    elif method.lower() == 'savgol':
+        ossub2 = signal.savgol_filter(osfit2, params[1], params[0])
+        data[:,osec2loc[0]:] -= ossub2[:,None]
+    elif method.lower() == 'median':
+        # Subtract scalar and continue
+        data[:,osec2loc[0]:] -= osfit2
+    else:
+        raise ValueError('Unrecognized overscan subtraction method: {0}'.format(method))
+
+    data *= gain_image
+    return data
+
+    
+
 def subtract_overscan(rawframe, numamplifiers, datasec, oscansec, gain_image=None,
                       method='savgol', params=[5, 65]):
     """
@@ -1008,42 +1061,58 @@ def main_new_red_amp(rawFiles,*args,**kwargs):
         oScanFile_amp1 = oScanFile.split('.')[0]+'_amp1.'+oScanFile.split('.')[1]
         oScanFile_amp2 = oScanFile.split('.')[0]+'_amp2.'+oScanFile.split('.')[1]
 
-        # if ISDFLAT:
-        #     os.system('cp ' + rawFile + ' ' +oScanFile_amp1)
-        # else:
-        #     os.system('cp ' + rawFile + ' pre_reduced/to{}'.format(rawFile))
-        
-        # img,gain_img,head,secs = read_lris_new_red_amp(rawFile)
+        if (not os.path.isfile(oScanFile) and not os.path.isfile(oScanFile_amp1) and not os.path.isfile(oScanFile_amp2)) or CLOBBER:
+            # if ISDFLAT:
+            #     os.system('cp ' + rawFile + ' ' +oScanFile_amp1)
+            # else:
+            #     os.system('cp ' + rawFile + ' pre_reduced/to{}'.format(rawFile))
+            
+            # img,gain_img,head,secs = read_lris_new_red_amp(rawFile)
 
 
-        hdu = fits.open(rawFile)
-        header = hdu[0].header
+            hdu = fits.open(rawFile)
+            header = hdu[0].header
 
-        data_trim = read_lris_new_red_amp(rawFile)
+            # noBiasImg = subtract_overscan_new_red_amp(img,nAmps,
+            #                                           dsec,osec,
+            #                                           gain_image=gain_img,
+            #                                           method='polynomial',    # median should be fine
+            #                                           params=[5,65])       # default savgol params
 
-        # print (np.shape(data_trim))
+            data_trim = read_lris_new_red_amp(rawFile)
 
-        if ISDFLAT:
-            outImg_amp1 = data_trim[:,0:325] #12/7/18 ignoring middle of red
-            hdu = fits.PrimaryHDU(outImg_amp1,header)
-            if os.path.isfile(oScanFile_amp1):
-                os.remove(oScanFile_amp1)
-            hdu.writeto(oScanFile_amp1,output_verify='ignore')
+            if ISDFLAT:
+                # outImg_amp1 = data_trim[:,0:325] #12/7/18 ignoring middle of red
+                outImg_amp1 = data_trim[:,0:608] 
+                hdu = fits.PrimaryHDU(outImg_amp1,header)
+                if os.path.isfile(oScanFile_amp1):
+                    os.remove(oScanFile_amp1)
+                hdu.writeto(oScanFile_amp1,output_verify='ignore')
 
-            outImg_amp2 = data_trim[:,325:]
-            hdu = fits.PrimaryHDU(outImg_amp2,header)
-            if os.path.isfile(oScanFile_amp2):
-                os.remove(oScanFile_amp2)
-            hdu.writeto(oScanFile_amp2,output_verify='ignore')
-        else:
-            if RED_AMP_BAD:
-                outImg = data_trim[:,0:325]
+                # outImg_amp2 = data_trim[:,325:]
+                outImg_amp2 = data_trim[:,621:]
+                hdu = fits.PrimaryHDU(outImg_amp2,header)
+                if os.path.isfile(oScanFile_amp2):
+                    os.remove(oScanFile_amp2)
+                hdu.writeto(oScanFile_amp2,output_verify='ignore')
             else:
-                outImg = data_trim
-            hdu = fits.PrimaryHDU(outImg,header)
-            if os.path.isfile(oScanFile):
-                os.remove(oScanFile)
-            hdu.writeto(oScanFile,output_verify='ignore')
+                if RED_AMP_BAD:
+                    # outImg = data_trim[:,0:325]
+                    outImg = data_trim[:,621:]
+                else:
+                    trim_inds = []
+                    for i in range(0,608):
+                        trim_inds.append(i)
+                    for i in range(621,1263):
+                        trim_inds.append(i)
+                    outImg = data_trim[:,trim_inds]
+                hdu = fits.PrimaryHDU(outImg,header)
+                if os.path.isfile(oScanFile):
+                    os.remove(oScanFile)
+                hdu.writeto(oScanFile,output_verify='ignore')
+        else:
+            outStr = 'File exists: {}'.format(oScanFile)
+            print(outStr)
    
     return 0
   

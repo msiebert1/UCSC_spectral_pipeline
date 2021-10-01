@@ -168,15 +168,25 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                         if 'cosmic_{}'.format(i) not in glob.glob('*.fits'):
 
                             br = instruments.blue_or_red(i)[0]
+                            # outimg,outmask,header = pyzapspec.pyzapspec(i,
+                            #                                             outfile='cosmic_{}'.format(i),
+                            #                                             WRITE_OUTFILE = True,
+                            #                                             br = br,
+                            #                                             img_num=k, redshift=redshift,
+                            #                                             cedit=_cedit,
+                            #                                             boxsize=inst.get('pyzap_boxsize',7),
+                            #                                             nsigma=inst.get('pyzap_nsigma',16),
+                            #                                             subsigma=inst.get('pyzap_subsigma',3))
+
                             outimg,outmask,header = pyzapspec.pyzapspec(i,
                                                                         outfile='cosmic_{}'.format(i),
                                                                         WRITE_OUTFILE = True,
                                                                         br = br,
                                                                         img_num=k, redshift=redshift,
-                                                                        cedit=_cedit,
-                                                                        boxsize=inst.get('pyzap_boxsize',7),
-                                                                        nsigma=inst.get('pyzap_nsigma',16),
-                                                                        subsigma=inst.get('pyzap_subsigma',3))
+                                                                        cedit=_cedit, DEBUG=False,
+                                                                        boxsize=inst.get('pyzap_boxsize',20),
+                                                                        nsigma=inst.get('pyzap_nsigma',2),
+                                                                        subsigma=inst.get('pyzap_subsigma',.5))
                         img = 'cosmic_{}'.format(i)
                         img_str = img_str + img + ','
 

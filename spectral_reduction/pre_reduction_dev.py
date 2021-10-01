@@ -736,16 +736,19 @@ def pre_reduction_dev(*args,**kwargs):
             if not RED_AMP_BAD:
                 hdu_amp1 = fits.open('pre_reduced/RESP_red_amp1.fits')
                 hdu_amp2 = fits.open('pre_reduced/RESP_red_amp2.fits')
-                amp1_flatten = np.asarray(hdu_amp1[0].data).flatten()
-                amp2_flatten = np.asarray(hdu_amp2[0].data).flatten()
-                concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
+                amp1_flatten = np.asarray(np.transpose(hdu_amp1[0].data)).flatten()
+                amp2_flatten = np.asarray(np.transpose(hdu_amp2[0].data)).flatten()
+                # concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
+                concat_amps = np.concatenate([amp1_flatten, amp2_flatten])
                 if not MASK_MIDDLE_RED: 
                 # if MASK_MIDDLE_RED: #from bad commit
                     resp_red_data = np.reshape(concat_amps, (575,4061))
                     resp_red_data[278:294,:] = 1.
                 else:
                     # resp_red_data = np.reshape(concat_amps, (575,4061)) #depends on num amps? (500 for 4)(4126, 631)
-                    resp_red_data = np.reshape(concat_amps, (631, 4126))
+                    # resp_red_data = np.reshape(concat_amps, (631, 4126))
+                    resp_red_data = np.reshape(concat_amps, (1263, 4115))
+                    resp_red_data = np.transpose(resp_red_data)
 
                 header = hdu_amp1[0].header
                 if os.path.isfile('pre_reduced/RESP_red.fits'):
