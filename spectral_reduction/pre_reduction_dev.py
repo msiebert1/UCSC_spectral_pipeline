@@ -747,7 +747,8 @@ def pre_reduction_dev(*args,**kwargs):
                 else:
                     # resp_red_data = np.reshape(concat_amps, (575,4061)) #depends on num amps? (500 for 4)(4126, 631)
                     # resp_red_data = np.reshape(concat_amps, (631, 4126))
-                    resp_red_data = np.reshape(concat_amps, (1263, 4115))
+                    resp_red_data = np.reshape(concat_amps, (616, 4115))
+                    # resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
                     resp_red_data = np.transpose(resp_red_data)
 
                 header = hdu_amp1[0].header

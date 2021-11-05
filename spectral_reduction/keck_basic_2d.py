@@ -1088,14 +1088,16 @@ def main_new_red_amp(rawFiles,*args,**kwargs):
 
             if ISDFLAT:
                 # outImg_amp1 = data_trim[:,0:325] #12/7/18 ignoring middle of red
-                outImg_amp1 = data_trim[:,0:608] 
+                # outImg_amp1 = data_trim[:,0:608] #1x1 BINING DONT CHANGE
+                outImg_amp1 = data_trim[:,0:300]
                 hdu = fits.PrimaryHDU(outImg_amp1,header)
                 if os.path.isfile(oScanFile_amp1):
                     os.remove(oScanFile_amp1)
                 hdu.writeto(oScanFile_amp1,output_verify='ignore')
 
                 # outImg_amp2 = data_trim[:,325:]
-                outImg_amp2 = data_trim[:,621:]
+                # outImg_amp2 = data_trim[:,621:]#1x1 BINING DONT CHANGE
+                outImg_amp2 = data_trim[:,310:]
                 hdu = fits.PrimaryHDU(outImg_amp2,header)
                 if os.path.isfile(oScanFile_amp2):
                     os.remove(oScanFile_amp2)
