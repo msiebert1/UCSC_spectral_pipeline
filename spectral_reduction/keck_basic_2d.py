@@ -381,11 +381,16 @@ def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
     data_osub = subtract_overscan_new_red_chip(data,gain_image=gain_array)
 
     trim_inds = []
-    for i in range(1400,2057):
+    # for i in range(1400,2057): #1X1 BINNING DON'T DELETE
+    #     trim_inds.append(i)
+    # for i in range(2171,2790):
+    #     trim_inds.append(i)
+    for i in range(700,1026):
         trim_inds.append(i)
-    for i in range(2171,2790):
+    for i in range(1180,1480):
         trim_inds.append(i)
 
+    # data_trim = data_osub[5:4120,trim_inds]
     data_trim = data_osub[5:4120,trim_inds]
     # plt.imshow(data_trim, vmin=0,vmax=500)
     # plt.show()
@@ -1101,9 +1106,13 @@ def main_new_red_amp(rawFiles,*args,**kwargs):
                     outImg = data_trim[:,621:]
                 else:
                     trim_inds = []
-                    for i in range(0,608):
+                    # for i in range(0,608): #1X1 BINNING DON'T DELETE
+                    #     trim_inds.append(i)
+                    # for i in range(621,1263):
+                    #     trim_inds.append(i)
+                    for i in range(0,300):
                         trim_inds.append(i)
-                    for i in range(621,1263):
+                    for i in range(310,620):
                         trim_inds.append(i)
                     outImg = data_trim[:,trim_inds]
                 hdu = fits.PrimaryHDU(outImg,header)
