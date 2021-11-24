@@ -246,6 +246,7 @@ def blue_or_red(img):
     elif util.readkey3(hdr, 'INSTRUME') == 'LRIS':
         return 'red', lris_red
     else:
+        print (img)
         print(util.readkey3(hdr, 'VERSION') + 'not in database')
         return None, None
 

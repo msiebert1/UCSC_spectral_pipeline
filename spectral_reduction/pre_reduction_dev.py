@@ -736,7 +736,11 @@ def pre_reduction_dev(*args,**kwargs):
                     resp_red_data = np.reshape(concat_amps, (575,4061))
                     resp_red_data[278:294,:] = 1.
                 else:
-                    resp_red_data = np.reshape(concat_amps, (575,4061)) #depends on num amps? (500 for 4)
+                    nAmps = hdu_amp1[0].header['nAmps']
+                    if nAmps == 2:
+                        resp_red_data = np.reshape(concat_amps, (575,4061)) #num amps = 2
+                    elif nAmps == 4:
+                        resp_red_data = np.reshape(concat_amps, (520,4061)) #num amps = 4
 
                 header = hdu_amp1[0].header
                 if os.path.isfile('pre_reduced/RESP_red.fits'):
