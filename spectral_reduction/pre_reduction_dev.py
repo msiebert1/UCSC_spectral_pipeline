@@ -354,8 +354,11 @@ def pre_reduction_dev(*args,**kwargs):
             # print (obsfile)
             channel, inst_dict = instruments.blue_or_red(obsfile)
 
-            # obj = header.get('OBJECT').strip()
-            obj = 'None'
+            if header.get('OBJECT', None):
+                obj = header.get('OBJECT').strip()
+            else:
+                obj = header.get('TARGNAME').strip()
+                
             if imageType == 'SCI' or imageType == 'STD':
                 if obj in configDict[imageType][channel.upper()].keys():
                     configDict[imageType][channel.upper()][obj].append(obsfile)
@@ -736,6 +739,10 @@ def pre_reduction_dev(*args,**kwargs):
             if not RED_AMP_BAD:
                 hdu_amp1 = fits.open('pre_reduced/RESP_red_amp1.fits')
                 hdu_amp2 = fits.open('pre_reduced/RESP_red_amp2.fits')
+                if np.shape(hdu_amp1[0].data)[0] > 400 and np.shape(hdu_amp1[0].data)[1] > 400:
+                    binning1x1 = True
+                else:
+                    binning1x1 = False
                 amp1_flatten = np.asarray(np.transpose(hdu_amp1[0].data)).flatten()
                 amp2_flatten = np.asarray(np.transpose(hdu_amp2[0].data)).flatten()
                 # concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
@@ -747,7 +754,10 @@ def pre_reduction_dev(*args,**kwargs):
                 else:
                     # resp_red_data = np.reshape(concat_amps, (575,4061)) #depends on num amps? (500 for 4)(4126, 631)
                     # resp_red_data = np.reshape(concat_amps, (631, 4126))
-                    resp_red_data = np.reshape(concat_amps, (616, 4115))
+                    if binning1x1:
+                        resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
+                    else:
+                        resp_red_data = np.reshape(concat_amps, (616, 4115))
                     # resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
                     resp_red_data = np.transpose(resp_red_data)
 

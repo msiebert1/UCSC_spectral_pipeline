@@ -381,14 +381,21 @@ def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
     data_osub = subtract_overscan_new_red_chip(data,gain_image=gain_array)
 
     trim_inds = []
-    # for i in range(1400,2057): #1X1 BINNING DON'T DELETE
-    #     trim_inds.append(i)
-    # for i in range(2171,2790):
-    #     trim_inds.append(i)
-    for i in range(700,1026):
-        trim_inds.append(i)
-    for i in range(1180,1480):
-        trim_inds.append(i)
+    if np.shape(data)[0] > 4000 and np.shape(data)[1] > 4000:
+        binning1x1 = True
+    else:
+        binning1x1 = False
+
+    if binning1x1:
+        for i in range(1400,2057): #1X1 BINNING DON'T DELETE
+            trim_inds.append(i)
+        for i in range(2171,2790):
+            trim_inds.append(i)
+    else:
+        for i in range(700,1026):
+            trim_inds.append(i)
+        for i in range(1180,1480):
+            trim_inds.append(i)
 
     # data_trim = data_osub[5:4120,trim_inds]
     data_trim = data_osub[5:4120,trim_inds]
@@ -397,7 +404,7 @@ def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
     # raise TypeError
     data_trim = np.flip(data_trim)
 
-    return data_trim
+    return data_trim, binning1x1
 
 def lris_read_amp(inp, ext, redchip=False, applygain=True):
     """
@@ -1084,20 +1091,24 @@ def main_new_red_amp(rawFiles,*args,**kwargs):
             #                                           method='polynomial',    # median should be fine
             #                                           params=[5,65])       # default savgol params
 
-            data_trim = read_lris_new_red_amp(rawFile)
+            data_trim, binning1x1 = read_lris_new_red_amp(rawFile)
 
             if ISDFLAT:
                 # outImg_amp1 = data_trim[:,0:325] #12/7/18 ignoring middle of red
-                # outImg_amp1 = data_trim[:,0:608] #1x1 BINING DONT CHANGE
-                outImg_amp1 = data_trim[:,0:300]
+                if binning1x1:
+                    outImg_amp1 = data_trim[:,0:608] #1x1 BINING DONT CHANGE
+                else:
+                    outImg_amp1 = data_trim[:,0:300]
                 hdu = fits.PrimaryHDU(outImg_amp1,header)
                 if os.path.isfile(oScanFile_amp1):
                     os.remove(oScanFile_amp1)
                 hdu.writeto(oScanFile_amp1,output_verify='ignore')
 
                 # outImg_amp2 = data_trim[:,325:]
-                # outImg_amp2 = data_trim[:,621:]#1x1 BINING DONT CHANGE
-                outImg_amp2 = data_trim[:,310:]
+                if binning1x1:
+                    outImg_amp2 = data_trim[:,621:]#1x1 BINING DONT CHANGE
+                else:
+                    outImg_amp2 = data_trim[:,310:]
                 hdu = fits.PrimaryHDU(outImg_amp2,header)
                 if os.path.isfile(oScanFile_amp2):
                     os.remove(oScanFile_amp2)
@@ -1108,14 +1119,16 @@ def main_new_red_amp(rawFiles,*args,**kwargs):
                     outImg = data_trim[:,621:]
                 else:
                     trim_inds = []
-                    # for i in range(0,608): #1X1 BINNING DON'T DELETE
-                    #     trim_inds.append(i)
-                    # for i in range(621,1263):
-                    #     trim_inds.append(i)
-                    for i in range(0,300):
-                        trim_inds.append(i)
-                    for i in range(310,620):
-                        trim_inds.append(i)
+                    if binning1x1:
+                        for i in range(0,608): #1X1 BINNING DON'T DELETE
+                            trim_inds.append(i)
+                        for i in range(621,1263):
+                            trim_inds.append(i)
+                    else:
+                        for i in range(0,300):
+                            trim_inds.append(i)
+                        for i in range(310,620):
+                            trim_inds.append(i)
                     outImg = data_trim[:,trim_inds]
                 hdu = fits.PrimaryHDU(outImg,header)
                 if os.path.isfile(oScanFile):
