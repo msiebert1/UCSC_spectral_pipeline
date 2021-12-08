@@ -153,9 +153,9 @@ lris_red = { 'name': 'lris_red',
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
              'section': 'middle line',
-             'pyzap_boxsize': 5,
-             'pyzap_nsigma': 16,
-             'pyzap_subsigma': 8,
+             'pyzap_boxsize': 5,#21
+             'pyzap_nsigma': 16,#5
+             'pyzap_subsigma': 8,#2
              'approx_extract_line': 350,
              'pixel_scale': .135, #arcsec/pix
              'spatial_binning': 2.,
