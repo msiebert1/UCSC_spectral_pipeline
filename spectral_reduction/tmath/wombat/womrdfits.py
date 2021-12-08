@@ -49,7 +49,10 @@ def womrdfits(hop):
     else:
         flux=flux.astype(float)
         var=np.ones(flux.shape)
-    wave=np.arange(1,len(flux)+1)*wdelt+crval1
+    crval=float(fitsdata[fitsindex].header['CRVAL1'])
+    cdelt=float(fitsdata[fitsindex].header['CD1_1'])
+    npix=float(fitsdata[fitsindex].header['NAXIS2'])
+    wave=np.arange(npix)*cdelt + crval
     hop[0].wave=wave.copy()
     hop[0].flux=flux.copy()
     hop[0].obname=objectname
