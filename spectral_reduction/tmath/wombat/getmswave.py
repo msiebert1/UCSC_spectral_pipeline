@@ -20,6 +20,6 @@ def getmswave(head,aperture):
         crval=float(head['CRVAL1'])
         cdelt=float(head['CD1_1'])
         npix=float(head['NAXIS1'])
-    wave=np.arange(npix)*cdelt + crval
+        wave=np.arange(npix)*cdelt + crval
     return wave
 

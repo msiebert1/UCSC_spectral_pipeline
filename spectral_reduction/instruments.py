@@ -24,7 +24,7 @@ kast_blue = {'name': 'kast_blue',
              # 'trimsec': '[80:1850,40:330]', #3-31-21 ToO
              # 'flatsec': '[80:1850,80:330]', #3-31-21 ToO
              'trimsec': '[80:1850,10:300]', #3-21-21 
-             'flatsec': '[80:1850,10:300]', #3-21-21 
+             'flatsec': '[80:1850,10:300]', #3-21-21
              # 'trimsec': '[26:1976,22:302]', # temporary
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_blue_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_blue.fits',
@@ -67,12 +67,8 @@ kast_red = { 'name': 'kast_red',
              # 'flatsec': '[110:370,80:2296]', #8-31-19
              # 'trimsec': '[110:370,80:2560]', #2020oi ToO
              # 'flatsec': '[110:370,80:2560]', #2020oi ToO
-             'trimsec': '[75:365,70:2296]', #3-31-21 ToO
-             'flatsec': '[75:365,70:2296]', #3-31-21 ToO
-             # 'trimsec': '[75:365,70:2296]', #3-21-2021
-             # 'flatsec': '[75:365,70:2296]', #3-21-2021 ToO
-             # 'trimsec': '[110:340,215:2300]', #9-8-2021 ToO
-             # 'flatsec': '[110:340,215:2300]', #9-8-2021 ToO
+             'trimsec': '[75:365,70:2296]', #3-21-21
+             'flatsec': '[75:365,70:2296]', #3-21-21
              # 'trimsec': '[30:320,80:2120]', #12-04-20
              # 'flatsec': '[110:330,80:2120]', #12-04-20
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
@@ -156,9 +152,9 @@ lris_red = { 'name': 'lris_red',
              'observatory': 'keck',
              'sky_file': path_to_trunk + 'LRIS_cals/kecksky.fits',
              'section': 'middle line',
-             'pyzap_boxsize': 21,
-             'pyzap_nsigma': 5,#was 16
-             'pyzap_subsigma': 2,# was 8
+             'pyzap_boxsize': 5,#21
+             'pyzap_nsigma': 16,#5
+             'pyzap_subsigma': 8,#2
              'approx_extract_line': 350,
              'pixel_scale': .135, #arcsec/pix
              'spatial_binning': 2.,
@@ -249,6 +245,7 @@ def blue_or_red(img):
     elif util.readkey3(hdr, 'INSTRUME') == 'LRIS':
         return 'red', lris_red
     else:
+        print (img)
         print(util.readkey3(hdr, 'VERSION') + 'not in database')
         return None, None
 

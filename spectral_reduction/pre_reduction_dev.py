@@ -754,12 +754,24 @@ def pre_reduction_dev(*args,**kwargs):
                 else:
                     # resp_red_data = np.reshape(concat_amps, (575,4061)) #depends on num amps? (500 for 4)(4126, 631)
                     # resp_red_data = np.reshape(concat_amps, (631, 4126))
-                    if binning1x1:
-                        resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
+                    if hdu_amp1[0].header.get('TTIME', None):
+                        new_chip = True
                     else:
-                        resp_red_data = np.reshape(concat_amps, (616, 4115))
-                    # resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
-                    resp_red_data = np.transpose(resp_red_data)
+                        new_chip = False
+                        
+                    if new_chip:
+                        if binning1x1:
+                            resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
+                        else:
+                            resp_red_data = np.reshape(concat_amps, (616, 4115))
+                        # resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
+                        resp_red_data = np.transpose(resp_red_data)
+                    else:
+                        nAmps = hdu_amp1[0].header['nAmps']
+                        if nAmps == 2:
+                            resp_red_data = np.reshape(concat_amps, (575,4061)) #num amps = 2
+                        elif nAmps == 4:
+                            resp_red_data = np.reshape(concat_amps, (520,4061)) #num amps = 4
 
                 header = hdu_amp1[0].header
                 if os.path.isfile('pre_reduced/RESP_red.fits'):
