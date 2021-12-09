@@ -6,7 +6,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.io import ascii
 from scipy import signal, ndimage
-import matplotlib.pyplot as plt
+#DO NOT IMPORT MATPLOTLIB, CAUSES IRAF TO CRASH?
 
 def load_sections(string, fmt_iraf=True):
     """
