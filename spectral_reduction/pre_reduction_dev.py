@@ -513,6 +513,17 @@ def pre_reduction_dev(*args,**kwargs):
     for imgType,typeDict in configDict.items():
         for chan,objDict in typeDict.items():
             for obj,fileList in objDict.items():
+
+                hdul = fits.open(fileList[0])
+                date_info = hdul[0].header.get('DATE-OBS').split('-')
+                date = datetime.datetime(int(date_info[0]),int(date_info[1]),int(date_info[2]))
+                chip_update = datetime.datetime(2021,4,15)
+                if date > chip_update:
+                    new_chip = True
+                    print ('Using new chip params', new_chip)
+                else:
+                    new_chip = False
+
                 for rawFile in fileList:
                     # try:
                     #     res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
@@ -527,13 +538,13 @@ def pre_reduction_dev(*args,**kwargs):
                             # res = keck_basic_2d.main([rawFile])
                             if imgType != 'CAL_FLAT':
                                 print (imgType)
-                                if inst['name'] == 'lris_blue': #hacking for new red chip
+                                if inst['name'] == 'lris_blue' or not new_chip: #hacking for new red chip
                                     res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
                                 else:
                                     res = keck_basic_2d.main_new_red_amp([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
                             else:
                                 print (imgType)
-                                if inst['name'] == 'lris_blue': #hacking for new red chip
+                                if inst['name'] == 'lris_blue' or not new_chip: #hacking for new red chip
                                     res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
                                 else:
                                     res = keck_basic_2d.main_new_red_amp([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
@@ -747,12 +758,13 @@ def pre_reduction_dev(*args,**kwargs):
                 amp2_flatten = np.asarray(np.transpose(hdu_amp2[0].data)).flatten()
                 # concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
                 concat_amps = np.concatenate([amp1_flatten, amp2_flatten])
-                if not MASK_MIDDLE_RED: 
-                # if MASK_MIDDLE_RED: #from bad commit
-                    resp_red_data = np.reshape(concat_amps, (575,4061))
-                    resp_red_data[278:294,:] = 1.
+                if not new_chip:
+                    nAmps = hdu_amp1[0].header['nAmps']
+                    if nAmps == 2:
+                        resp_red_data = np.reshape(concat_amps, (575,4061)) #num amps = 2
+                    elif nAmps == 4:
+                        resp_red_data = np.reshape(concat_amps, (520,4061)) #num amps = 4
                 else:
-                    # resp_red_data = np.reshape(concat_amps, (575,4061)) #depends on num amps? (500 for 4)(4126, 631)
                     # resp_red_data = np.reshape(concat_amps, (631, 4126))
                     if binning1x1:
                         resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
