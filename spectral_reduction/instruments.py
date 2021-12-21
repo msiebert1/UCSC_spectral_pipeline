@@ -142,7 +142,7 @@ lris_red = { 'name': 'lris_red',
              'filter': 'temp',
              'slit': 'temp',
              # 'dispaxis': 1,
-             'dispaxis': 2, #hacking for new red chip
+             'dispaxis': 1, 
              'archive_flat_file': path_to_trunk + 'LRIS_cals/RESP_red.fits',
              'archive_sens': path_to_trunk + 'LRIS_cals/fluxstarred.fits',
              'archive_bstar': path_to_trunk + 'LRIS_cals/bstarred.fits',

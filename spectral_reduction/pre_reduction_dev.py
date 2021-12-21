@@ -698,6 +698,8 @@ def pre_reduction_dev(*args,**kwargs):
             # br, inst = instruments.blue_or_red(list_flat_r[0])
             br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(r_amp1_list[0]))
             dispaxis = inst.get('dispaxis')
+            if new_chip:
+                dispaxis = 2
             iraf.specred.dispaxi = dispaxis
             Flat_red_amp1 = 'pre_reduced/toFlat_red_amp1.fits'
             Flat_red_amp2 = 'pre_reduced/toFlat_red_amp2.fits'

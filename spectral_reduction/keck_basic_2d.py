@@ -960,6 +960,7 @@ def main(rawFiles,*args,**kwargs):
             # adjust the header (these keywords aren't present by default)
             head['EXPTIME'] = head['ELAPTIME']
             head['DATE-OBS'] = head['DATE_BEG']
+            head['NAMPS'] = nAmps
             head['BASIC-2D'] = 'DONE'
                 
             # write the images  
