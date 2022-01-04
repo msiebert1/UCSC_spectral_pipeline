@@ -88,7 +88,6 @@ def calculate_ap_data(sn, inst, seeing = 1., ap_scale=.0015):
                 if line.split()[0] == sn:
                     z, sep, ang, r_kron_rad = float(line.split()[1]), float(line.split()[2]), float(line.split()[3]), float(line.split()[4])
 
-
         cosmo_data = cosmo.calculate(z)
         DA, DL_Mpc = cosmo_data[5], cosmo_data[7]
 
@@ -201,13 +200,19 @@ def substitute_ap_data(host_ap_file, ref_ap_data, name, ap_width, is_sn_ap, sn_d
                 low = str(-1.*ap_width/2. + sn_direction*sep_pix) 
             else:
                 low = str(-1.*ap_width/2.) 
-            host_ap_file.write(r_line.replace(r_line.split()[2], low))
+            if 'kast' in name:
+                host_ap_file.write(r_line.replace(r_line.split()[1], low))
+            else:
+                host_ap_file.write(r_line.replace(r_line.split()[2], low))
         elif 'high' in r_line and 'reject' not in r_line:
             if is_sn_ap:
                 high = str(ap_width/2. + sn_direction*sep_pix) 
             else:
                 high = str(ap_width/2.) 
-            host_ap_file.write(r_line.replace(r_line.split()[2], high))
+            if 'kast' in name:
+                host_ap_file.write(r_line.replace(r_line.split()[1], high))
+            else:
+                host_ap_file.write(r_line.replace(r_line.split()[2], high))
         else:
             host_ap_file.write(r_line)
 

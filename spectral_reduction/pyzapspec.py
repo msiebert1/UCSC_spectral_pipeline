@@ -325,28 +325,52 @@ def pyzapspec(infile,
         # print ('Ignoring region centered at pixel ', center_x)
 
         fixed = False
-        trace_y = int(raw_input('Enter approximate row of trace [360]: ') or 360)
-        buff_y = 30
-        while not fixed:
-            rect = patches.Rectangle((0, trace_y - int(buff_y)), len(zapimage[0]), 2*buff_y, linewidth=1, edgecolor='r', facecolor='none')
-            plt.figure(figsize=[15,8])
-            plt.imshow(zapimage)
-            plt.gca().add_patch(rect)
-            plt.gca().invert_yaxis()
-            plt.draw()
-            plt.show(block=False)
-            col_str = raw_input('Enter a new column mask region of trace [900 1100] (n for none): ') or '900 1100'
-            if col_str == 'n':
-                fixed = True
-            else:
-                col_left = int(col_str.split()[0])
-                col_right = int(col_str.split()[1])
-                zapimage[trace_y-buff_y:trace_y+buff_y, col_left:col_right] = 0
-                new_reg = raw_input('Enter another region [y]/n: ') or 'y'
-                if new_reg != 'y':
+        if np.shape(zapimage)[0] < np.shape(zapimage)[1]:
+            trace_y = int(raw_input('Enter approximate row of trace [360]: ') or 360)
+            buff_y = 30
+            while not fixed:
+                rect = patches.Rectangle((0, trace_y - int(buff_y)), len(zapimage[0]), 2*buff_y, linewidth=1, edgecolor='r', facecolor='none')
+                plt.figure(figsize=[15,8])
+                plt.imshow(zapimage)
+                plt.gca().add_patch(rect)
+                plt.gca().invert_yaxis()
+                plt.draw()
+                plt.show(block=False)
+                col_str = raw_input('Enter a new column mask region of trace [900 1100] (n for none): ') or '900 1100'
+                if col_str == 'n':
                     fixed = True
-            plt.close()
-        zapimage_ravel = zapimage.ravel()
+                else:
+                    col_left = int(col_str.split()[0])
+                    col_right = int(col_str.split()[1])
+                    zapimage[trace_y-buff_y:trace_y+buff_y, col_left:col_right] = 0
+                    new_reg = raw_input('Enter another region [y]/n: ') or 'y'
+                    if new_reg != 'y':
+                        fixed = True
+                plt.close()
+            zapimage_ravel = zapimage.ravel()
+        else:
+            trace_x = int(raw_input('Enter approximate column of trace [808]: ') or 808)
+            buff_x = 30
+            while not fixed:
+                rect = patches.Rectangle((trace_x - int(buff_x), 0), 2*buff_x, np.shape(zapimage)[0], linewidth=1, edgecolor='r', facecolor='none')
+                plt.figure(figsize=[15,8])
+                plt.imshow(zapimage)
+                plt.gca().add_patch(rect)
+                plt.gca().invert_yaxis()
+                plt.draw()
+                plt.show(block=False)
+                col_str = raw_input('Enter a new row mask region of trace [1360 1600] (n for none): ') or '1360 1600'
+                if col_str == 'n':
+                    fixed = True
+                else:
+                    col_left = int(col_str.split()[0])
+                    col_right = int(col_str.split()[1])
+                    zapimage[col_left:col_right, trace_x-buff_x:trace_x+buff_x] = 0
+                    new_reg = raw_input('Enter another region [y]/n: ') or 'y'
+                    if new_reg != 'y':
+                        fixed = True
+                plt.close()
+            zapimage_ravel = zapimage.ravel()
 
     # zapimage[45:65, 1870:1930] = 0 #telluric A-band
     # zapimage_ravel = zapimage.ravel()
