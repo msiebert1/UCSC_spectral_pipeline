@@ -268,6 +268,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             fig.subplots_adjust(hspace=0)
             ax0.plot(wave,multispec[1,i,:],drawstyle='steps-mid',color='r')
             ax0.plot(wave,multispec[0,i,:],drawstyle='steps-mid',color='k')
+            # ax0.fill_between(wave, multispec[0,i,:] - multispec[3,i,:], multispec[0,i,:] + multispec[3,i,:], color = 'gray')
             # ax0.plot(multispec[0,i,:],multispec[2,i,:],drawstyle='steps-mid',color='r')
             # ax0.plot(multispec[0,i,:],multispec[1,i,:],drawstyle='steps-mid',color='k')
             plt.pause(0.01)
@@ -505,12 +506,21 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             # interp_wave = np.arange(math.ceil(wave[0])+1., math.floor(wave[-1])-1., dtype=float, step=newdelt)
             interp_wave = np.arange(len(finalobj.copy()))*newdelt+nwave[0]
             spectres_data = spectres(interp_wave, wave, bobj, spec_errs=bsig)
-
+            # plt.close()
+            # fig=plt.figure(figsize = [15,8])
+            # plt.plot(spectres_data[0],spectres_data[1],drawstyle='steps-mid')
+            # plt.fill_between(spectres_data[0], spectres_data[1] - spectres_data[2], spectres_data[1] + spectres_data[2], color = 'gray')
+            # plt.show()
+            # raise TypeError
             # trim_range = (interp_data[0] > waveb) & (interp_data[0] < waver)
             nwave = spectres_data[0]
             finalobj = spectres_data[1]
-            finalvar = 1./spectres_data[2]
-            finalsig = np.sqrt(finalvar)
+            # finalvar = 1./spectres_data[2]
+            # finalsig = np.sqrt(finalvar)
+
+
+            finalsig = spectres_data[2]
+            finalvar = (1./spectres_data[2])**2.
 
             # trim_range = (interp_data[0] > waveb) & (interp_data[0] < waver)
             # nwave = interp_data[0][trim_range]
@@ -539,6 +549,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             plt.close()
             fig=plt.figure(figsize = [15,8])
             plt.plot(nwave,finalobj,drawstyle='steps-mid')
+            plt.fill_between(nwave, finalobj-finalsig, finalobj+finalsig, color = 'gray')
             # plt.plot(spectres_data[0],spectres_data[1],drawstyle='steps-mid', color='green')
             plt.xlabel('Wavelength')
             plt.ylabel('Flux')
