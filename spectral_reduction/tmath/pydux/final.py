@@ -520,7 +520,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
 
 
             finalsig = spectres_data[2]
-            finalvar = (1./spectres_data[2])**2.
+            finalvar = spectres_data[2]**2.
 
             # trim_range = (interp_data[0] > waveb) & (interp_data[0] < waver)
             # nwave = interp_data[0][trim_range]
@@ -549,7 +549,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             plt.close()
             fig=plt.figure(figsize = [15,8])
             plt.plot(nwave,finalobj,drawstyle='steps-mid')
-            plt.fill_between(nwave, finalobj-finalsig, finalobj+finalsig, color = 'gray')
+            plt.fill_between(nwave, finalobj-finalsig, finalobj+finalsig, color = 'gray', alpha=.3)
             # plt.plot(spectres_data[0],spectres_data[1],drawstyle='steps-mid', color='green')
             plt.xlabel('Wavelength')
             plt.ylabel('Flux')
@@ -739,6 +739,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
 
                 plt.clf()
                 plt.plot(nwave,finalobj,drawstyle='steps-mid')
+                plt.fill_between(nwave, finalobj-finalsig, finalobj+finalsig, color = 'gray', alpha=.3)
                 plt.xlabel('Wavelength')
                 plt.ylabel('Flux')
                 plt.title(objectname)
