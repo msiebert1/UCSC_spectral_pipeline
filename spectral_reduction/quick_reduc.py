@@ -481,8 +481,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                     else:
                                         arcex_new.write(line)
                                 arcex_new.write('\n')
-            os.system('cp ' + 'database/' + wave_sol_file +'_new' + ' database/'+wave_sol_file)
-            util.delete('database/'+wave_sol_file+'_new')
+                    os.system('cp ' + 'database/' + wave_sol_file +'_new' + ' database/'+wave_sol_file)
+                    util.delete('database/'+wave_sol_file+'_new')
             print('\n### applying wavelength solution')
             print (arc_ex)
             iraf.disp(inlist=imgex, reference=arc_ex)
