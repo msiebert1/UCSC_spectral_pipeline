@@ -920,7 +920,8 @@ def main(rawFiles,*args,**kwargs):
                     elif nAmps == 4:
                         if ISDFLAT and not RED_AMP_BAD:
                             outImg_amp1 = outImg[1045:1320,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
-                            outImg_amp2 = outImg[800:1025,:-55]
+                            # outImg_amp2 = outImg[800:1025,:-55]
+                            outImg_amp2 = outImg[800:1045,:-55]
                         elif ISDFLAT and RED_AMP_BAD:
                             # outImg_amp1 = outImg[290:575,:-55]
                             outImg_amp1 = outImg[1045:1320,:-55]
@@ -962,6 +963,7 @@ def main(rawFiles,*args,**kwargs):
             head['DATE-OBS'] = head['DATE_BEG']
             head['NAMPS'] = nAmps
             head['BASIC-2D'] = 'DONE'
+            head['nAmps'] = nAmps
                 
             # write the images  
             if ISDFLAT:  

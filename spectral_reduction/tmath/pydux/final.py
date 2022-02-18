@@ -275,6 +275,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             fig.subplots_adjust(hspace=0)
             ax0.plot(wave,multispec[1,i,:],drawstyle='steps-mid',color='r')
             ax0.plot(wave,multispec[0,i,:],drawstyle='steps-mid',color='k')
+            # ax0.fill_between(wave, multispec[0,i,:] - multispec[3,i,:], multispec[0,i,:] + multispec[3,i,:], color = 'gray')
             # ax0.plot(multispec[0,i,:],multispec[2,i,:],drawstyle='steps-mid',color='r')
             # ax0.plot(multispec[0,i,:],multispec[1,i,:],drawstyle='steps-mid',color='k')
             plt.pause(0.01)
@@ -444,7 +445,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             
             if wavesave0 == 0.0:
                 if observat == 'keck' and 'blue' in inputfile:
-                    waves = input('Enter the new wavelength range desired [3160 5640]: ') or '3160 5640'
+                    waves = input('Enter the new wavelength range desired [3160 5620]: ') or '3160 5620'
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
                 elif observat == 'keck' and 'red' in inputfile:
@@ -452,7 +453,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
                 elif observat == 'lick' and 'blue' in inputfile:
-                    waves = input('Enter the new wavelength range desired [3250 5640]: ') or '3250 5640'
+                    waves = input('Enter the new wavelength range desired [3250 5620]: ') or '3250 5620'
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
                 elif observat == 'lick' and 'red' in inputfile:
@@ -460,7 +461,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
                 else:
-                    waves = input('Enter the new wavelength range desired: ') or '3160 5640'
+                    waves = input('Enter the new wavelength range desired: ') or '3160 5620'
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
             else:
@@ -508,8 +509,25 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             #Matt's interpolation algorithm. womashrebin is an unreadable monstrosity.
             # interp_data = interpo_flux_conserving(wave, bobj, 1./vartmp, waveb, waver, dw=newdelt, testing=False)
 
+            #need to interpolate since we corrected for earths motion
             # interp_wave = np.arange(math.ceil(wave[0])+1., math.floor(wave[-1])-1., dtype=float, step=newdelt)
-            # spectres_data = spectres(interp_wave, wave, bobj, spec_errs=bsig)
+            interp_wave = np.arange(len(finalobj.copy()))*newdelt+nwave[0]
+            spectres_data = spectres(interp_wave, wave, bobj, spec_errs=bsig)
+            # plt.close()
+            # fig=plt.figure(figsize = [15,8])
+            # plt.plot(spectres_data[0],spectres_data[1],drawstyle='steps-mid')
+            # plt.fill_between(spectres_data[0], spectres_data[1] - spectres_data[2], spectres_data[1] + spectres_data[2], color = 'gray')
+            # plt.show()
+            # raise TypeError
+            # trim_range = (interp_data[0] > waveb) & (interp_data[0] < waver)
+            nwave = spectres_data[0]
+            finalobj = spectres_data[1]
+            # finalvar = 1./spectres_data[2]
+            # finalsig = np.sqrt(finalvar)
+
+
+            finalsig = spectres_data[2]
+            finalvar = spectres_data[2]**2.
 
             # trim_range = (interp_data[0] > waveb) & (interp_data[0] < waver)
             # nwave = interp_data[0][trim_range]
@@ -538,11 +556,12 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             plt.close()
             fig=plt.figure(figsize = [15,8])
             plt.plot(nwave,finalobj,drawstyle='steps-mid')
+            plt.fill_between(nwave, finalobj-finalsig, finalobj+finalsig, color = 'gray', alpha=.3)
             # plt.plot(spectres_data[0],spectres_data[1],drawstyle='steps-mid', color='green')
             plt.xlabel('Wavelength')
             plt.ylabel('Flux')
             plt.title(objectname)
-            plt.ylim([ymin,ymax])
+            plt.ylim(ymin,ymax)
             plt.savefig(objectname + '-' + gratcode + '_ap' + str(i+1) + suffixes['ap'+str(i+1)] +'.png')
             plt.show()
 
@@ -572,7 +591,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             new_mshead = mshead.copy()
             new_mshead.set('CRPIX1', 1)
             new_mshead.set('CRVAL1',  nwave[0])
-            new_mshead.set('CDELT1', nwave[1] - nwave[0])
+            new_mshead.set('CDELT1', newdelt)
+            new_mshead.set('CD1_1', newdelt)
+            new_mshead.set('NAXIS1', len(finalobj.copy()))
+            header_wave_final = np.arange(len(finalobj.copy()))*newdelt+nwave[0]
+            # print (newdelt, 'TESTING')
+            # for i, w in enumerate(header_wave_final):
+            #     print (nwave[i], header_wave_final[i])
             new_mshead.set('CTYPE1', 'LINEAR')
             new_mshead.set('W_RANGE', waverange)
             new_mshead.set('BSTAR_Z', bstarairmass)
@@ -693,7 +718,9 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     objectname = inputfile
 
                 data_new=fitsdata[0].data
-                wave_new=np.arange(1,len(data_new)+1)*wdelt+crval1
+                # wave_new=np.arange(0,len(data_new)+1)*wdelt+crval1
+                npix=float(fitsdata[0].header['NAXIS2'])
+                wave_new=np.arange(npix)*wdelt + crval1
                 if (len(data_new.shape) == 2):
                     var_new=data_new[:,1]
                     var_new=var_new.astype(float)
@@ -719,9 +746,12 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
 
                 plt.clf()
                 plt.plot(nwave,finalobj,drawstyle='steps-mid')
+                plt.fill_between(nwave, finalobj-finalsig, finalobj+finalsig, color = 'gray', alpha=.3)
                 plt.xlabel('Wavelength')
                 plt.ylabel('Flux')
                 plt.title(objectname)
+                ymin,ymax=finalscaler(finalobj)
+                plt.ylim(ymin,ymax)
                 plt.savefig(objectname + '_combined_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'.png')
                 
                 outputdone = False
@@ -751,6 +781,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 mshead_combined.set('CRPIX1', 1)
                 mshead_combined.set('CRVAL1',  nwave[0])
                 mshead_combined.set('CDELT1', nwave[1] - nwave[0])
+                mshead_combined.set('CD1_1', nwave[1] - nwave[0])
                 mshead_combined.set('CTYPE1', 'LINEAR')
                 # mshead_combined.set('W_RANGE', waverange)
                 mshead_combined.set('W_RANGE', str(nwave[0]) + ' ' + str(nwave[-1]))
@@ -780,6 +811,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 outdata[:,0]=finalobj.copy()
                 outdata[:,1]=finalsig.copy()
                 outhdu=fits.PrimaryHDU(outdata)
+
                 hdul=fits.HDUList([outhdu])
                 mshead_combined.set('NAXIS2',2)
                 hdul[0].header=mshead_combined.copy()

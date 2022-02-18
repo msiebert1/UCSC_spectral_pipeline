@@ -1,6 +1,6 @@
 
 
-def fitspl(wave,flux,airlimit,fig, cal = None):
+def fitspl(wave,flux,airlimit,fig, cal = None, idstar=None):
     """fit spline to spectrum"""
     import numpy as np
     import matplotlib.pyplot as plt
@@ -159,7 +159,7 @@ def fitspl(wave,flux,airlimit,fig, cal = None):
     return splineresult
 
 
-def fitspl_dev(wave,flux,airlimit,fig, cal=None):
+def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = None):
     import numpy as np
     import matplotlib.pyplot as plt
     from scipy.interpolate import splrep,splev
@@ -170,6 +170,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None):
     from tmath.wombat.onclick import onclick
     from tmath.wombat.onkeypress import onkeypress
     import glob
+    import os
     """fit spline to spectrum"""    
     # starting points for spline
     # bandpts = np.array([3000, 3050, 3090, 3200, 3430, 3450, 3500, 3550, 3600, \
@@ -180,7 +181,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None):
     #            6700, 6750, 6800, 7450, 7500, 7550, 8420, 8460, 8520, \
     #            8570, 8600, 8725, 8770, 9910, 10000, 10200, 10300, \
     #            10400, 10500, 10600, 10700])
-    binWidth = 60
+    binWidth = 200
     bandpts = np.arange(3000,11000,binWidth)
     locsinrange=np.logical_and((bandpts > wave[10]),(bandpts < wave[-10]))
     #useband=bandpts[locsinrange]
@@ -269,6 +270,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None):
         useband[i]=index
     # useband now has indices of wavelength positions
 
+
     if (min(flux) < 0):
         flux[np.where(flux < 0)]=0.0
     plt.cla()
@@ -290,12 +292,38 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None):
     plt.plot(wavetell,fluxtell,drawstyle='steps-mid',color='violet')
 
     if '../../master_files/' + cal + '_splpts_master.txt' not in glob.glob('../../master_files/*'):
-        womconfig.nsplinepoints=len(useband)
-        womconfig.tmpsplptsx=wave[useband].copy().tolist()
-        womconfig.tmpsplptsy=[]
-        for i,_ in enumerate(useband):
-            womconfig.tmpsplptsy.append(np.median(flux[useband[i]-2:useband[i]+3]))
-        spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
+
+        path_to_trunk = os.path.expandvars('$UCSC_SPECPIPE/spectral_reduction/trunk/')
+        if fluxstarid:
+            splpt_files = glob.glob(path_to_trunk+'std_spline_pts/fluxstar*.txt')
+            idstar = fluxstarid
+        elif bstarid:
+            splpt_files = glob.glob(path_to_trunk+'std_spline_pts/bstar*.txt')
+            idstar = bstarid
+        masterx = []
+        for spl_f in splpt_files:
+            if 'ID'+str(idstar)+'.txt' in spl_f:
+                print ('Using saved spline wave locations')
+                masterx, mastery = np.genfromtxt(spl_f)
+                break
+        if len(masterx)>0:
+            womconfig.nsplinepoints=len(masterx)
+            # womconfig.tmpsplptsx=list(masterx)
+            womconfig.tmpsplptsx=[]
+            womconfig.tmpsplptsy=[]
+            for i,wave_master in enumerate(list(masterx)):
+                new_wave_loc = np.argmin(np.absolute(wave - wave_master))
+                if ~np.isnan(np.median(flux[new_wave_loc-2:new_wave_loc+3])):
+                    womconfig.tmpsplptsx.append(list(masterx)[i])
+                    womconfig.tmpsplptsy.append(np.median(flux[new_wave_loc-2:new_wave_loc+3]))
+            spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
+        else:
+            womconfig.nsplinepoints=len(useband)
+            womconfig.tmpsplptsx=wave[useband].copy().tolist()
+            womconfig.tmpsplptsy=[]
+            for i,_ in enumerate(useband):
+                womconfig.tmpsplptsy.append(np.median(flux[useband[i]-2:useband[i]+3]))
+            spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
     else:
         masterx, mastery = np.genfromtxt('../../master_files/' + cal + '_splpts_master.txt')
         womconfig.nsplinepoints=len(masterx)

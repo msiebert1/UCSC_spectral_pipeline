@@ -80,6 +80,8 @@ def main():
     # gratcode = inputter('Enter the grating code (blue/red): ', 'string', False)
     gratcode = input('Enter the grating code ([blue]/red): ') or 'blue'
     print(' ')
+    if gratcode == 'r':
+        gratcode = 'red'
     if (secondord):
         gratcode2 = inputter('Enter the second-order grating code: ', 'string', False)
     print(' ')
@@ -103,7 +105,7 @@ def main():
     if (answer_flux == 'y'):
         plt.close()
         fluxfile = getfitsfile('flux star', '.fits', gratcode=gratcode)
-        pydux.mkfluxstar(fluxfile, gratcode)
+        idstar = pydux.mkfluxstar(fluxfile, gratcode)
         if (secondord):
             print(' ')
             fluxfile2 = getfitsfile('second flux star', '.fits')
@@ -145,7 +147,7 @@ def main():
         # else:
         bfile = fluxfile
         bfile = 'c'+gratcode+bfile
-        pydux.mkbstar(bfile, gratcode)
+        pydux.mkbstar(bfile, gratcode, idstar=idstar)
         if (secondord):
             print('\nDo you want to use the flux star {}'.format(fluxfile2))
             print('as the b-star?\n')

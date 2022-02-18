@@ -1,4 +1,4 @@
-def mkbstar(bfile,gratcode):
+def mkbstar(bfile,gratcode, idstar=None):
     import numpy as np
     import os
     import matplotlib.pyplot as plt
@@ -97,7 +97,7 @@ def mkbstar(bfile,gratcode):
     try:
         plt.ylim([ymin,ymax])
     except ValueError:
-        medValue = np.median(y0)
+        medValue = np.nanmedian(y0)
         plt.ylim([1.e-2*medValue,1.e2*medValue])
     plt.pause(0.01)
     print('\nPlotting optimal as black, normal as red')
@@ -114,13 +114,14 @@ def mkbstar(bfile,gratcode):
     while (airlimit < 1.0) or (airlimit > 10.):
         # airlimit=inputter('Above what airmass is considered high? ','float',False)
         airlimit = input('Above what airmass is considered high? [1.1]: ') or 1.1
+        airlimit = float(airlimit)
         
     print('\nNow fit the continuum manually\n')
     plt.clf()
     ax=fig.add_subplot(111)
     cursor = Cursor(ax, useblit=True, color='k', linewidth=1 )
     airlimit=1.5
-    splineresult=fitspl_dev(wave,np.log10(bstar),(airmass>airlimit),fig, cal='bstar{}'.format(gratcode))
+    splineresult=fitspl_dev(wave,np.log10(bstar),(airmass>airlimit),fig, cal='bstar{}'.format(gratcode), bstarid=idstar)
     splineresult=10**(splineresult)
     plt.cla()
     plt.plot(wave,splineresult,drawstyle='steps-mid')

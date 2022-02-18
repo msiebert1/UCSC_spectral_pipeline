@@ -121,7 +121,6 @@ def womgau(hop):
             c = 299792.458
             v1 = -1.*c*((rest_wave/w1)**2. - 1)/(1+((rest_wave/w1)**2.))
             v2 = -1.*c*((rest_wave/w2)**2. - 1)/(1+((rest_wave/w2)**2.))
-
         logging.info('Slope       {:16.8f}+/-{:16.8f}'.format(coeff[3],coefferr[3]))
         logging.info('Y-intercept {:16.8f}+/-{:16.8f}'.format(coeff[4],coefferr[4]))
         logging.info('FWHM        {:16.8f}+/-{:16.8f}'.format(2.35482*np.abs(coeff[2]),2.35482*coefferr[2]))

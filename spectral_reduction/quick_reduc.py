@@ -1,6 +1,6 @@
 from __future__    import print_function
 
-def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _arc, _fast, _host, _nflat, _cedit, _ex):
+def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _arc, _fast, _host, _nflat, _cedit, _ex, _rename):
     import string
     import os
     import re
@@ -132,6 +132,9 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
 
         _object0 = re.sub(' ', '', _object0)
         _object0 = re.sub('/', '_', _object0)
+
+        if _rename:
+            _object0 = raw_input('New object name ' + '['+_object0+']: ') or _object0
         # nameout0 = str(_object0) + '_' + inst.get('name') + '_' + str(_date0)
         nameout0 = str(_object0) + '_' + inst.get('name')
 
@@ -279,6 +282,14 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                 theader.set('Mirrored',  'True')
                 hdu = fits.PrimaryHDU(flip_tdata, theader)
                 hdu.writeto(timg,output_verify='ignore', clobber=True)
+
+        if _rename:
+            tfits = fits.open(timg)
+            tdata = tfits[0].data
+            theader = tfits[0].header
+            theader.set('OBJECT',  _object0)
+            hdu = fits.PrimaryHDU(tdata, theader)
+            hdu.writeto(timg,output_verify='ignore', clobber=True)
 
         img = timg
 
@@ -482,8 +493,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                     else:
                                         arcex_new.write(line)
                                 arcex_new.write('\n')
-            os.system('cp ' + 'database/' + wave_sol_file +'_new' + ' database/'+wave_sol_file)
-            util.delete('database/'+wave_sol_file+'_new')
+                    os.system('cp ' + 'database/' + wave_sol_file +'_new' + ' database/'+wave_sol_file)
+                    util.delete('database/'+wave_sol_file+'_new')
             print('\n### applying wavelength solution')
             print (arc_ex)
             iraf.disp(inlist=imgex, reference=arc_ex)

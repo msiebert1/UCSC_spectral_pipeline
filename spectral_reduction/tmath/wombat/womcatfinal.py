@@ -59,6 +59,7 @@ def womcatfinal(blue_data, red_data):
 
     blue_dw = waveblue[1] - waveblue[0]
     red_dw = wavered[1] - wavered[0]
+
     if red_dw > blue_dw:
         print ("Interpolating to {} A/pix".format(red_dw))
         interp_wave = np.arange(math.ceil(waveblue[0])+1.*red_dw, math.floor(wavered[-1])-1.*red_dw, dtype=float, step=red_dw)
