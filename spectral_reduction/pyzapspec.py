@@ -304,7 +304,8 @@ def pyzapspec(infile,
     zapimage_ravel = zapimage.ravel() # this is a view of zapimage
     skysubimage_ravel = skysubimage.ravel() # this is a view of zapimage
 
-    crcores = np.where(residualnsigmaimage_ravel > nsigma)[0]
+    print (nsigma)
+    crcores = np.where(np.absolute(residualnsigmaimage_ravel) > nsigma)[0]
     newzaps = len(crcores)
     if newzaps > 0:
         zapimage_ravel[crcores] = 1
@@ -377,8 +378,6 @@ def pyzapspec(infile,
 
 
     res = writefits(zapimage,'zapimage{}{}.fits'.format(br, img_num),CLOBBER=True)
-    # if DEBUG:
-    #     res = writefits(zapimage,'{}/zapimage.fits'.format(DEBUG_DIR),CLOBBER=True)
 
 
     outStr = 'Flagged {} initial affected pixels before percolation.'.format(newzaps)
@@ -514,6 +513,7 @@ def pyzapspec(infile,
         res = writefits(xmedimage,'{}/xmedimage.fits'.format(DEBUG_DIR),CLOBBER=True)
         res = writefits(ysubimage,'{}/ysubimage.fits'.format(DEBUG_DIR),CLOBBER=True)
         res = writefits(xsubimage,'{}/xsubimage.fits'.format(DEBUG_DIR),CLOBBER=True)
+        res = writefits(residualnsigmaimage,'{}/nsigmaimage.fits'.format(DEBUG_DIR),CLOBBER=True)
         res = writefits(skysubimage,'{}/fullsubimage.fits'.format(DEBUG_DIR),CLOBBER=True)
         res = writefits(zapimage,'{}/zapimage.fits'.format(DEBUG_DIR),CLOBBER=True)
         res = writefits(outimg,outfile,header=header,CLOBBER=True)

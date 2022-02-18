@@ -8,7 +8,6 @@ from astropy.io import fits
 from astropy.io import ascii
 from scipy import signal, ndimage
 
-
 def load_sections(string, fmt_iraf=True):
     """
     Modified from pypit.core.parse.load_sections -- Jon Brown

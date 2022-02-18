@@ -6,7 +6,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.io import ascii
 from scipy import signal, ndimage
-
+#DO NOT IMPORT MATPLOTLIB, CAUSES IRAF TO CRASH?
 
 def load_sections(string, fmt_iraf=True):
     """
@@ -337,6 +337,75 @@ def read_lris(raw_file, det=None, TRIM=False):
     # Return, transposing array back to goofy Python indexing
     return array.T,gain_array.T, head0, (dsec, osec)
 
+def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
+    """
+    Modified from pypeit.spectrographs.keck_lris.read_lris -- Jon Brown
+    
+    Read a raw LRIS data frame (one or more detectors)
+    Packed in a multi-extension HDU
+    Based on readmhdufits.pro
+
+    Parameters
+    ----------
+    raw_file : str
+      Filename
+    det : int, optional
+      Detector number; Default = both
+    TRIM : bool, optional
+      Trim the image?
+
+    Returns
+    -------
+    array : ndarray
+      Combined image 
+    header : FITS header
+    sections : list
+      List of datasec, oscansec, ampsec sections
+    """
+
+    # Check for file; allow for extra .gz, etc. suffix
+    fil = glob.glob(raw_file)
+
+    # Read
+    outStr = "Reading LRIS file: {:s}".format(fil)
+    print(outStr)
+    hdu = fits.open(fil[0])
+    data = hdu[0].data
+    data = np.asarray(data, dtype=float)
+    header = hdu[0].header
+    gain_array = np.zeros(np.shape(data))
+    # print (np.shape(data))
+    gain_array[:,1:2057] = 1.022 #https://www2.keck.hawaii.edu/inst/lris/lris-red-upgrade-notes.html#dewar1
+    gain_array[:,2171:4227] = 0.916 #https://www2.keck.hawaii.edu/inst/lris/lris-red-upgrade-notes.html#dewar1
+
+    data_osub = subtract_overscan_new_red_chip(data,gain_image=gain_array)
+
+    trim_inds = []
+    if np.shape(data)[0] > 4000 and np.shape(data)[1] > 4000:
+        binning1x1 = True
+    else:
+        binning1x1 = False
+
+    if binning1x1:
+        for i in range(1400,2057): #1X1 BINNING DON'T DELETE
+            trim_inds.append(i)
+        for i in range(2171,2790):
+            trim_inds.append(i)
+    else:
+        for i in range(700,1026):
+            trim_inds.append(i)
+        for i in range(1180,1480):
+            trim_inds.append(i)
+
+    # data_trim = data_osub[5:4120,trim_inds]
+    data_trim = data_osub[5:4120,trim_inds]
+    # plt.imshow(data_trim, vmin=0,vmax=500)
+    # plt.show()
+    # raise TypeError
+    data_trim = np.flip(data_trim)
+
+    return data_trim, binning1x1
+
 def lris_read_amp(inp, ext, redchip=False, applygain=True):
     """
     Modified from pypeit.spectrographs.keck_lris.lris_read_amp -- Jon Brown
@@ -495,7 +564,52 @@ def lris_read_amp(inp, ext, redchip=False, applygain=True):
             
     return data, gaindata, predata, postdata, x1, y1
     
+def subtract_overscan_new_red_chip(data, osec1loc = [2065,2117], osec2loc = [2118, 2170], gain_image=None,
+                                    method='savgol', params=[5, 65]):
     
+    # print(osec1loc[0], osec1loc[1])
+    osec1_data = data[:,osec1loc[0]:osec1loc[1]]
+    osec2_data = data[:,osec2loc[0]:osec2loc[1]]
+
+    # plt.imshow(osec1_data, vmin = 80, vmax = 1000)
+    # plt.show()
+
+    osfit1 = np.median(osec1_data) if method.lower() == 'median' \
+                        else np.median(osec1_data, axis=1)
+    osfit2 = np.median(osec2_data) if method.lower() == 'median' \
+                        else np.median(osec2_data, axis=1)
+
+    if method.lower() == 'polynomial':
+        # TODO: Use np.polynomial.polynomial.polyfit instead?
+        c = np.polyfit(np.arange(osfit1.size), osfit1, params[0])
+        ossub1 = np.polyval(c, np.arange(osfit1.size))
+    elif method.lower() == 'savgol':
+        ossub1 = signal.savgol_filter(osfit1, params[1], params[0])
+        data[:,:osec1loc[1]] -= ossub1[:,None]
+    elif method.lower() == 'median':
+        # Subtract scalar and continue
+        data[:,:osec1loc[1]] -= osfit1
+    else:
+        raise ValueError('Unrecognized overscan subtraction method: {0}'.format(method))
+
+    if method.lower() == 'polynomial':
+        # TODO: Use np.polynomial.polynomial.polyfit instead?
+        c = np.polyfit(np.arange(osfit2.size), osfit2, params[0])
+        ossub2 = np.polyval(c, np.arange(osfit2.size))
+    elif method.lower() == 'savgol':
+        ossub2 = signal.savgol_filter(osfit2, params[1], params[0])
+        data[:,osec2loc[0]:] -= ossub2[:,None]
+    elif method.lower() == 'median':
+        # Subtract scalar and continue
+        data[:,osec2loc[0]:] -= osfit2
+    else:
+        raise ValueError('Unrecognized overscan subtraction method: {0}'.format(method))
+
+    data *= gain_image
+    return data
+
+    
+
 def subtract_overscan(rawframe, numamplifiers, datasec, oscansec, gain_image=None,
                       method='savgol', params=[5, 65]):
     """
@@ -786,6 +900,7 @@ def main(rawFiles,*args,**kwargs):
                         outImg_amp2 = outImg[1800//xbin:2260//xbin,:]
                     else:
                         outImg = outImg[1800//xbin:2800//xbin,:]
+                        # outImg = outImg[1800//xbin:2800//xbin,660:2100] # ToO 07052021
                 else:
                     # nAmps = 4
                     # print (nAmps)
@@ -802,7 +917,7 @@ def main(rawFiles,*args,**kwargs):
                         else:
                             # outImg = outImg[600//xbin:1100//xbin,:]
                             outImg = outImg[0:575,:-55]
-                    elif nAmps == 4: 
+                    elif nAmps == 4:
                         if ISDFLAT and not RED_AMP_BAD:
                             outImg_amp1 = outImg[1045:1320,:-55] # trimming for windowed and removes bottom amplifier (assumes xbin = 2)
                             # outImg_amp2 = outImg[800:1025,:-55]
@@ -817,7 +932,8 @@ def main(rawFiles,*args,**kwargs):
                             # outImg = outImg[600//xbin:1100//xbin,:]
                             outImg = outImg[800:1320,:-55]
                     else:
-                        outImg = outImg[1600//xbin:2600//xbin,:-55]
+                        outImg = outImg[0:575,:-55]
+                        # outImg = outImg[1600//xbin:2600//xbin,:-55]
                         outImg_amp1 = outImg[250:575,:] #12/7/18 ignoring middle of red
                         outImg_amp2 = outImg[0:250,:]
                         # This is a weird case. Red is being read out in full frame
@@ -845,6 +961,7 @@ def main(rawFiles,*args,**kwargs):
             # adjust the header (these keywords aren't present by default)
             head['EXPTIME'] = head['ELAPTIME']
             head['DATE-OBS'] = head['DATE_BEG']
+            head['NAMPS'] = nAmps
             head['BASIC-2D'] = 'DONE'
             head['nAmps'] = nAmps
                 
@@ -874,6 +991,152 @@ def main(rawFiles,*args,**kwargs):
                     os.remove(oScanFile)
                 hdu.writeto(oScanFile,output_verify='ignore')
                         
+        else:
+            outStr = 'File exists: {}'.format(oScanFile)
+            print(outStr)
+   
+    return 0
+
+def main_new_red_amp(rawFiles,*args,**kwargs):
+    '''
+    Run basic 2D CCD reduction on Keck LRIS data
+
+    Parameters
+    ----------
+    CLOBBER : bool, optional (default=False)
+        Overwrite the individual files in pre_reduced, but
+        do not wipe subdirectories
+    FULL_CLEAN : bool, optional (default=False)
+        Completely wipe pre_reduced and all subdirectories
+    BPM : bool, optional (default=False)
+        Mask bad pixels (not currently implemented)
+    PIXEL_FLOOR : bool, optional (default=False)
+        Removes negative pixel values
+    REORIENT : bool, optional (default=True)
+        Transposes to wavelength increasing rightward. LRIS images
+        are by default (spatial, spectral), and in general should
+        be transposed to (spectral, spatial).
+    TRIM : bool, optional (default=True)
+        Trim to some hard coded section of the detector
+    MASK_MIDDLE_BLUE : bool (default=False)
+        Mask the middle section of the blue images
+    MASK_MIDDLE_RED : bool (default=False)
+        Mask the middle section of the red images (useful if
+        there's wildly disparate values that make the iraf
+        windowing tedious)
+        
+    Returns
+    -------
+    int : 0, and writes files to disk
+    '''
+
+    # unpack supported kwargs
+    CLOBBER = kwargs.get('CLOBBER',False) # 
+    FULL_CLEAN = kwargs.get('FULL_CLEAN',False) # this will completely wipe pre_reduced.
+    BPM = kwargs.get('BPM',False) # no bad pixel mask available (at least for our binning)
+    PIXEL_FLOOR = kwargs.get('PIXEL_FLOOR',False) 
+    REORIENT = kwargs.get('REORIENT',True) 
+    TRIM = kwargs.get('TRIM',False) 
+    ISDFLAT = kwargs.get('ISDFLAT',False) 
+    RED_AMP_BAD = kwargs.get('RED_AMP_BAD',False) 
+    MASK_MIDDLE_BLUE = kwargs.get('MASK_MIDDLE_BLUE',False)
+    MASK_MIDDLE_RED = kwargs.get('MASK_MIDDLE_RED',False)
+
+    # pre_reduced does not exist, needs to be made
+    if not os.path.isdir('pre_reduced/'):
+        os.mkdir('pre_reduced/')
+        
+    # pre_reduced exists, but we want to clobber/do a clean reduction
+    elif FULL_CLEAN:
+        
+        promptStr = 'Do you really want to wipe pre_reduced? [y/n]: '
+        usrRespOrig = raw_input(promptStr)
+        if usrRespOrig and usrRespOrig[0].strip().upper() == 'Y':
+
+            # remove all pre_reduced files
+            shutil.rmtree('pre_reduced')
+            os.mkdir('pre_reduced/')
+      
+    # pre_reduced exists, need to document what is there
+    else:
+        
+        # get files
+        preRedFiles = glob.glob('pre_reduced/*.fits')
+    
+  
+    # get all raw files, sort them
+    # rawFiles = sorted(glob.glob('???????_????.fits'))
+
+    # loop over raw files, if the destination exists, do nothing
+    # otherwise, do the bias/reorient/trim/output
+    for i in xrange(len(rawFiles)):
+        
+        rawFile = rawFiles[i]
+        oScanFile = 'pre_reduced/to{}'.format(rawFile)
+        oScanFile_amp1 = oScanFile.split('.')[0]+'_amp1.'+oScanFile.split('.')[1]
+        oScanFile_amp2 = oScanFile.split('.')[0]+'_amp2.'+oScanFile.split('.')[1]
+
+        if (not os.path.isfile(oScanFile) and not os.path.isfile(oScanFile_amp1) and not os.path.isfile(oScanFile_amp2)) or CLOBBER:
+            # if ISDFLAT:
+            #     os.system('cp ' + rawFile + ' ' +oScanFile_amp1)
+            # else:
+            #     os.system('cp ' + rawFile + ' pre_reduced/to{}'.format(rawFile))
+            
+            # img,gain_img,head,secs = read_lris_new_red_amp(rawFile)
+
+
+            hdu = fits.open(rawFile)
+            header = hdu[0].header
+
+            # noBiasImg = subtract_overscan_new_red_amp(img,nAmps,
+            #                                           dsec,osec,
+            #                                           gain_image=gain_img,
+            #                                           method='polynomial',    # median should be fine
+            #                                           params=[5,65])       # default savgol params
+
+            data_trim, binning1x1 = read_lris_new_red_amp(rawFile)
+
+            if ISDFLAT:
+                # outImg_amp1 = data_trim[:,0:325] #12/7/18 ignoring middle of red
+                if binning1x1:
+                    outImg_amp1 = data_trim[:,0:608] #1x1 BINING DONT CHANGE
+                else:
+                    outImg_amp1 = data_trim[:,0:300]
+                hdu = fits.PrimaryHDU(outImg_amp1,header)
+                if os.path.isfile(oScanFile_amp1):
+                    os.remove(oScanFile_amp1)
+                hdu.writeto(oScanFile_amp1,output_verify='ignore')
+
+                # outImg_amp2 = data_trim[:,325:]
+                if binning1x1:
+                    outImg_amp2 = data_trim[:,621:]#1x1 BINING DONT CHANGE
+                else:
+                    outImg_amp2 = data_trim[:,310:]
+                hdu = fits.PrimaryHDU(outImg_amp2,header)
+                if os.path.isfile(oScanFile_amp2):
+                    os.remove(oScanFile_amp2)
+                hdu.writeto(oScanFile_amp2,output_verify='ignore')
+            else:
+                if RED_AMP_BAD:
+                    # outImg = data_trim[:,0:325]
+                    outImg = data_trim[:,621:]
+                else:
+                    trim_inds = []
+                    if binning1x1:
+                        for i in range(0,608): #1X1 BINNING DON'T DELETE
+                            trim_inds.append(i)
+                        for i in range(621,1263):
+                            trim_inds.append(i)
+                    else:
+                        for i in range(0,300):
+                            trim_inds.append(i)
+                        for i in range(310,620):
+                            trim_inds.append(i)
+                    outImg = data_trim[:,trim_inds]
+                hdu = fits.PrimaryHDU(outImg,header)
+                if os.path.isfile(oScanFile):
+                    os.remove(oScanFile)
+                hdu.writeto(oScanFile,output_verify='ignore')
         else:
             outStr = 'File exists: {}'.format(oScanFile)
             print(outStr)

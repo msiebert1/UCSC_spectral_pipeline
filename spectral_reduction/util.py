@@ -4,6 +4,7 @@ except:   import pyfits
 import numpy as np
 import glob
 import os
+import instruments
 
 
 #---------------------------------------------------------------------------
@@ -725,7 +726,7 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
             aps = glob.glob('database/ap*')
             for ap in aps:
                 print (ap.split('/')[-1])
-            ap_select = raw_input('Choose image to match apertures: ')
+            ap_select = raw_input('Choose aperture for the match: ')
             
             #this is just to make things automatic for now
             if 'blue' in ap_select and 'lris' in inst.get('name'):
@@ -756,8 +757,13 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
 
             aps = glob.glob('../master_files/ap*')
             for ap in aps:
-                print (ap.split('/')[-1])
-            center_ap = raw_input('Choose master aperture for center: ')
+                if instruments.blue_or_red(img)[0] == 'blue' and 'blue' in ap:
+                    if img.split('_')[0] in ap:
+                        ap_r = ap.split('/')[-1]
+                elif instruments.blue_or_red(img)[0] == 'red' and 'red' in ap:
+                    if img.split('_')[0] in ap:
+                        ap_r = ap.split('/')[-1]
+            center_ap = raw_input('Choose master aperture for center [{}]: '.format(ap_r)) or ap_r
 
             #get center of main reference aperture (should be a std)
             with open('../master_files/'+center_ap) as c_ap:

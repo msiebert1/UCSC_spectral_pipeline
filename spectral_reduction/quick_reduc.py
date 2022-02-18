@@ -125,7 +125,9 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         iraf.specred.apall.readnoi = _ron
         iraf.specred.apall.gain = _gain
 
-        _object0 = util.readkey3(hdr, 'OBJECT')
+        print (os.getcwd().split('/')[-1])
+        _object0 = os.getcwd().split('/')[-1]
+        # _object0 = util.readkey3(hdr, 'OBJECT')
         _date0 = util.readkey3(hdr, 'DATE-OBS')
 
         _object0 = re.sub(' ', '', _object0)
@@ -169,15 +171,25 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                         if 'cosmic_{}'.format(i) not in glob.glob('*.fits'):
 
                             br = instruments.blue_or_red(i)[0]
+                            # outimg,outmask,header = pyzapspec.pyzapspec(i,
+                            #                                             outfile='cosmic_{}'.format(i),
+                            #                                             WRITE_OUTFILE = True,
+                            #                                             br = br,
+                            #                                             img_num=k, redshift=redshift,
+                            #                                             cedit=_cedit,
+                            #                                             boxsize=inst.get('pyzap_boxsize',7),
+                            #                                             nsigma=inst.get('pyzap_nsigma',16),
+                            #                                             subsigma=inst.get('pyzap_subsigma',3))
+
                             outimg,outmask,header = pyzapspec.pyzapspec(i,
                                                                         outfile='cosmic_{}'.format(i),
                                                                         WRITE_OUTFILE = True,
                                                                         br = br,
                                                                         img_num=k, redshift=redshift,
-                                                                        cedit=_cedit,
-                                                                        boxsize=inst.get('pyzap_boxsize',7),
-                                                                        nsigma=inst.get('pyzap_nsigma',16),
-                                                                        subsigma=inst.get('pyzap_subsigma',3))
+                                                                        cedit=_cedit, DEBUG=False,
+                                                                        boxsize=inst.get('pyzap_boxsize',20),
+                                                                        nsigma=inst.get('pyzap_nsigma',2),
+                                                                        subsigma=inst.get('pyzap_subsigma',.5))
                         img = 'cosmic_{}'.format(i)
                         img_str = img_str + img + ','
 
@@ -285,8 +297,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         print('\n### extraction using apall')
         result = []
         hdr_image = util.readhdr(img)
-        _type=util.readkey3(hdr_image, 'object')
-
+        # _type=util.readkey3(hdr_image, 'object')
+        _type=hdr_image.get('object', '')
         if (_type.startswith("arc") or
             _type.startswith("dflat") or
             _type.startswith("Dflat") or
@@ -304,7 +316,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     seeing = raw_input('Seeing estimate? [1"]: ') or 1.
                     seeing =float(seeing)
                     ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, ap_widths_arcsec, ap_widths_kpc, r_kron_rad = host_gals.calculate_ap_data(_object0.lower().split('_')[0], inst, seeing=seeing)
-                    host_gals.write_host_ap(ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, nameout0.split('.')[0], ap_widths_arcsec, ap_widths_kpc, r_kron_rad)
+                    host_gals.write_host_ap(ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, nameout0.split('.')[0], ap_widths_arcsec, ap_widths_kpc, r_kron_rad, inst, img)
                     imgex = util.extractspectrum(img, dv, inst, _interactive, 'obj', host_ex = True, match_aperture=match_aperture)
             else:
                 imgex = util.extractspectrum(img, dv, inst, _interactive, 'obj', match_aperture=match_aperture)

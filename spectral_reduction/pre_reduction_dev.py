@@ -354,7 +354,11 @@ def pre_reduction_dev(*args,**kwargs):
             # print (obsfile)
             channel, inst_dict = instruments.blue_or_red(obsfile)
 
-            obj = header.get('OBJECT').strip()
+            if header.get('OBJECT', None):
+                obj = header.get('OBJECT').strip()
+            else:
+                obj = header.get('TARGNAME').strip()
+                
             if imageType == 'SCI' or imageType == 'STD':
                 if obj in configDict[imageType][channel.upper()].keys():
                     configDict[imageType][channel.upper()][obj].append(obsfile)
@@ -509,6 +513,17 @@ def pre_reduction_dev(*args,**kwargs):
     for imgType,typeDict in configDict.items():
         for chan,objDict in typeDict.items():
             for obj,fileList in objDict.items():
+
+                hdul = fits.open(fileList[0])
+                date_info = hdul[0].header.get('DATE-OBS').split('-')
+                date = datetime.datetime(int(date_info[0]),int(date_info[1]),int(date_info[2]))
+                chip_update = datetime.datetime(2021,4,15)
+                if date > chip_update:
+                    new_chip = True
+                    print ('Using new chip params', new_chip)
+                else:
+                    new_chip = False
+
                 for rawFile in fileList:
                     # try:
                     #     res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
@@ -523,10 +538,16 @@ def pre_reduction_dev(*args,**kwargs):
                             # res = keck_basic_2d.main([rawFile])
                             if imgType != 'CAL_FLAT':
                                 print (imgType)
-                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
+                                if inst['name'] == 'lris_blue' or not new_chip: #hacking for new red chip
+                                    res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
+                                else:
+                                    res = keck_basic_2d.main_new_red_amp([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
                             else:
                                 print (imgType)
-                                res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
+                                if inst['name'] == 'lris_blue' or not new_chip: #hacking for new red chip
+                                    res = keck_basic_2d.main([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
+                                else:
+                                    res = keck_basic_2d.main_new_red_amp([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=RED_AMP_BAD, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
                         else:
                             res = basic_2d_proc(rawFile,imgType=imgType,CLOBBER=CLOBBER)
                     else:
@@ -677,6 +698,8 @@ def pre_reduction_dev(*args,**kwargs):
             # br, inst = instruments.blue_or_red(list_flat_r[0])
             br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(r_amp1_list[0]))
             dispaxis = inst.get('dispaxis')
+            if new_chip:
+                dispaxis = 2
             iraf.specred.dispaxi = dispaxis
             Flat_red_amp1 = 'pre_reduced/toFlat_red_amp1.fits'
             Flat_red_amp2 = 'pre_reduced/toFlat_red_amp2.fits'
@@ -702,6 +725,7 @@ def pre_reduction_dev(*args,**kwargs):
                 res = combine_flats(flat_list_amp1,OUTFILE=Flat_red_amp1,MEDIAN_COMBINE=True)
 
             #What is the output here? Check for overwrite
+            print (Flat_red_amp1)
             iraf.specred.response(Flat_red_amp1, 
                                   normaliz=Flat_red_amp1, 
                                   response='pre_reduced/RESP_red_amp1', 
@@ -728,19 +752,28 @@ def pre_reduction_dev(*args,**kwargs):
             if not RED_AMP_BAD:
                 hdu_amp1 = fits.open('pre_reduced/RESP_red_amp1.fits')
                 hdu_amp2 = fits.open('pre_reduced/RESP_red_amp2.fits')
-                amp1_flatten = np.asarray(hdu_amp1[0].data).flatten()
-                amp2_flatten = np.asarray(hdu_amp2[0].data).flatten()
-                concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
-                if not MASK_MIDDLE_RED: 
-                # if MASK_MIDDLE_RED: #from bad commit
-                    resp_red_data = np.reshape(concat_amps, (575,4061))
-                    resp_red_data[278:294,:] = 1.
+                if np.shape(hdu_amp1[0].data)[0] > 400 and np.shape(hdu_amp1[0].data)[1] > 400:
+                    binning1x1 = True
                 else:
+                    binning1x1 = False
+                amp1_flatten = np.asarray(np.transpose(hdu_amp1[0].data)).flatten()
+                amp2_flatten = np.asarray(np.transpose(hdu_amp2[0].data)).flatten()
+                # concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
+                concat_amps = np.concatenate([amp1_flatten, amp2_flatten])
+                if not new_chip:
                     nAmps = hdu_amp1[0].header['nAmps']
                     if nAmps == 2:
                         resp_red_data = np.reshape(concat_amps, (575,4061)) #num amps = 2
                     elif nAmps == 4:
                         resp_red_data = np.reshape(concat_amps, (520,4061)) #num amps = 4
+                else:
+                    # resp_red_data = np.reshape(concat_amps, (631, 4126))
+                    if binning1x1:
+                        resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
+                    else:
+                        resp_red_data = np.reshape(concat_amps, (616, 4115))
+                    # resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
+                    resp_red_data = np.transpose(resp_red_data)
 
                 header = hdu_amp1[0].header
                 if os.path.isfile('pre_reduced/RESP_red.fits'):

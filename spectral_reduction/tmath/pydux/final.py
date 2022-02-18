@@ -2,6 +2,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
     import matplotlib.pyplot as plt
     from matplotlib import gridspec
     import numpy as np
+    import os
     from datetime import datetime
     import os, pdb
     import inspect
@@ -62,7 +63,10 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
     bstarwavedelt=float(bstarhead['CDELT1'])
     bstarwave=np.arange(len(bstarstar))*bstarwavedelt+bstarwavezero
     bstarairmass=float(bstarhead['AIRMASS'])
-    bstarname=bstarhead['OBJECT']
+    # bstarname=bstarhead['OBJECT']
+    bstarname = bstarhead.get('OBJECT',None)
+    if bstarname == None:
+        bstarname = os.getcwd().split('/')[-2]
     try:
         bstarnum=int(bstarhead['OBSNUM'])
     except KeyError:
@@ -142,7 +146,10 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             multispec2=multifits2[0].data
             mshead2=multifits2[0].header
         pacheck(mshead)
-        objectname=mshead['OBJECT']
+        # objectname=mshead['OBJECT']
+        objectname = mshead.get('OBJECT',None)
+        if objectname == None:
+            objectname = os.getcwd().split('/')[-2]
         print('The object is: {}'.format(objectname))
         # observat=mshead['OBSERVAT'].strip().lower()
         observat=mshead.get('TELESCOP',None)
@@ -786,7 +793,6 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 mshead_combined.set('ATMSHIFT', bangshift)
                 mshead_combined.set('EXTRACT', extractcode)
                 mshead_combined.set('REDUCER', user)
-                print (str(datetime.now()).split()[0], 'EPOCH OF REDUCTION')
                 mshead_combined.set('RED_DATE', str(datetime.now()).split()[0], 'EPOCH OF REDUCTION')
                 mshead_combined.set('OBJECT', objectname)
                 if (secondord): #not implemented

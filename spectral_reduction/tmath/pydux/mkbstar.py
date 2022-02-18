@@ -1,5 +1,6 @@
 def mkbstar(bfile,gratcode, idstar=None):
     import numpy as np
+    import os
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Cursor
     from astropy.io import fits
@@ -40,9 +41,16 @@ def mkbstar(bfile,gratcode, idstar=None):
     head=fitsfile[0].header
     num_apertures=rawdata.shape[1]
     wavearr=np.zeros((rawdata.shape[2],rawdata.shape[1]))
-    objectname=head['OBJECT']
+    # objectname=head['OBJECT']
+    objectname = head.get('OBJECT',None)
+    if objectname == None:
+        objectname = os.getcwd().split('/')[-2]
     airmass=float(head['AIRMASS'])
-    exptime=float(head['EXPTIME'])
+    # exptime=float(head['EXPTIME'])
+    exptime=head.get('EXPTIME',None)
+    if exptime == None:
+        exptime=head.get('TTIME')
+    exptime = float(exptime)
     
     if (exptime < 1):
         exptime=1.

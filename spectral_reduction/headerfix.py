@@ -99,7 +99,11 @@ for f in files:
     harad=ha*15./degrad
     
     # deal with lris header nonsense
-    exptime=float(fitsfile[0].header['EXPTIME'])
+    # exptime=float(fitsfile[0].header['EXPTIME'])
+    exptime=fitsfile[0].header.get('EXPTIME',None)
+    if exptime == None:
+        exptime=fitsfile[0].header.get('TTIME')
+    exptime = float(exptime)
     dateobs=fitsfile[0].header['DATE-OBS'].strip().split('T')[0]
 
     year,month,day=dateparser(dateobs)

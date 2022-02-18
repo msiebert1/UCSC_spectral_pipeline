@@ -745,9 +745,13 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
         hdu = fits.open(file)
         br, inst = instruments.blue_or_red(file)
         data = hdu[0].data
+        data = np.asarray(data, dtype=float)
         header = hdu[0].header
         nImages += 1
-        expTime += header.get('EXPTIME')
+        if header.get('EXPTIME', None) == None: #new red chip hacking
+            expTime += header.get('TTIME')
+        else:
+            expTime += header.get('EXPTIME')
 
         # scale to expTime
         data /= expTime

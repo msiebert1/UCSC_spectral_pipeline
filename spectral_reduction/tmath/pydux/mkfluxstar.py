@@ -1,6 +1,7 @@
 def mkfluxstar(fluxfile,gratcode):
     import pdb
     import numpy as np
+    import os
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Cursor
     from astropy.io import fits
@@ -50,9 +51,14 @@ def mkfluxstar(fluxfile,gratcode):
     num_apertures=rawdata.shape[1]
         
     wavearr=np.zeros((rawdata.shape[2],rawdata.shape[1]))
-    objectname=head['OBJECT']
+    objectname = head.get('OBJECT',None)
+    if objectname == None:
+        objectname = os.getcwd().split('/')[-2]
     airmass=float(head['AIRMASS'])
-    exptime=float(head['EXPTIME'])
+    exptime=fitsfile[0].header.get('EXPTIME',None)
+    if exptime == None:
+        exptime=fitsfile[0].header.get('TTIME')
+    exptime = float(exptime)
     head=pacheck(head)
     if (exptime < 1):
         exptime=1.

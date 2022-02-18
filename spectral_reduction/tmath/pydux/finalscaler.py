@@ -25,8 +25,10 @@ def finalscaler(flux):
         if (varpix > nsig*nsig*sum):
             flux_temp[i]=medval
 
-    ymin=np.percentile(flux_temp,.1)
-    ymax=np.percentile(flux_temp,99.9)
+    # ymin=np.percentile(flux,.1)
+    # ymax=np.percentile(flux,99.9)
+
+    ymin=np.percentile(flux,1.)
+    ymax=np.percentile(flux,99.)
 
     return ymin, ymax
-
