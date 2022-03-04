@@ -732,8 +732,11 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
             if 'blue' in ap_select and 'lris' in inst.get('name'):
                 ap_match = ap_select.replace('blue','red')
                 ap_binning = 1.
-            elif 'red' in ap_select and 'lris' in inst.get('name'):
+            elif 'red' in ap_select and 'red_new' not in ap_select and 'lris' in inst.get('name'):
                 ap_match = ap_select.replace('red','blue')
+                ap_binning = 2.
+            elif 'red_new' in ap_select and 'lris' in inst.get('name'):
+                ap_match = ap_select.replace('red_new','blue')
                 ap_binning = 2.
             elif 'blue' in ap_select and 'kast' in inst.get('name'):
                 ap_match = ap_select.replace('blue','red')
@@ -864,6 +867,8 @@ def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
         sign = 1.
 
     for line in ap_data:
+        if 'begin' in line:
+            match_inst = line.split()[2]
 
         if len(line.split()) == 2 and 'aperture' in line:
             if line.split()[1] == '1':
@@ -883,12 +888,16 @@ def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
         elif 'low' in line and 'reject' not in line:
             if 'kast_blue' in inst.get('name'): #current inst is blue so want to get correct red ap
                 low = str(sign*float(line.split()[1])*(ap_binning/img_binning) + diff) 
+            elif 'lris_red_new' in match_inst:
+                low = str(sign*float(line.split()[1])*(ap_binning/img_binning) + diff) 
             else:
                 low = str(sign*float(line.split()[2])*(ap_binning/img_binning) + diff) 
             lows.append(low)
 
         elif 'high' in line and 'reject' not in line:
             if 'kast_blue' in inst.get('name'): #current inst is blue so want to get correct red ap
+                high = str(sign*float(line.split()[1])*(ap_binning/img_binning) + diff)
+            elif 'lris_red_new' in match_inst:
                 high = str(sign*float(line.split()[1])*(ap_binning/img_binning) + diff)
             else:
                 high = str(sign*float(line.split()[2])*(ap_binning/img_binning) + diff)

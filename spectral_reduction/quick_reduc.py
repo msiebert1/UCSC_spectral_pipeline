@@ -273,6 +273,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                Stdout=1)
 
         if 'kast_red' in inst.get('name') or 'lris_red_new' in inst.get('name'):
+        # if 'kast_red' in inst.get('name'):
             tfits = fits.open(timg)
             tdata = tfits[0].data
             theader = tfits[0].header

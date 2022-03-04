@@ -514,15 +514,19 @@ def pre_reduction_dev(*args,**kwargs):
         for chan,objDict in typeDict.items():
             for obj,fileList in objDict.items():
 
-                hdul = fits.open(fileList[0])
-                date_info = hdul[0].header.get('DATE-OBS').split('-')
-                date = datetime.datetime(int(date_info[0]),int(date_info[1]),int(date_info[2]))
-                chip_update = datetime.datetime(2021,4,15)
-                if date > chip_update:
-                    new_chip = True
-                    print ('Using new chip params', new_chip)
+                inst = instruments.blue_or_red(fileList[0])[1]
+                if 'lris' in inst['name']:
+                    hdul = fits.open(fileList[0])
+                    date_info = hdul[0].header.get('DATE-OBS').split('-')
+                    date = datetime.datetime(int(date_info[0]),int(date_info[1]),int(date_info[2]))
+                    chip_update = datetime.datetime(2021,4,15)
+                    if date > chip_update:
+                        new_chip = True
+                        print ('Using new chip params', new_chip)
+                    else:
+                        new_chip = False
                 else:
-                    new_chip = False
+                    new_chip=False
 
                 for rawFile in fileList:
                     # try:
