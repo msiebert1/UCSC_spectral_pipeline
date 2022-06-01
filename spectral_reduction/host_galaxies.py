@@ -26,7 +26,7 @@ def make_host_metadata(configDict):
         host_seps = {}
         host_angs = {}
         for row in foundation_host_meta:
-            print (row[0].strip().lower())
+            # print (row[0].strip().lower())
             host_seps[row[0].strip().lower()] = row[12].strip()
             host_angs[row[0].strip().lower()] = row[13].strip()
 
@@ -48,13 +48,13 @@ def make_host_metadata(configDict):
                 for obj,fileList in objDict.items():
                     if 'host' in obj.lower():
                         targ_list.append(obj.lower().split('_')[0])
-                        print (obj.lower().split('_')[0])
+                        # print (obj.lower().split('_')[0])
 
     # pdb.set_trace()
     with open('pre_reduced/HOST_METADATA.txt', 'w') as host_file:
         host_file.write('# SN z sep ang\n')
         for SN in host_seps:
-            if SN.lower() in targ_list:
+            if SN.lower() in targ_list or SN.lower() in targ_list:
                 print (SN.lower(), host_reds[SN],host_seps[SN],host_angs[SN])
                 host_file.write(SN.lower() + ' ' + host_reds[SN] + ' ' + host_seps[SN] + ' ' + host_angs[SN]+'\n')
             if SN.lower().replace('-','') in targ_list:

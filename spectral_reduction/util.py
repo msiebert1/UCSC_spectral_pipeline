@@ -923,7 +923,8 @@ def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
                 b4 = b4*(ap_binning/img_binning) + diff
             if 'kast' in inst.get('name'):
                 if len(_b_sample.split()) > 1 or len(_b_sample.split(',')) > 1:
-                    _b_sample_new = str(sign*b4)+':'+str(sign*b3)+' '+str(sign*b2)+':'+str(sign*b1)
+                    # _b_sample_new = str(sign*b4)+':'+str(sign*b3)+' '+str(sign*b2)+':'+str(sign*b1)
+                    _b_sample_new = str(sign*b1)+':'+str(sign*b2)+' '+str(sign*b3)+':'+str(sign*b4)
                 else:
                     _b_sample_new = str(sign*b2)+':'+str(sign*b1)
             else:
