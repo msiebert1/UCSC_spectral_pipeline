@@ -286,8 +286,11 @@ class fitFlatClass(object):
                     region = self.regionDict[key]
                     outStr += '{} {} {}\n'.format(region.name,region.colLo,region.colUp)
                 outStr += 'Enter the name of the region to delete, or Q to quit: '
-                usrResp = raw_input(outStr).strip().upper()
-            
+                try:
+                    usrResp = raw_input(outStr).strip().upper()
+                except:
+                    usrResp = input(outStr).strip().upper()
+                
                 # delete the entry
                 if usrResp in self.regionDict.keys():
                     trash = self.regionDict.pop(usrResp, None)
@@ -492,7 +495,7 @@ class fitFlatClass(object):
                 
         colArr = colArr.astype(int)
         # for each col, fit flux as a function of pixel number   
-        for i in xrange(skyImage.shape[1]): 
+        for i in range(skyImage.shape[1]): 
             if i % 50 == 0:  
                 print('Working on col {} / {}'.format(i,skyImage.shape[1]))
             
@@ -635,7 +638,7 @@ class fitFlatClass(object):
         if len(name) > 0:
             colLo = self.regionDict[usrResp].colLo
             colUp = self.regionDict[usrResp].colUp
-            for i in xrange(colUp-colLo):
+            for i in range(colUp-colLo):
                 self.flatCorrData[:,colLo+i] = self.masterProfile
             self.refresh_plot()                
         elif len(name) == 0:
@@ -646,14 +649,16 @@ class fitFlatClass(object):
                     region = self.regionDict[key]
                     outStr += '{} {} {}\n'.format(region.name,region.colLo,region.colUp)
                 outStr += 'Enter the name of the region to mask, or Q to quit: '
-                usrResp = raw_input(outStr).strip().upper()
-            
+                try:
+                    usrResp = raw_input(outStr).strip().upper()
+                except:
+                    usrResp = input(outStr).strip().upper()
                 # sub the master profile
                 # inefficient, don't care
                 if usrResp in self.regionDict.keys():
                     colLo = self.regionDict[usrResp].colLo
                     colUp = self.regionDict[usrResp].colUp
-                    for i in xrange(colUp-colLo):
+                    for i in range(colUp-colLo):
                         self.flatCorrData[:,colLo+i] = self.masterProfile
                     self.refresh_plot()
                     break
@@ -1022,7 +1027,10 @@ def inspect_flat(flat_list,*args,**kwargs):
         promptStr += 'Enter (q) to quit and write the current flat to disk.\n'
         promptStr += 'Enter (q!) to quit and do nothing.'
         promptStr += 'Answer: '
-        usrResp = raw_input(promptStr).strip().upper()
+        try:
+            usrResp = raw_input(promptStr).strip().upper()
+        except:
+            usrResp = input(promptStr).strip().upper()
         
         if usrResp in validResps:
 
@@ -1038,13 +1046,19 @@ def inspect_flat(flat_list,*args,**kwargs):
             # add region by marking it
             if usrResp == 'A':
                 promptStr = 'Enter the name of the sky region (e.g. c1): '
-                name = raw_input(promptStr).strip().upper()
+                try:
+                    name = raw_input(promptStr).strip().upper()
+                except:
+                    name = input(promptStr).strip().upper()
                 flatFitObj.add_fit_region(name)
                 
             # add hardcoded region
             if usrResp == 'AHARD':
                 promptStr = 'Enter name colLo colUp (e.g. c1 113 171): '
-                usrResp = raw_input(promptStr).upper().strip()
+                try:
+                    usrResp = raw_input(promptStr).upper().strip()
+                except:
+                    usrResp = input(promptStr).upper().strip()
                 try:
                     name = usrResp.split()[0]
                     colLo = int(usrResp.split()[1])
@@ -1088,9 +1102,15 @@ def inspect_flat(flat_list,*args,**kwargs):
 
                 if outFile is None:
                     promptStr = 'Enter name of save file (e.g. RESP_blue): '
-                    outFile = raw_input(promptStr).strip()
-                    promptStr = 'Write to file {} [y/n]: '.format(outFile)
-                    usrResp = raw_input(promptStr).upper().strip()
+                    try:
+                        outFile = raw_input(promptStr).strip()
+                        promptStr = 'Write to file {} [y/n]: '.format(outFile)
+                        usrResp = raw_input(promptStr).upper().strip()
+                    except:
+                        outFile = input(promptStr).strip()
+                        promptStr = 'Write to file {} [y/n]: '.format(outFile)
+                        usrResp = input(promptStr).upper().strip()
+                        
                     if usrResp == 'Y':
                         flatFitObj.save_flat('pre_reduced/'+outFile,header=header)
                         break
@@ -1119,9 +1139,15 @@ def inspect_flat(flat_list,*args,**kwargs):
                 if outFile is None:
                     promptStr = 'Enter name of save file '
                     promptStr += '(e.g. RESP_blue.fits): '
-                    outFile = raw_input(promptStr).strip()
-                    promptStr = 'Write to file {} [y/n]: '.format(outFile)
-                    usrResp = raw_input(promptStr).upper().strip()
+                    try:
+                        outFile = raw_input(promptStr).strip()
+                        promptStr = 'Write to file {} [y/n]: '.format(outFile)
+                        usrResp = raw_input(promptStr).upper().strip()
+                    except:
+                        outFile = input(promptStr).strip()
+                        promptStr = 'Write to file {} [y/n]: '.format(outFile)
+                        usrResp = input(promptStr).upper().strip()
+                        
                     if usrResp == 'Y':
                         flatFitObj.save_flat('pre_reduced/'+outFile,header=header)
                         break

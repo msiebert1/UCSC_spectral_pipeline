@@ -97,8 +97,11 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
     elif len(newlist[0]) < 1:
         newlist = newlist[1:]
     else:
-        sides = raw_input("Reduce which side? ([both]/b/r): ")
-
+        try:
+            sides = raw_input("Reduce which side? ([both]/b/r): ")
+        except:
+            sides = input("Reduce which side? ([both]/b/r): ")
+        
         if sides == 'b':
             newlist = newlist[:-1]
         elif sides == 'r':
@@ -134,7 +137,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
         _object0 = re.sub('/', '_', _object0)
 
         if _rename:
-            _object0 = raw_input('New object name ' + '['+_object0+']: ') or _object0
+            try:
+                _object0 = raw_input('New object name ' + '['+_object0+']: ') or _object0
+            except:
+                _object0 = input('New object name ' + '['+_object0+']: ') or _object0       
         # nameout0 = str(_object0) + '_' + inst.get('name') + '_' + str(_date0)
         nameout0 = str(_object0) + '_' + inst.get('name')
 
@@ -308,13 +314,19 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
             print('\n### warning problem \n exit ')
             sys.exit()
         else:
-            match_aperture = raw_input('Match aperture? y/[n]: ') or 'n'
+            try:
+                match_aperture = raw_input('Match aperture? y/[n]: ') or 'n'
+            except:
+                match_aperture = input('Match aperture? y/[n]: ') or 'n'
             if _host:
                 # match_aperture = raw_input('Match aperture? y/[n]: ') or 'n'
                 if match_aperture != 'n':
                     imgex = util.extractspectrum(img, dv, inst, _interactive, 'obj', host_ex = True, match_aperture=match_aperture)
                 else:
-                    seeing = raw_input('Seeing estimate? [1"]: ') or 1.
+                    try:
+                        seeing = raw_input('Seeing estimate? [1"]: ') or 1.
+                    except:
+                        seeing = input('Seeing estimate? [1"]: ') or 1.
                     seeing =float(seeing)
                     ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, ap_widths_arcsec, ap_widths_kpc, r_kron_rad = host_gals.calculate_ap_data(_object0.lower().split('_')[0], inst, seeing=seeing)
                     host_gals.write_host_ap(ap_pixs_phys, ap_pixs_sky, ap_width_kron, sep_pix, nameout0.split('.')[0], ap_widths_arcsec, ap_widths_kpc, r_kron_rad, inst, img)
@@ -323,7 +335,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                 imgex = util.extractspectrum(img, dv, inst, _interactive, 'obj', match_aperture=match_aperture)
 
             save_ap = 'n'
-            save_ap = raw_input('Save as a master aperture ? y/[n]: ')
+            try:
+                save_ap = raw_input('Save as a master aperture ? y/[n]: ')
+            except:
+                save_ap = input('Save as a master aperture ? y/[n]: ')
             if save_ap == 'y':
                 os.system('cp ' + 'database/ap' + img[0:-5] + ' ../master_files/ap'+img[0:-5])
 
@@ -364,7 +379,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
 
                 masters = [os.path.basename(x) for x in glob.glob('../master_files/*')]
                 if wave_sol_file in masters:
-                    wave_sol= raw_input("Use your master wavelength solution? [y]/n: ") or 'y'
+                    try:
+                        wave_sol= raw_input("Use your master wavelength solution? [y]/n: ") or 'y'
+                    except:
+                        wave_sol= input("Use your master wavelength solution? [y]/n: ") or 'y'      
                     if wave_sol.strip().lower() == 'y':
                         print ('Copying master file')
                         arc_ex=re.sub('.fits', '.ms.fits', arcfile)
@@ -380,8 +398,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                     ref_img = im
 
 
-                        ref_img= raw_input("Reference image [{}]: ".format(ref_img)) or ref_img
-
+                        try:
+                            ref_img= raw_input("Reference image [{}]: ".format(ref_img)) or ref_img
+                        except:
+                            ref_img= input("Reference image [{}]: ".format(ref_img)) or ref_img
                         os.system('cp ' + '../' + arcfile + ' .')
                         arc_ex=re.sub('.fits', '.ms.fits', arcfile)
                         print('\n### arcfile : ',arcfile)
@@ -436,9 +456,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                         for im in glob.glob('*.fits'):
                             if 'red' in im and '_ex' not in im and 'zap' not in im:
                                 ref_img = im
-
-                    ref_img= raw_input("Reference image [{}]: ".format(ref_img)) or ref_img
-
+                    try:
+                        ref_img= raw_input("Reference image [{}]: ".format(ref_img)) or ref_img
+                    except:
+                        ref_img= input("Reference image [{}]: ".format(ref_img)) or ref_img
                     os.system('cp ' + '../' + arcfile + ' .')
                     arc_ex=re.sub('.fits', '.ms.fits', arcfile)
                     print('\n### arcfile : ',arcfile)
@@ -523,12 +544,18 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
 
         os.system('mv ' + 'd'+ imgex + ' ' + _object0 + '_ex/')
 
-        use_master = raw_input('Use master flux calibration? [y]/n ')
+        try:
+            use_master = raw_input('Use master flux calibration? [y]/n ')
+        except:
+            use_master = input('Use master flux calibration? [y]/n ')
         if use_master != 'n':
             os.system('cp ' + '../master_files/fluxstar' + inst.get('arm') +  '.fits ' + _object0 + '_ex/')
             os.system('cp ' + '../master_files/bstar' + inst.get('arm') +  '.fits ' + _object0 + '_ex/')
         else:
-            use_sens = raw_input('Use archival flux calibration? [y]/n ')
+            try:
+                use_sens = raw_input('Use archival flux calibration? [y]/n ')
+            except:
+                use_sens = input('Use archival flux calibration? [y]/n ')
             if use_sens != 'n':
                 sensfile = inst.get('archive_sens')
                 os.system('cp ' + sensfile + ' ' + _object0 + '_ex/')

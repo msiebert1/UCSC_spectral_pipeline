@@ -109,7 +109,7 @@ def kastbias(ifile,ofile):
                 datanew[:,i]=datanew[:,i]-biasb
 
         if xorig < hsize/2 and x0 > hsize/2:
-            x1=hsize/2-xorig
+            x1=int(hsize/2-xorig)
             dataa=data[:,0:x1]
             datab=data[:,x1:-cover*2]
             ma=dataa.shape[1]
@@ -640,7 +640,7 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
 
     imgex = re.sub('.fits', '_ex.fits', img)
     print (img)
-    imgfast = re.sub(string.split(img, '_')[-2] + '_', '', img)
+    imgfast = re.sub(img.split('_')[-2] + '_', '', img)
     if not os.path.isfile(imgex) and not os.path.isfile(
             'database/ap' + re.sub('.fits', '', img)) and not os.path.isfile(
             'database/ap' + re.sub('.fits', '', imgfast)):
