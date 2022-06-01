@@ -80,8 +80,10 @@ kast_red = { 'name': 'kast_red',
              # 'flatsec': '[75:340,350:2296]', #4-2-17
              # 'trimsec': '[30:320,80:2120]', #12-04-20
              # 'flatsec': '[110:330,80:2120]', #12-04-20
-             'trimsec': '[60:350,70:2296]', #2-7-18
-             'flatsec': '[60:350,70:2296]', #2-7-18
+             # 'trimsec': '[60:350,70:2296]', #2-7-18
+             # 'flatsec': '[60:350,70:2296]', #2-7-18
+             'trimsec': '[75:365,70:2296]', #Kirsty 5-30-22
+             'flatsec': '[75:365,70:2296]', #Kirsty 5-30-22
 
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
