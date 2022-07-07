@@ -1,6 +1,6 @@
 from __future__    import print_function
 
-def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _arc, _fast, _host, _nflat, _cedit, _ex, _rename):
+def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _arc, _fast, _host, _nflat, _cedit, _crmask, _ex, _rename):
     import string
     import os
     import re
@@ -163,7 +163,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                 for i in imgs:
                     # util.create_bpmask([[],[]], br = 'red')
                     # raise TypeError
-                    if _cosmic or _cedit:
+                    if _cosmic or _cedit or _crmask:
                         if _host and 'red' in nameout0:
                             with open('../HOST_METADATA.txt') as host_file:
                                 for line in host_file.readlines():
@@ -186,18 +186,35 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                             #                                             boxsize=inst.get('pyzap_boxsize',7),
                             #                                             nsigma=inst.get('pyzap_nsigma',16),
                             #                                             subsigma=inst.get('pyzap_subsigma',3))
-
-                            outimg,outmask,header = pyzapspec.pyzapspec(i,
-                                                                        outfile='cosmic_{}'.format(i),
-                                                                        WRITE_OUTFILE = True,
-                                                                        br = br,
-                                                                        img_num=k, redshift=redshift,
-                                                                        cedit=_cedit, DEBUG=False,
-                                                                        boxsize=inst.get('pyzap_boxsize',20),
-                                                                        nsigma=inst.get('pyzap_nsigma',2),
-                                                                        subsigma=inst.get('pyzap_subsigma',.5))
+                            if _crmask:
+                                print ('Masking cosmic rays...')
+                                outimg,outmask,header = pyzapspec.pyzapspec(i,
+                                                                            outfile='cosmic_{}'.format(i),
+                                                                            WRITE_OUTFILE = True,
+                                                                            br = br,
+                                                                            img_num=k, redshift=redshift,
+                                                                            cedit=_cedit, DEBUG=False,
+                                                                            boxsize=inst.get('pyzap_boxsize_mask',20),
+                                                                            nsigma=inst.get('pyzap_nsigma_mask',2),
+                                                                            subsigma=inst.get('pyzap_subsigma_mask',.5))
+                            else:
+                                outimg,outmask,header = pyzapspec.pyzapspec(i,
+                                                                            outfile='cosmic_{}'.format(i),
+                                                                            WRITE_OUTFILE = True,
+                                                                            br = br,
+                                                                            img_num=k, redshift=redshift,
+                                                                            cedit=_cedit, DEBUG=False,
+                                                                            boxsize=inst.get('pyzap_boxsize',20),
+                                                                            nsigma=inst.get('pyzap_nsigma',2),
+                                                                            subsigma=inst.get('pyzap_subsigma',.5))
+                        if _crmask:
+                            iraf.ccdmask(image='zap_'+i,mask='mask_'+'zap_'+i[0:-5])
                         img = 'cosmic_{}'.format(i)
+                        # img = '{}'.format(i)
+                        if _crmask:
+                            iraf.hedit(images=img, fields='BPM', add='yes', verify='no', value='mask_'+'zap_'+i[0:-5]+'.pl')
                         img_str = img_str + img + ','
+                        
 
                         print('\n### cosmic removal finished')
                     else:
@@ -206,7 +223,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                         img_str = img_str + i + ','
                     k+=1
                 print (img_str)
-                iraf.imcombine(img_str, output=timg)
+                if _crmask:
+                    iraf.imcombine(img_str, combine='median', masktype='goodvalue', output=timg)
+                else:
+                    iraf.imcombine(img_str, combine='median', output=timg)
             else:
                 i = imgs[0]
                 if _cosmic or _cedit:

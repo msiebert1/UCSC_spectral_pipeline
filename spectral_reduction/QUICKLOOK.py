@@ -41,6 +41,8 @@ if __name__ == "__main__":
                       action="store_true",help='do not flat field')
     parser.add_option("--cedit", dest="cedit",
                       action="store_true",help='cosmic ray removal with manual trace editing')
+    parser.add_option("--crmask", dest="crmask",
+                      action="store_true",help='creates a bad pixel mask from cr rejection for imcombine')
     parser.add_option("--ex", dest="extract",
                       action="store_true",help='combined, cr rejected files already exist. skip straight to flatfielding and extraction')
     parser.add_option("--rename", dest="rename",
@@ -56,6 +58,7 @@ if __name__ == "__main__":
     _host= option.host
     _nflat= option.nflat
     _cedit= option.cedit
+    _crmask= option.crmask
     _ex= option.extract
     _rename= option.rename
 
@@ -101,7 +104,7 @@ if __name__ == "__main__":
 
     if len(files_science) > 0:
         print('\n#######################################\n### start of reduction')
-        outputfile = quick_reduc.reduce(files_science, files_arc, files_flat, _cosmic, _interactive_extraction,_arc,_fast,_host,_nflat,_cedit,_ex,_rename)
+        outputfile = quick_reduc.reduce(files_science, files_arc, files_flat, _cosmic, _interactive_extraction,_arc,_fast,_host,_nflat,_cedit,_crmask,_ex,_rename)
         stoptime = time.time()
         print('\n### wow, only ' + str(stoptime - starttime) + ' seconds')
         print('\n### end of reduction')

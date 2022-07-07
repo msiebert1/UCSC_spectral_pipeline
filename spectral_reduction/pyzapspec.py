@@ -377,7 +377,8 @@ def pyzapspec(infile,
     # zapimage_ravel = zapimage.ravel()
 
 
-    res = writefits(zapimage,'zapimage{}{}.fits'.format(br, img_num),CLOBBER=True)
+    # res = writefits(zapimage,'zapimage{}{}.fits'.format(br, img_num),CLOBBER=True)
+    res = writefits(zapimage,'zap_'+infile,CLOBBER=True)
 
 
     outStr = 'Flagged {} initial affected pixels before percolation.'.format(newzaps)

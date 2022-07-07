@@ -28,8 +28,10 @@ kast_blue = {'name': 'kast_blue',
              # 'flatsec': '[80:1650,20:300]', #4-2-17 
              # 'trimsec': '[80:1850,20:300]', #3-21-21
              # 'flatsec': '[80:1850,20:300]', #3-21-21
-             'trimsec': '[80:1850,30:300]', #Kirsty 5-30-22
-             'flatsec': '[80:1850,30:300]', #Kirsty 5-30-22
+             # 'trimsec': '[80:1850,30:300]', #Kirsty 5-30-22
+             # 'flatsec': '[80:1850,30:300]', #Kirsty 5-30-22
+             'trimsec': '[80:1850,45:290]', #Matt 5-26-20
+             'flatsec': '[80:1850,45:290]', #Matt 5-26-20
              # 'trimsec': '[26:1976,22:302]', # temporary
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_blue_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_blue.fits',
@@ -47,6 +49,9 @@ kast_blue = {'name': 'kast_blue',
              'pyzap_boxsize': 5, # approximate seeing in pixels
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 2.8,
+             'pyzap_boxsize_mask': 21,
+             'pyzap_nsigma_mask': 5,
+             'pyzap_subsigma_mask': 2,
              'approx_extract_line': 145,
              'approx_extract_column': 1000,
              'pixel_scale': .43, #arcsec/pix
@@ -101,6 +106,9 @@ kast_red = { 'name': 'kast_red',
              'pyzap_boxsize': 5,
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 2.8,
+             'pyzap_boxsize_mask': 21,
+             'pyzap_nsigma_mask': 5,
+             'pyzap_subsigma_mask': 2,
              'approx_extract_line': 150,
              'approx_extract_column': 1000,
              'pixel_scale': .43, #arcsec/pix
@@ -134,6 +142,9 @@ lris_blue = {'name': 'lris_blue',
              'pyzap_boxsize': 5,
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 8,
+             'pyzap_boxsize_mask': 21,
+             'pyzap_nsigma_mask': 5,
+             'pyzap_subsigma_mask': 2,
              # 'approx_extract_line': 740, jon old
              'approx_extract_line': 200,
              'pixel_scale': .135, #arcsec/pix
@@ -169,6 +180,9 @@ lris_red = { 'name': 'lris_red',
              'pyzap_boxsize': 5,#21
              'pyzap_nsigma': 16,#5
              'pyzap_subsigma': 8,#2
+             'pyzap_boxsize_mask': 21,
+             'pyzap_nsigma_mask': 5,
+             'pyzap_subsigma_mask': 2,
              'approx_extract_line': 350,
              'pixel_scale': .135, #arcsec/pix
              'spatial_binning': 2.,
@@ -203,6 +217,9 @@ lris_red_new = { 'name': 'lris_red_new',
              'pyzap_boxsize': 21,
              'pyzap_nsigma': 5,
              'pyzap_subsigma': 2,
+             'pyzap_boxsize_mask': 21,
+             'pyzap_nsigma_mask': 5,
+             'pyzap_subsigma_mask': 2,
              'approx_extract_line': 350,
              'pixel_scale': .135, #arcsec/pix
              'spatial_binning': 2.,
