@@ -207,13 +207,6 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                                                             boxsize=inst.get('pyzap_boxsize',20),
                                                                             nsigma=inst.get('pyzap_nsigma',2),
                                                                             subsigma=inst.get('pyzap_subsigma',.5))
-                        # if _crmask:
-                        #     iraf.ccdmask(image='zap_'+i,mask='mask_'+'zap_'+i[0:-5])
-                        # img = 'cosmic_{}'.format(i)
-                        # # img = '{}'.format(i)
-                        # if _crmask:
-                        #     iraf.hedit(images=img, fields='BPM', add='yes', verify='no', value='mask_'+'zap_'+i[0:-5]+'.pl')
-                        # img_str = img_str + img + ','
                         if _crmask:
                             iraf.ccdmask(image='zap_'+i,mask='mask_'+'zap_'+i[0:-5])
                         img = 'cosmic_{}'.format(i)
@@ -231,8 +224,9 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     k+=1
                 print (img_str)
                 if _crmask:
-                    iraf.imcombine(img_str, combine='sum', weight='exposure', masktype='goodvalue', output=timg)
-                    iraf.imcombine(img_str, combine='median', masktype='goodvalue', output=timg[0:-5]+'_test.fits')
+                    # iraf.imcombine(img_str, combine='sum', weight='exposure', masktype='goodvalue', output=timg)
+                    iraf.imcombine(img_str, combine='median', masktype='goodvalue', output=timg)
+                    # iraf.imcombine(img_str, combine='median', masktype='goodvalue', output=timg[0:-5]+'_test.fits')
                 else:
                     iraf.imcombine(img_str, output=timg)
             else:
@@ -311,12 +305,12 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
             tfits = fits.open(timg)
             tdata = tfits[0].data
             theader = tfits[0].header
-            if theader.get('Mirrored', None) is None:
-                print ('Mirroring Image!')
-                flip_tdata = np.fliplr(tdata)
-                theader.set('Mirrored',  'True')
-                hdu = fits.PrimaryHDU(flip_tdata, theader)
-                hdu.writeto(timg,output_verify='ignore', clobber=True)
+            # if theader.get('Mirrored', None) is None:
+            #     print ('Mirroring Image!')
+            #     flip_tdata = np.fliplr(tdata)
+            #     theader.set('Mirrored',  'True')
+            #     hdu = fits.PrimaryHDU(flip_tdata, theader)
+            #     hdu.writeto(timg,output_verify='ignore', clobber=True)
 
         if _rename:
             tfits = fits.open(timg)
