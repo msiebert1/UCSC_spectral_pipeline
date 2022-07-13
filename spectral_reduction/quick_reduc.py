@@ -207,6 +207,13 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                                                             boxsize=inst.get('pyzap_boxsize',20),
                                                                             nsigma=inst.get('pyzap_nsigma',2),
                                                                             subsigma=inst.get('pyzap_subsigma',.5))
+                        # if _crmask:
+                        #     iraf.ccdmask(image='zap_'+i,mask='mask_'+'zap_'+i[0:-5])
+                        # img = 'cosmic_{}'.format(i)
+                        # # img = '{}'.format(i)
+                        # if _crmask:
+                        #     iraf.hedit(images=img, fields='BPM', add='yes', verify='no', value='mask_'+'zap_'+i[0:-5]+'.pl')
+                        # img_str = img_str + img + ','
                         if _crmask:
                             iraf.ccdmask(image='zap_'+i,mask='mask_'+'zap_'+i[0:-5])
                         img = 'cosmic_{}'.format(i)
@@ -224,9 +231,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     k+=1
                 print (img_str)
                 if _crmask:
-                    iraf.imcombine(img_str, combine='median', masktype='goodvalue', output=timg)
+                    iraf.imcombine(img_str, combine='sum', weight='exposure', masktype='goodvalue', output=timg)
+                    iraf.imcombine(img_str, combine='median', masktype='goodvalue', output=timg[0:-5]+'_test.fits')
                 else:
-                    iraf.imcombine(img_str, combine='median', output=timg)
+                    iraf.imcombine(img_str, output=timg)
             else:
                 i = imgs[0]
                 if _cosmic or _cedit:
