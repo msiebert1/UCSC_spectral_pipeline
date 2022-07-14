@@ -300,17 +300,17 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                readaxi='line',
                                Stdout=1)
 
-        if 'kast_red' in inst.get('name') or 'lris_red_new' in inst.get('name'):
-        # if 'kast_red' in inst.get('name'):
+        # if 'kast_red' in inst.get('name') or 'lris_red_new' in inst.get('name'): #Matt: did this change again?
+        if 'kast_red' in inst.get('name'):
             tfits = fits.open(timg)
             tdata = tfits[0].data
             theader = tfits[0].header
-            # if theader.get('Mirrored', None) is None:
-            #     print ('Mirroring Image!')
-            #     flip_tdata = np.fliplr(tdata)
-            #     theader.set('Mirrored',  'True')
-            #     hdu = fits.PrimaryHDU(flip_tdata, theader)
-            #     hdu.writeto(timg,output_verify='ignore', clobber=True)
+            if theader.get('Mirrored', None) is None:
+                print ('Mirroring Image!')
+                flip_tdata = np.fliplr(tdata)
+                theader.set('Mirrored',  'True')
+                hdu = fits.PrimaryHDU(flip_tdata, theader)
+                hdu.writeto(timg,output_verify='ignore', clobber=True)
 
         if _rename:
             tfits = fits.open(timg)
