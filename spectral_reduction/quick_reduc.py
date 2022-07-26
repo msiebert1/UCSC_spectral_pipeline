@@ -224,11 +224,10 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     k+=1
                 print (img_str)
                 if _crmask:
-                    # iraf.imcombine(img_str, combine='sum', weight='exposure', masktype='goodvalue', output=timg)
-                    iraf.imcombine(img_str, combine='median', masktype='goodvalue', output=timg)
-                    # iraf.imcombine(img_str, combine='median', masktype='goodvalue', output=timg[0:-5]+'_test.fits')
+                    iraf.imcombine(img_str, combine='average', weight='exposure', masktype='goodvalue', output=timg)
+                    iraf.imcombine(img_str, combine='median', masktype='goodvalue', output=timg[0:-5]+'_med.fits')
                 else:
-                    iraf.imcombine(img_str, output=timg)
+                    iraf.imcombine(img_str, combine='average', weight='exposure', output=timg)
             else:
                 i = imgs[0]
                 if _cosmic or _cedit:

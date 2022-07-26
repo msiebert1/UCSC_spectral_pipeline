@@ -180,9 +180,9 @@ lris_red = { 'name': 'lris_red',
              'pyzap_boxsize': 5,#21
              'pyzap_nsigma': 16,#5
              'pyzap_subsigma': 8,#2
-             'pyzap_boxsize_mask': 21,
-             'pyzap_nsigma_mask': 5,
-             'pyzap_subsigma_mask': 2,
+             'pyzap_boxsize_mask': 5,
+             'pyzap_nsigma_mask': 16,
+             'pyzap_subsigma_mask': 8,
              'approx_extract_line': 350,
              'pixel_scale': .135, #arcsec/pix
              'spatial_binning': 2.,
