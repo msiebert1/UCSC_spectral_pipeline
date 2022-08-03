@@ -8,6 +8,17 @@ from astropy.io import ascii
 from scipy import signal, ndimage
 #DO NOT IMPORT MATPLOTLIB, CAUSES IRAF TO CRASH?
 
+###Python 3 compatibility check
+try:
+    basestring
+except NameError:
+    basestring = str
+
+try:
+    xrange
+except:
+    xrange = range
+
 def load_sections(string, fmt_iraf=True):
     """
     Modified from pypit.core.parse.load_sections -- Jon Brown
@@ -847,7 +858,7 @@ def main(rawFiles,*args,**kwargs):
 
     # loop over raw files, if the destination exists, do nothing
     # otherwise, do the bias/reorient/trim/output
-    for i in xrange(len(rawFiles)):
+    for i in range(len(rawFiles)):
         
         rawFile = rawFiles[i]
         oScanFile = 'pre_reduced/to{}'.format(rawFile)
@@ -1069,7 +1080,7 @@ def main_new_red_amp(rawFiles,*args,**kwargs):
 
     # loop over raw files, if the destination exists, do nothing
     # otherwise, do the bias/reorient/trim/output
-    for i in xrange(len(rawFiles)):
+    for i in range(len(rawFiles)):
         
         rawFile = rawFiles[i]
         oScanFile = 'pre_reduced/to{}'.format(rawFile)
