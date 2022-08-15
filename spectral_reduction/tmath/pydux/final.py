@@ -433,6 +433,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             newdelt = float(newdelt)
             if newdelt != wave[1]-wave[0]:
                 rebinned = True
+            else:
+                rebinned = False
             print('\nCurrent range: {} {}'.format(wave[0],wave[-1]))
             if (secondtime):
                 print('\nPrevious selection was {} {} (marked in red on plot)'.format(wavesave0,wavesaven))

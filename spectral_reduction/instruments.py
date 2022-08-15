@@ -31,10 +31,12 @@ kast_blue = {'name': 'kast_blue',
              # 'trimsec': '[80:1850,30:300]', #Kirsty 5-30-22
              # 'flatsec': '[80:1850,30:300]', #Kirsty 5-30-22
 
-             'trimsec': '[80:1850,45:290]', #Matt 5-26-20
-             'flatsec': '[80:1850,45:290]', #Matt 5-26-20
-             # 'trimsec': '[80:1850,20:300]', #Matt 5-26-20
-             # 'flatsec': '[80:1850,20:300]', #Matt 5-26-20
+             # 'trimsec': '[80:1850,45:290]', #Matt 5-26-20
+             # 'flatsec': '[80:1850,45:290]', #Matt 5-26-20
+             'trimsec': '[80:1850,20:300]', #Matt 5-26-20
+             'flatsec': '[80:1850,20:300]', #Matt 5-26-20
+             # 'trimsec': '[80:1850,40:330]', #Matt 5-26-20
+             # 'flatsec': '[80:1850,40:330]', #Matt 5-26-20
 
              # 'trimsec': '[26:1976,22:302]', # temporary
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_blue_20180206.fits',
@@ -94,8 +96,8 @@ kast_red = { 'name': 'kast_red',
 
              'trimsec': '[75:365,70:2296]', #Kirsty 5-30-22
              'flatsec': '[75:365,70:2296]', #Kirsty 5-30-22
-             # 'trimsec': '[110:370,70:2296]'
-             # 'flatsec': '[110:370,70:2296]'
+             # 'trimsec': '[110:370,80:2296]',
+             # 'flatsec': '[110:370,80:2296]',
 
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
