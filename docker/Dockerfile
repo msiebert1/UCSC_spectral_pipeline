@@ -15,4 +15,7 @@ RUN wget \
 RUN conda config --add channels http://ssb.stsci.edu/astroconda
 RUN conda create -n iraf27 python=2.7 iraf-all pyraf-all stsci
 RUN conda create -n py36 python=3.6
-WORKDIR /home
+SHELL ["conda", "run", "--no-capture-output", "-n", "iraf27", "/bin/bash", "-c"]
+WORKDIR /home/iraf/
+RUN echo "y xgterm" | mkiraf
+WORKDIR /home/
