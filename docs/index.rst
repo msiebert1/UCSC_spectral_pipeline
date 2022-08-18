@@ -1,0 +1,14 @@
+..
+
+UCSC Spectral Pipeline documentation
+====================================
+
+Welcome.
+
+
+Contents
+--------
+
+.. toctree::
+    :maxdepth: 2
+

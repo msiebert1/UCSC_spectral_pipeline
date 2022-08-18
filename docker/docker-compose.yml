@@ -1,6 +1,6 @@
 version: "3"
 services:
-  ucsc_spectral_pipeline:
+  ucsc_spectral_pipeline_local:
     build:
       context: .
     volumes:
@@ -10,4 +10,15 @@ services:
     environment:
       - DISPLAY=host.docker.internal:0
       - UCSC_SPECPIPE=/home/UCSC_spectral_pipeline
-
+    profiles: ["local"]
+  ucsc_spectral_pipeline_latest:
+    build:
+      context: .
+    volumes:
+      - ../:/home/UCSC_spectral_pipeline
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ../extra_files/disp.cl:/home/spec_user/iraf/disp.cl
+    environment:
+      - DISPLAY=host.docker.internal:0
+      - UCSC_SPECPIPE=/home/UCSC_spectral_pipeline
+    profiles: [ "latest" ]
