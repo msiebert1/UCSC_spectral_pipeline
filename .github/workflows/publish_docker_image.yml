@@ -8,7 +8,7 @@ name: Publish Docker image
 
 on:
   push:
-    branches: [main]
+    branches: [peter-docker]
     paths:
       - "*/Dockerfile"
       - ".github/workflows/publish_docker_image.yml"
