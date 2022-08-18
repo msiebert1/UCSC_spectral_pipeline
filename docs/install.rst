@@ -59,7 +59,7 @@ using the pipeline container.
 Stopping the container
 ----------------------
 
-It important when you are finished using the docker container that you stop it
+It is important when you are finished using the docker container that you stop it
 properly. This enables it to be started easily again.
 
 To exit the container run,
@@ -75,7 +75,7 @@ Then make sure you stop the container running with (whilst you are in the
 
     docker compose down
 
-The make sure that you close your machine to connections with,
+Then make sure that you close your machine to connections with,
 
 .. code:: None
 
