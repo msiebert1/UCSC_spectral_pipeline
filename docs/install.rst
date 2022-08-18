@@ -30,6 +30,7 @@ Running the spectral pipeline
 Clone the pipline repository.
 
 ..  code::
+
     git clone https://github.com/astrophpeter/UCSC_spectral_pipeline
 
 Navigate to docker directory.
@@ -51,8 +52,11 @@ Run the docker container.
 
     docker compose run ucsc_spectral_pipeline_latest
 
-This should bring you into the docker container. Where you can run pipeline tasks
-with the required installs present. To exit the container run,
+This should bring you into the docker container. Here you can run pipeline tasks
+with the required installs present. See :doc:`here <docker>`_ for details on
+using the pipeline container.
+
+To exit the container run,
 
 .. code:: None
 
