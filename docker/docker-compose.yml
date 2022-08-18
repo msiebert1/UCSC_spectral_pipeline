@@ -10,10 +10,8 @@ services:
     environment:
       - DISPLAY=host.docker.internal:0
       - UCSC_SPECPIPE=/home/UCSC_spectral_pipeline
-    profiles: ["local"]
   ucsc_spectral_pipeline_latest:
-    build:
-      context: .
+    image: ghcr.io/astrophpeter/ucsc_spectral_pipeline:latest
     volumes:
       - ../:/home/UCSC_spectral_pipeline
       - /tmp/.X11-unix:/tmp/.X11-unix
@@ -21,4 +19,3 @@ services:
     environment:
       - DISPLAY=host.docker.internal:0
       - UCSC_SPECPIPE=/home/UCSC_spectral_pipeline
-    profiles: [ "latest" ]
