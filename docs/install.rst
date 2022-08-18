@@ -53,7 +53,7 @@ Run the docker container.
     docker compose run ucsc_spectral_pipeline_latest
 
 This should bring you into the docker container. Here you can run pipeline tasks
-with the required installs present. See :doc:`here <docker>`_ for details on
+with the required installs present. See :doc:`here <docker>` for details on
 using the pipeline container.
 
 To exit the container run,
