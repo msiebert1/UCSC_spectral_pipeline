@@ -10,19 +10,19 @@ Conda environments
 There are two pre-configured conda environments setup in the container -
 :code:`iraf27` and :code:`py36`. To activate these conda environments run,
 
-.. code::
+.. code:: None
 
     source activate iraf27
 
 or
 
-.. code::
+.. code:: None
 
     source activate py36
 
 To deactivate run,
 
-.. code::
+.. code:: None
 
     source deactivate
 
@@ -44,9 +44,22 @@ need the container to see a data directory on your local machine. To add this vo
 you need to add a volume to the :code:`ucsc_spectra_pipeline_latest` service in
 :code:`docker/docker-compose.yml` file. The syntax is,
 
-.. code::
+.. code:: None
 
     <path on your local machine>:<path in the container>
 
 To see this volume you will have to start the container with the modified
 docker compose file.
+
+Running pyraf
+-------------
+
+To run pyraf in the container,
+
+.. code:: None
+
+    source activate iraf27
+    pyraf
+
+You should see the pyraf GUI. If you get an "cannot find X display error", stop
+the container and run "xhost +" on your local machine.
