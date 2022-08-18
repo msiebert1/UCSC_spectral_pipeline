@@ -427,13 +427,14 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 print('\nPrevious resolution choice: {}'.format(deltsave))
             else:
                 deltsave = 0.0
+
             newdelt=wave[1]-wave[0]
-            # while (newdelt <= 0) or (newdelt > wave[-1]):
-            #     print('Rebin to how many Angstroms per pixel? ')
-            #     newdelt=inputter('         <CR> selects previous choice: ','float',True,deltsave)
-            #     if (newdelt <= 0) or (newdelt > wave[-1]):
-            #         print('Need positive resoution and smaller than the')
-            #         print('entire spectrum.  Try again')
+            newdelt = input('Angstroms per pixel ['+ str(np.round(newdelt, 3)) + ']: ') or newdelt
+            newdelt = float(newdelt)
+            if newdelt != wave[1]-wave[0]:
+                rebinned = True
+            else:
+                rebinned = False
             print('\nCurrent range: {} {}'.format(wave[0],wave[-1]))
             if (secondtime):
                 print('\nPrevious selection was {} {} (marked in red on plot)'.format(wavesave0,wavesaven))
@@ -510,8 +511,12 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             # interp_data = interpo_flux_conserving(wave, bobj, 1./vartmp, waveb, waver, dw=newdelt, testing=False)
 
             #need to interpolate since we corrected for earths motion
+
             # interp_wave = np.arange(math.ceil(wave[0])+1., math.floor(wave[-1])-1., dtype=float, step=newdelt)
-            interp_wave = np.arange(len(finalobj.copy()))*newdelt+nwave[0]
+            if rebinned:
+                interp_wave = np.arange(math.ceil(wave[0])+1., math.floor(wave[-1])-1., dtype=float, step=newdelt)
+            else:
+                interp_wave = np.arange(len(finalobj.copy()))*newdelt+nwave[0]
             spectres_data = spectres(interp_wave, wave, bobj, spec_errs=bsig)
             # plt.close()
             # fig=plt.figure(figsize = [15,8])
