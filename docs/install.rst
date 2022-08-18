@@ -56,6 +56,12 @@ This should bring you into the docker container. Here you can run pipeline tasks
 with the required installs present. See :doc:`here <docker>` for details on
 using the pipeline container.
 
+Stopping the container
+----------------------
+
+It important when you are finished using the docker container that you stop it
+properly. This enables it to be started easily again.
+
 To exit the container run,
 
 .. code:: None
