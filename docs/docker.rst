@@ -4,18 +4,30 @@ Using the container
 This pages walks you though how to use the docker container and details some
 pre-configured settings.
 
-Running the pipeline
---------------------
+Environment file
+----------------
 
-To run a pipeline script run:
+The docker container should run out of the box with the env/env.public environment
+file. However, you may want to use your own env file e.g., if you want to map
+data on your local machine to the container.
+
+To do this, first make a copy of the env.public file and call it env. In the base
+directory run
 
 .. code:: None
 
-    python3 ${PIPELINE}/<name_of_script>.py
+    cp env/env.public env/env
 
+The env file is now your personal environment file and will be ignored by git.
+Make sure you change the :code:`PATH_TO_ENV` to ../env/env so docker can find it.
+Then to run the docker container with your personal env file,
 
-Volumes
--------
+.. code:: None
+
+    docker compose --env-file ../env/env ucsc_spectral_pipeline_latest run
+
+Data Volume
+-----------
 
 Volumes allow the docker container to see files (and live edits) on your local
 system.
@@ -24,20 +36,23 @@ By default the container has the ucsc_spectral_pipeline repository, where
 you launched the container from, mapped into :code:`/home/ucsc_spectral_pipeline/`
 in the container.
 
-Also by default the container has the :code:`/home/ucsc_spectral_pipeline/extra_files/disp.cl`
-mapped to :code:`/home/iraf/disp.cl` in the container.
+Also by default the container has the :code:`ucsc_spectral_pipeline/extra_files/disp.cl`
+mapped to :code:`/etc/iraf/disp.cl` in the container, and :code:`ucsc_spectral_pipeline/login.cl`
+mapped to :code:`/etc/iraf/login.cl` in the container.
 
-You might want to mount your own volumes in the container. For example you may
-need the container to see a data directory on your local machine. To add this volume,
-you need to add a volume to the :code:`ucsc_spectra_pipeline_latest` service in
-:code:`docker/docker-compose.yml` file. The syntax is,
+You might want to mount your own data volumes in the container. To do this set
+the :code:`DATA_VOLUME` variable in your env file to the path on your local machine
+container the data. This data will then be available in the docker container at
+:code:`/home/data/`.
+
+Running the pipeline
+--------------------
+
+To run a pipeline script run when in the container.
 
 .. code:: None
 
-    <path on your local machine>:<path in the container>
-
-To see this volume you will have to start the container with the modified
-docker compose file.
+    python3 ${PIPELINE}/<name_of_script>.py
 
 Running pyraf
 -------------

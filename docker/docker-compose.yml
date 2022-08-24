@@ -1,25 +1,20 @@
 version: "3"
 services:
-  ucsc_spectral_pipeline_local:
+  ucsc_spectral_pipeline_base:
     build:
       context: .
     volumes:
       - ../:/home/UCSC_spectral_pipeline
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - ../extra_files/disp.cl:/home/iraf/disp.cl
-      - ../login.cl:/etc/iraf/login.cl
-    environment:
-      - DISPLAY=host.docker.internal:0
-      - UCSC_SPECPIPE=/home/UCSC_spectral_pipeline
-      - PIPELINE=/home/UCSC_spectral_pipeline/spectral_reduction
+      - $SOCKET:/tmp/.X11-unix
+      - $IRAF_DISP_FILE:/etc/iraf/disp.cl
+      - $IRAF_LOGIN_FILE:/etc/iraf/login.cl
+      - $DATA_VOLUME:/home/data/
+    env_file:
+      - $PATH_TO_ENV
   ucsc_spectral_pipeline_latest:
-    image: ghcr.io/astrophpeter/ucsc_spectral_pipeline:latest
-    volumes:
-      - ../:/home/UCSC_spectral_pipeline
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - ../extra_files/disp.cl:/home/iraf/disp.cl
-      - ../login.cl:/etc/iraf/login.cl
-    environment:
-      - DISPLAY=host.docker.internal:0
-      - UCSC_SPECPIPE=/home/UCSC_spectral_pipeline
-      - PIPELINE=/home/UCSC_spectral_pipeline/spectral_reduction
+    extends:
+      file: docker-compose.yml
+      service: ucsc_spectral_pipeline_base
+    image: $DOCKER_IMAGE
+
+

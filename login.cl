@@ -126,4 +126,4 @@ else
 
 keep
 
-task disp='/home/iraf/disp.cl'
+task disp='/etc/iraf/disp.cl'

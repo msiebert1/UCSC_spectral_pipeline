@@ -33,6 +33,12 @@ Clone the pipline repository.
 
     git clone https://github.com/astrophpeter/UCSC_spectral_pipeline
 
+Download the most recent docker image.
+
+..  code::
+
+    docker pull ghcr.io/astrophpeter/ucsc_spectral_pipeline:latest
+
 Navigate to docker directory.
 
 .. code:: None
@@ -50,7 +56,7 @@ Run the docker container.
 
 .. code:: None
 
-    docker compose run ucsc_spectral_pipeline_latest
+    docker compose --env-file ../env/env.public run ucsc_spectral_pipeline_latest
 
 This should bring you into the docker container. Here you can run pipeline tasks
 with the required installs present. See :doc:`here <docker>` for details on
@@ -73,7 +79,7 @@ Then make sure you stop the container running with (whilst you are in the
 
 .. code:: None
 
-    docker compose down
+    docker compose --env-file ../env/env.public down
 
 Then make sure that you close your machine to connections with,
 
