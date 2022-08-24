@@ -12,6 +12,7 @@ on:
     paths:
       - "*/Dockerfile"
       - ".github/workflows/publish_docker_image.yml"
+      - "*/requirements.txt"
 
 jobs:
   docker:
