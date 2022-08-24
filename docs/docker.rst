@@ -4,27 +4,15 @@ Using the container
 This pages walks you though how to use the docker container and details some
 pre-configured settings.
 
-Conda environments
-------------------
+Running the pipeline
+--------------------
 
-There are two pre-configured conda environments setup in the container -
-:code:`iraf27` and :code:`py36`. To activate these conda environments run,
-
-.. code:: None
-
-    source activate iraf27
-
-or
+To run a pipeline script run:
 
 .. code:: None
 
-    source activate py36
+    python3 ${PIPELINE}/<name_of_script>.py
 
-To deactivate run,
-
-.. code:: None
-
-    source deactivate
 
 Volumes
 -------
@@ -58,7 +46,6 @@ To run pyraf in the container,
 
 .. code:: None
 
-    source activate iraf27
     pyraf
 
 You should see the pyraf GUI. If you get an "cannot find X display error", stop

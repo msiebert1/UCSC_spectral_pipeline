@@ -69,7 +69,7 @@ To exit the container run,
     exit
 
 Then make sure you stop the container running with (whilst you are in the
-:code:`docker/`) directory,
+:code:`docker/`) directory
 
 .. code:: None
 
