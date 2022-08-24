@@ -51,3 +51,4 @@ jobs:
           tags: ${{ steps.prep.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          push: ${{ github.event_name != 'pull_request'}}
