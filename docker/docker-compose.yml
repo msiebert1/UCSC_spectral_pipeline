@@ -1,8 +1,7 @@
 version: "3"
 services:
-  ucsc_spectral_pipeline_base:
-    build:
-      context: .
+  pipeline:
+    image: ghcr.io/astrophpeter/ucsc_spectral_pipeline:latest
     volumes:
       - ../:/home/UCSC_spectral_pipeline
       - $SOCKET:/tmp/.X11-unix
@@ -11,10 +10,5 @@ services:
       - $DATA_VOLUME:/home/data/
     env_file:
       - $PATH_TO_ENV
-  ucsc_spectral_pipeline_latest:
-    extends:
-      file: docker-compose.yml
-      service: ucsc_spectral_pipeline_base
-    image: $DOCKER_IMAGE
 
 

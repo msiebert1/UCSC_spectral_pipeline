@@ -16,7 +16,7 @@ Install and configure XQuarts
 
 You are going to need XQuartx to see IRAF GUI output.
 
-1. Install XQuartz: https://www.xquartz.org/
+1. Install XQuartz: https://www.xquartz.org/ (Tested with XQuarts 2.8.2)
 
 2. Launch XQuartz. Under the XQuartz menu, select Preferences
 
@@ -39,28 +39,17 @@ Download the most recent docker image.
 
     docker pull ghcr.io/astrophpeter/ucsc_spectral_pipeline:latest
 
-Navigate to docker directory.
+Run the start up script. While in the base directory,
 
-.. code:: None
+..  code:: None
 
-    cd docker/
+    bash run.sh
 
-Enable the docker container to forward to your machine so you can see the
-IRAF GUI.
+This script enables the docker container to forward to your machine so you can see the
+IRAF GUI, and starts the pipeline container with your :code:`env/env` file.
 
-.. code:: None
-
-    xhost +
-
-Run the docker container.
-
-.. code:: None
-
-    docker compose --env-file ../env/env.public run ucsc_spectral_pipeline_latest
-
-This should bring you into the docker container. Here you can run pipeline tasks
-with the required installs present. See :doc:`here <docker>` for details on
-using the pipeline container.
+Once in the container, you can run pipeline tasks with the required installs present.
+See :doc:`here <docker>` for details on using the pipeline container.
 
 Stopping the container
 ----------------------
@@ -74,21 +63,14 @@ To exit the container run,
 
     exit
 
-Then make sure you stop the container running with (whilst you are in the
-:code:`docker/`) directory
+Then make sure you stop the container running and close your machine to local
+host connections by running,
 
 .. code:: None
 
-    docker compose --env-file ../env/env.public down
+    bash down.sh
 
-Then make sure that you close your machine to connections with,
-
-.. code:: None
-
-    xhost -
-
-
-
+in the base directory.
 
 
 
