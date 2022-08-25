@@ -15,4 +15,5 @@ Contents
     install
     docker
     images
+    usage
 
