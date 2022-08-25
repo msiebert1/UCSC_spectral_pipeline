@@ -201,7 +201,7 @@ def substitute_ap_data(host_ap_file, ref_ap_data, name, ap_width, is_sn_ap, sn_d
                 low = str(-1.*ap_width/2. + sn_direction*sep_pix) 
             else:
                 low = str(-1.*ap_width/2.) 
-            if 'kast' in name or 'lris_red_new' in name:
+            if 'kast_red' in name or 'lris_red_new' in name:
                 host_ap_file.write(r_line.replace(r_line.split()[1], low))
             else:
                 host_ap_file.write(r_line.replace(r_line.split()[2], low))
@@ -210,7 +210,7 @@ def substitute_ap_data(host_ap_file, ref_ap_data, name, ap_width, is_sn_ap, sn_d
                 high = str(ap_width/2. + sn_direction*sep_pix) 
             else:
                 high = str(ap_width/2.) 
-            if 'kast' in name or 'lris_red_new' in name:
+            if 'kast_red' in name or 'lris_red_new' in name:
                 host_ap_file.write(r_line.replace(r_line.split()[1], high))
             else:
                 host_ap_file.write(r_line.replace(r_line.split()[2], high))

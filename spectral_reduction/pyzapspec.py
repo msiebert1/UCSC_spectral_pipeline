@@ -313,7 +313,8 @@ def pyzapspec(infile,
 
     # this uses a crude relationship between redshift and halpha column
     # to select region of cr mask to ignore 
-    if redshift or cedit:
+    # if redshift or cedit:
+    if cedit:
         
         # zs = [.0204, .037, .0619, .0808]
         # cols = [1130, 1220, 1350, 1464]

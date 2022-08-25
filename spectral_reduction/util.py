@@ -790,9 +790,15 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
                                 elif 'begin' not in c_line and 'aperture' in c_line:
                                     new_file.write(c_line.replace(c_line.split()[1], str(i+1)))
                                 elif 'low' in c_line and 'reject' not in c_line:
-                                    new_file.write(c_line.replace(c_line.split()[2], low))
+                                    if 'kast_red' in ap_match:
+                                        new_file.write(c_line.replace(c_line.split()[1], low))
+                                    else:
+                                        new_file.write(c_line.replace(c_line.split()[2], low))
                                 elif 'high' in c_line and 'reject' not in c_line:
-                                    new_file.write(c_line.replace(c_line.split()[2], high))
+                                    if 'kast_red' in ap_match:
+                                        new_file.write(c_line.replace(c_line.split()[1], high))
+                                    else:
+                                        new_file.write(c_line.replace(c_line.split()[2], high))
                                 elif 'sample' in c_line:
                                     b_sample = str(b_samps[i])
                                     new_file.write(c_line.replace(c_line.split('sample')[1].split('\n')[0], ' '+ b_sample))
@@ -866,9 +872,18 @@ def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
     else:
         sign = 1.
 
+    if 'blue' in inst.get('name'):
+        match_inst = instruments.lookup(inst.get('name').split('_')[0]+'_red')
+    elif 'red' in inst.get('name'):
+        match_inst = instruments.lookup(inst.get('name').split('_')[0]+'_blue')
+
+    pix_scale_factor = match_inst.get('pixel_scale')/inst.get('pixel_scale')
+    print ('pixel scale factor: ', pix_scale_factor)
+
     for line in ap_data:
         if 'begin' in line:
-            match_inst = line.split()[2]
+            match_name = line.split()[2]
+
 
         if len(line.split()) == 2 and 'aperture' in line:
             if line.split()[1] == '1':
@@ -887,20 +902,20 @@ def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
 
         elif 'low' in line and 'reject' not in line:
             if 'kast_blue' in inst.get('name'): #current inst is blue so want to get correct red ap
-                low = str(sign*float(line.split()[1])*(ap_binning/img_binning) + diff) 
-            elif 'lris_red_new' in match_inst:
-                low = str(sign*float(line.split()[1])*(ap_binning/img_binning) + diff) 
+                low = str(pix_scale_factor*(sign*float(line.split()[1])*(ap_binning/img_binning) + diff))
+            elif 'lris_red_new' in match_name:
+                low = str(pix_scale_factor*(sign*float(line.split()[1])*(ap_binning/img_binning) + diff))
             else:
-                low = str(sign*float(line.split()[2])*(ap_binning/img_binning) + diff) 
+                low = str(pix_scale_factor*(sign*float(line.split()[2])*(ap_binning/img_binning) + diff))
             lows.append(low)
 
         elif 'high' in line and 'reject' not in line:
             if 'kast_blue' in inst.get('name'): #current inst is blue so want to get correct red ap
-                high = str(sign*float(line.split()[1])*(ap_binning/img_binning) + diff)
-            elif 'lris_red_new' in match_inst:
-                high = str(sign*float(line.split()[1])*(ap_binning/img_binning) + diff)
+                high = str(pix_scale_factor*(sign*float(line.split()[1])*(ap_binning/img_binning) + diff))
+            elif 'lris_red_new' in match_name:
+                high = str(pix_scale_factor*(sign*float(line.split()[1])*(ap_binning/img_binning) + diff))
             else:
-                high = str(sign*float(line.split()[2])*(ap_binning/img_binning) + diff)
+                high = str(pix_scale_factor*(sign*float(line.split()[2])*(ap_binning/img_binning) + diff))
             highs.append(high)
 
         elif 'sample' in line:
@@ -916,11 +931,11 @@ def get_relevant_ap_data(ap_data, ap_binning, img_binning, inst):
                 if len(_b_sample.split()) > 1 or len(_b_sample.split(',')) > 1:
                     b3 = float(_b_sample.split()[1].split(':')[0])
                     b4 = float(_b_sample.split()[1].split(':')[1])
-            b1 = b1*(ap_binning/img_binning) + diff
-            b2 = b2*(ap_binning/img_binning) + diff
+            b1 = pix_scale_factor*(b1*(ap_binning/img_binning) + diff)
+            b2 = pix_scale_factor*(b2*(ap_binning/img_binning) + diff)
             if len(_b_sample.split()) > 1 or len(_b_sample.split(',')) > 1:
-                b3 = b3*(ap_binning/img_binning) + diff
-                b4 = b4*(ap_binning/img_binning) + diff
+                b3 = pix_scale_factor*(b3*(ap_binning/img_binning) + diff)
+                b4 = pix_scale_factor*(b4*(ap_binning/img_binning) + diff)
             if 'kast' in inst.get('name'):
                 if len(_b_sample.split()) > 1 or len(_b_sample.split(',')) > 1:
                     # _b_sample_new = str(sign*b4)+':'+str(sign*b3)+' '+str(sign*b2)+':'+str(sign*b1)
