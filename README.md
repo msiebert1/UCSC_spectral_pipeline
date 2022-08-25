@@ -5,47 +5,9 @@ This is the 0.1 version of a quicklook spectral reduction pipeline. It has been 
 
 The pipeline is a collection of python scripts (pre_reduction_dev.py, QUICKLOOK.py, and cal.py), utilising an implementation of IRAF called, not surprisingly, pyRAF. It is heavily influenced from Stefano Valenti's work on similar pipelines for NNT (EFOSC) and LCO (FLOYDS) pipelines.
 
--------------
+### Documentation
 
-Installation of the pipeline.
-
-- Via anaconda, install astroconda. More info on https://astroconda.readthedocs.io/en/latest/
-- Make sure you include the iraf environment, https://astroconda.readthedocs.io/en/latest/installation.html
-- After that, just in case, check if you have pyraf, numpy, astropy and pylab.
-- Clone the repository
-
-     ```git clone https://github.com/msiebert1/UCSC_spectral_pipeline.git```
-
-- In your ~/.bashrc file (or your ~/.bash_profile for Mac people), add the following lines:
-
-     ```export UCSC_SPECPIPE=<the new directory just created by git>```
-
-     ```export PATH=$UCSC_SPECPIPE/spectral_reduction:$PATH```
-
-- Copy the disp.cl file (located in the extra_files folder) into your iraf folder
-(this was hopefully created when you installed astroconda). If you cannot find it,
-copy the disp.cl file into ~/iraf and run mkiraf in that directory.
-- At the end of your iraf login.cl file, add the following line with the appropriate path:
-
-     ```task disp='<your_iraf_directory>/disp.cl'```
-
-- For the flux calibration portion of the pipline make sure you have a python 3 environment. This can be 
-created with a command like:
-
-    ```conda create -n py36 python=3.6 anaconda```
-  
-------------
-
-The pipeline includes 3 folders with the relevant scripts, and this readme file:
-
-- Spectral_reduction. This includes the scripts + functions, used in the
-pipeline. There may be some left-over functions from other codes, or
-functions that are not called at all. In time, this will be corrected.
-Moreover, there is a folder called trunk, where the archival files, used in the pipeline are included.
-- Extra_files. This includes 2 plots with emission arc lines for KAST,
-for your convenience, and the disp.cl file, for which we will mention later on.
-- Test_data. Contains arcs (b1003, r1003), flats (b1020-b1030, r1020-r1030), and science frames 
-(b1064, r1073-r1075).
+https://ucsc-spectral-pipeline.readthedocs.io/en/latest/
 
 -----------
 
