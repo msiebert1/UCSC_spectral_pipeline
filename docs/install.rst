@@ -70,8 +70,43 @@ host connections by running,
 
     bash down.sh
 
-in the base directory.
+in the base directory. Happy reducing!
 
+Archival Native install
+-----------------------
+
+.. warning::
+
+    These instructions are here for archival purposes only, we do not recommend
+    you install the pipeline this way. It will be difficult, you have been warned.
+
+Installation of the pipeline.
+
+* Via anaconda, install astroconda. More info on https://astroconda.readthedocs.io/en/latest/
+* Make sure you include the iraf environment, https://astroconda.readthedocs.io/en/latest/installation.html
+* After that, just in case, check if you have pyraf, numpy, astropy and pylab.
+* Clone the repository
+
+     ```git clone https://github.com/msiebert1/UCSC_spectral_pipeline.git```
+
+* In your ~/.bashrc file (or your ~/.bash_profile for Mac people), add the following lines:
+
+     ```export UCSC_SPECPIPE=<the new directory just created by git>```
+
+     ```export PATH=$UCSC_SPECPIPE/spectral_reduction:$PATH```
+
+* Copy the disp.cl file (located in the extra_files folder) into your iraf folder
+(this was hopefully created when you installed astroconda). If you cannot find it,
+copy the disp.cl file into ~/iraf and run mkiraf in that directory.
+
+* At the end of your iraf login.cl file, add the following line with the appropriate path:
+
+     ```task disp='<your_iraf_directory>/disp.cl'```
+
+* For the flux calibration portion of the pipline make sure you have a python 3 environment. This can be
+created with a command like:
+
+    ```conda create -n py36 python=3.6 anaconda```
 
 
 
