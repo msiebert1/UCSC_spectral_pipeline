@@ -24,7 +24,7 @@ Then to run the docker container with your personal env file,
 
 .. code:: None
 
-    docker compose --env-file ../env/env run ucsc_spectral_pipeline_latest
+    bash run.sh
 
 Volumes
 -------

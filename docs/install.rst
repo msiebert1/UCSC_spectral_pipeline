@@ -39,6 +39,13 @@ Download the most recent docker image.
 
     docker pull ghcr.io/astrophpeter/ucsc_spectral_pipeline:latest
 
+Set your env file to the defaults (See :doc:`Using the container <docker>` for
+more details on the env file). While in the base directory run,
+
+.. code::
+
+    cp env/env.public env/env
+
 Run the start up script. While in the base directory,
 
 ..  code:: None
