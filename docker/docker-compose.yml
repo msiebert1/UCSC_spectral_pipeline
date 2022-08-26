@@ -1,7 +1,7 @@
 version: "3"
 services:
   pipeline:
-    image: ghcr.io/astrophpeter/ucsc_spectral_pipeline:latest
+    image: $IMAGE
     volumes:
       - ../:/home/UCSC_spectral_pipeline
       - $SOCKET:/tmp/.X11-unix
