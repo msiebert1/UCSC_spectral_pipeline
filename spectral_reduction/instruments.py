@@ -35,8 +35,9 @@ kast_blue = {'name': 'kast_blue',
              # 'flatsec': '[80:1850,45:290]', #Matt 5-26-20
              'trimsec': '[80:1850,20:300]', #Matt 5-26-20
              'flatsec': '[80:1850,20:300]', #Matt 5-26-20
-             # 'trimsec': '[80:1850,40:330]', #Matt 5-26-20
-             # 'flatsec': '[80:1850,40:330]', #Matt 5-26-20
+             # 'trimsec': '[80:1850,30:320]', #Matt 4-19-17
+             # 'flatsec': '[80:1850,30:320]', #Matt 4-19-17
+
 
              # 'trimsec': '[26:1976,22:302]', # temporary
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_blue_20180206.fits',
@@ -96,8 +97,8 @@ kast_red = { 'name': 'kast_red',
 
              'trimsec': '[75:365,70:2296]', #Kirsty 5-30-22
              'flatsec': '[75:365,70:2296]', #Kirsty 5-30-22
-             # 'trimsec': '[110:370,80:2296]',
-             # 'flatsec': '[110:370,80:2296]',
+             # 'trimsec': '[50:340,70:2296]', #Kirsty 5-30-22
+             # 'flatsec': '[50:340,70:2296]', #Kirsty 5-30-22
 
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
@@ -115,9 +116,9 @@ kast_red = { 'name': 'kast_red',
              'pyzap_boxsize': 5,
              'pyzap_nsigma': 16,
              'pyzap_subsigma': 2.8,
-             'pyzap_boxsize_mask': 5, # test more params
-             'pyzap_nsigma_mask': 16, # test more params
-             'pyzap_subsigma_mask': 2.8, # test more params
+             'pyzap_boxsize_mask': 21,#5, # test more params
+             'pyzap_nsigma_mask': 5,#16, # test more params
+             'pyzap_subsigma_mask': 2,#2.8, # test more params
              'approx_extract_line': 150,
              'approx_extract_column': 1000,
              'pixel_scale': .43, #arcsec/pix
@@ -230,7 +231,7 @@ lris_red_new = { 'name': 'lris_red_new',
              'pyzap_nsigma_mask': 5,
              'pyzap_subsigma_mask': 2,
              'approx_extract_line': 350,
-             'pixel_scale': .135, #arcsec/pix
+             'pixel_scale': .123, #arcsec/pix updated with new chip
              'spatial_binning': 2.,
              'flat_regions': [[0,300],[1850,2000],[3250,3700]],
              'flat_good_region': [2500, 2700],
@@ -339,6 +340,32 @@ def blue_or_red(img):
         print (img)
         print(util.readkey3(hdr, 'VERSION') + 'not in database')
         return None, None
+
+def lookup(inst_name):
+    if inst_name == 'kast_blue':
+        return kast_blue
+    elif inst_name == 'kast_red':
+        return kast_red
+    elif inst_name == 'lris_blue':
+        return lris_blue
+    elif inst_name == 'lris_red':
+        return lris_red
+    elif inst_name == 'lris_red_new':
+        return lris_red_new
+    elif inst_name == 'goodman_blue':
+        return goodman_m1
+    elif inst_name == 'goodman_red':
+        return goodman_m2
+    else:
+        print ('No instrument named:', inst_name)
+
+
+
+
+
+
+
+
 
 
 
