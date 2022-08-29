@@ -514,7 +514,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
 
             # interp_wave = np.arange(math.ceil(wave[0])+1., math.floor(wave[-1])-1., dtype=float, step=newdelt)
             if rebinned:
-                interp_wave = np.arange(math.ceil(wave[0])+1., math.floor(wave[-1])-1., dtype=float, step=newdelt)
+                interp_wave = np.arange(math.ceil(nwave[0])+1., math.floor(nwave[-1])-1., dtype=float, step=newdelt)
             else:
                 interp_wave = np.arange(len(finalobj.copy()))*newdelt+nwave[0]
             spectres_data = spectres(interp_wave, wave, bobj, spec_errs=bsig)
