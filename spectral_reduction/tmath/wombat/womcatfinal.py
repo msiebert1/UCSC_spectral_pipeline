@@ -114,6 +114,7 @@ def womcatfinal(blue_data, red_data):
         # fluxred = red_interp_flux
         # varred = red_interp_err
 
+    print (wavered[0], wavered[-1])
     indexblue=womget_element(waveblue,wavered[0])
     indexred=womget_element(wavered,waveblue[-1])
     fluxcor=1.0
