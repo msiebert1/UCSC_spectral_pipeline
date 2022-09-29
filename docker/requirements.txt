@@ -1,0 +1,5 @@
+pyraf==2.2.1
+matplotlib==3.5.3
+pandas==1.4.3
+Pillow==9.2.0
+astropy==5.0
