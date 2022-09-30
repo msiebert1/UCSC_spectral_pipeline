@@ -8,7 +8,7 @@ name: Publish Docker image
 
 on:
   push:
-    branches: [peter-docker]
+    branches: [master]
     paths:
       - "*/Dockerfile"
       - ".github/workflows/publish_docker_image.yml"
@@ -23,7 +23,7 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-          DOCKER_IMAGE=ghcr.io/astrophpeter/ucsc_spectral_pipeline
+          DOCKER_IMAGE=ghcr.io/msiebert1/ucsc_spectral_pipeline
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/v}
             TAGS="${DOCKER_IMAGE}:${VERSION},${DOCKER_IMAGE}:latest"
