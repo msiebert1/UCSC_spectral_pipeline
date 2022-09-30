@@ -31,13 +31,13 @@ Clone the pipline repository.
 
 ..  code::
 
-    git clone https://github.com/astrophpeter/UCSC_spectral_pipeline
+    git clone https://github.com/msiebert1/UCSC_spectral_pipeline
 
 Download the most recent docker image.
 
 ..  code::
 
-    docker pull ghcr.io/astrophpeter/ucsc_spectral_pipeline:latest
+    docker pull ghcr.io/msiebert1/ucsc_spectral_pipeline:latest
 
 Set your env file to the defaults (See :doc:`Using the container <docker>` for
 more details on the env file). While in the base directory run,
