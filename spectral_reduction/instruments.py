@@ -97,8 +97,8 @@ kast_red = { 'name': 'kast_red',
 
              'trimsec': '[75:365,70:2296]', #Kirsty 5-30-22
              'flatsec': '[75:365,70:2296]', #Kirsty 5-30-22
-             # 'trimsec': '[50:340,70:2296]', #Kirsty 5-30-22
-             # 'flatsec': '[50:340,70:2296]', #Kirsty 5-30-22
+             # 'trimsec': '[75:340,130:2296]', 
+             # 'flatsec': '[75:340,130:2296]', 
 
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
