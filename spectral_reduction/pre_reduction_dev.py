@@ -538,7 +538,7 @@ def pre_reduction_dev(*args,**kwargs):
 
                     if not FAKE_BASIC_2D:
                         inst = instruments.blue_or_red(rawFile)[1]
-                        if inst['name'] == 'lris_blue' or inst['name'] == 'lris_red':
+                        if inst['name'] == 'lris_blue' or inst['name'] == 'lris_red' or inst['name'] == 'lris_red_new':
                             # res = keck_basic_2d.main([rawFile])
                             if imgType != 'CAL_FLAT':
                                 print (imgType)
