@@ -5,6 +5,7 @@ import numpy as np
 
 from astropy.io import fits
 from astropy.io import ascii
+from astropy.stats import sigma_clipped_stats
 
 import scipy
 from scipy import signal
@@ -818,6 +819,75 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
         hdu.writeto(outFile,output_verify='ignore')  
 
     return (flat_comb_image,header,inst)
+
+def combine_flats_sig_clip(flat_list,sigma = 3,**kwargs):
+    ''' Stacks images in flat_list, returns a master flat and header
+        use astropy sigma_clipped_stats
+     '''
+
+    # unpack
+    outFile = kwargs.get('OUTFILE')
+    clobber = kwargs.get('CLOBBER')
+
+    # read data
+    flat_comb_image = np.array([])
+    median_image_stack = np.array([])
+    nImages = 0
+    # expTime = 0
+
+    # loop over the flat files
+    for file in flat_list:
+        hdu = fits.open(file)
+        br, inst = instruments.blue_or_red(file)
+        data = hdu[0].data
+        data = np.asarray(data, dtype=float)
+        header = hdu[0].header
+        nImages += 1
+        if header.get('EXPTIME', None) == None: #new red chip hacking
+            expTime = header.get('TTIME')
+        else:
+            expTime = header.get('EXPTIME')
+
+        # scale to expTime
+        data /= expTime
+
+        if len(flat_comb_image) == 0:
+            flat_comb_image = np.copy(data)
+        else:
+            flat_comb_image = np.dstack((flat_comb_image,data))
+    print(flat_comb_image.shape)
+
+    #Now that all files are open, compute sigma_clipped_stats
+    print("Now sigma clip combine using sigma = {}".format(sigma))
+    stacked_flat_comb_image, med, std = sigma_clipped_stats(flat_comb_image, axis = 2, sigma = sigma)
+    header.add_history('combine_flats: sigma_clipped_mean {} files using sigma = {}'.format(nImages, sigma))
+
+    # # if median combining, squash the stack of median
+    # if MEDIAN_COMBINE:
+    #     # if there are multiple median images in the stack, median them
+    #     if len(median_image_stack.shape) > 2:
+    #         flat_comb_image = np.median(median_image_stack,axis=2)
+    #     # otherwise just return the single frame
+    #     else:
+    #         flat_comb_image = np.copy(median_image_stack)
+    #     header.add_history('combine_flats: median combined {} files'.format(nImages))
+    # else:
+    #     header.add_history('combine_flats: summed {} files'.format(nImages))
+
+    # counts / sec * expTime
+    stacked_flat_comb_image *= expTime
+
+    if outFile:
+        
+        # clear space
+        if os.path.isfile(outFile) and clobber:
+            os.remove(outFile)
+
+        # write correct flat data
+        hdu = fits.PrimaryHDU(stacked_flat_comb_image,header)
+        hdu.writeto(outFile,output_verify='ignore')  
+
+    return (stacked_flat_comb_image,header,inst)
 
 
 

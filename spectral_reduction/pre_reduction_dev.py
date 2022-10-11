@@ -17,7 +17,7 @@ import host_galaxies as host_gals
 import numpy as np
 
 matplotlib.use('TkAgg')
-from flat_utils import combine_flats,inspect_flat
+from flat_utils import combine_flats,combine_flats_sig_clip, inspect_flat
 
 
 def show_ds9_listfile(listFile,instanceName='default'):
@@ -654,8 +654,10 @@ def pre_reduction_dev(*args,**kwargs):
                 os.remove(Flat_blue_amp2)
 
             # first, combine all the flat files into a master flat
-            res = combine_flats(flat_list_amp1,OUTFILE=Flat_blue_amp1,MEDIAN_COMBINE=False)
-            res = combine_flats(flat_list_amp2,OUTFILE=Flat_blue_amp2,MEDIAN_COMBINE=False)
+            # res = combine_flats(flat_list_amp1,OUTFILE=Flat_blue_amp1,MEDIAN_COMBINE=False)
+            # res = combine_flats(flat_list_amp2,OUTFILE=Flat_blue_amp2,MEDIAN_COMBINE=False)
+            res = combine_flats_sig_clip(flat_list_amp1,OUTFILE=Flat_blue_amp1,sigma = 3)
+            res = combine_flats_sig_clip(flat_list_amp2,OUTFILE=Flat_blue_amp2,sigma = 3)
             
             # run iraf response
             iraf.specred.response(Flat_blue_amp1, 
@@ -723,10 +725,13 @@ def pre_reduction_dev(*args,**kwargs):
 
             # first, combine all the flat files into a master flat
             if not RED_AMP_BAD:
-                res = combine_flats(flat_list_amp1,OUTFILE=Flat_red_amp1,MEDIAN_COMBINE=True)
-                res = combine_flats(flat_list_amp2,OUTFILE=Flat_red_amp2,MEDIAN_COMBINE=True)
+                # res = combine_flats(flat_list_amp1,OUTFILE=Flat_red_amp1,MEDIAN_COMBINE=True)
+                # res = combine_flats(flat_list_amp2,OUTFILE=Flat_red_amp2,MEDIAN_COMBINE=True)
+                res = combine_flats_sig_clip(flat_list_amp1,OUTFILE=Flat_red_amp1,sigma = 3)
+                res = combine_flats_sig_clip(flat_list_amp2,OUTFILE=Flat_red_amp2,sigma = 3)
             else:
-                res = combine_flats(flat_list_amp1,OUTFILE=Flat_red_amp1,MEDIAN_COMBINE=True)
+                # res = combine_flats(flat_list_amp1,OUTFILE=Flat_red_amp1,MEDIAN_COMBINE=True)
+                res = combine_flats_sig_clip(flat_list_amp1,OUTFILE=Flat_red_amp1,sigma = 3)
 
             #What is the output here? Check for overwrite
             print (Flat_red_amp1)
@@ -822,11 +827,14 @@ def pre_reduction_dev(*args,**kwargs):
                 os.remove(Flat_blue)
 
             # first, combine all the flat files into a master flat
-            res = combine_flats(flat_list,OUTFILE=Flat_blue,MEDIAN_COMBINE=True)
+            # res = combine_flats(flat_list,OUTFILE=Flat_blue,MEDIAN_COMBINE=True)
+            res = combine_flats_sig_clip(flat_list,OUTFILE=Flat_blue,sigma = 3)
+
             # combine all the flat files for norm region
             if os.path.isfile('pre_reduced/dummy_blue.fits'):
                 os.remove('pre_reduced/dummy_blue.fits')
-            res = combine_flats(norm_list,OUTFILE='pre_reduced/dummy_blue.fits',MEDIAN_COMBINE=True)
+            # res = combine_flats(norm_list,OUTFILE='pre_reduced/dummy_blue.fits',MEDIAN_COMBINE=True)
+            res = combine_flats_sig_clip(norm_list,OUTFILE='pre_reduced/dummy_blue.fits',sigma = 3)
         
             #can't get this to work:
             # _flatsec0 = inst.get('flatsec')
@@ -873,11 +881,14 @@ def pre_reduction_dev(*args,**kwargs):
                 os.remove(Flat_red)
 
             # first, combine all the flat files into a master flat
-            res = combine_flats(flat_list,OUTFILE=Flat_red,MEDIAN_COMBINE=True)
+            # res = combine_flats(flat_list,OUTFILE=Flat_red,MEDIAN_COMBINE=True)
+            res = combine_flats_sig_clip(flat_list,OUTFILE=Flat_red,sigma = 3)
+
             # combine all the flat files for norm region
             if os.path.isfile('pre_reduced/dummy_red.fits'):
                 os.remove('pre_reduced/dummy_red.fits')
-            res = combine_flats(norm_list,OUTFILE='pre_reduced/dummy_red.fits',MEDIAN_COMBINE=True)
+            # res = combine_flats(norm_list,OUTFILE='pre_reduced/dummy_red.fits',MEDIAN_COMBINE=True)
+            res = combine_flats_sig_clip(norm_list,OUTFILE='pre_reduced/dummy_red.fits',sigma = 3)
 
             
             # run iraf response
@@ -1118,8 +1129,9 @@ def pre_reduction_orig():
                 os.remove(Flat_blue)
 
             # first, combine all the flat files into a master flat
-            res = combine_flats(flat_list,OUTFILE=Flat_blue,MEDIAN_COMBINE=True)
-            
+            # res = combine_flats(flat_list,OUTFILE=Flat_blue,MEDIAN_COMBINE=True)
+            res = combine_flats_sig_clip(flat_list,OUTFILE=Flat_blue,sigma = 3)
+
             # run iraf response
             iraf.specred.response(Flat_blue, 
                                    normaliz=Flat_blue, 
@@ -1147,7 +1159,8 @@ def pre_reduction_orig():
                 os.remove(Flat_red)
 
             # first, combine all the flat files into a master flat
-            res = combine_flats(flat_list,OUTFILE=Flat_red,MEDIAN_COMBINE=True)
+            # res = combine_flats(flat_list,OUTFILE=Flat_red,MEDIAN_COMBINE=True)
+            res = combine_flats_sig_clip(flat_list,OUTFILE=Flat_red,sigma = 3)
 
             #What is the output here? Check for overwrite
             iraf.specred.response(Flat_red, 

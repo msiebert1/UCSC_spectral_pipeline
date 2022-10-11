@@ -378,7 +378,7 @@ def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
     fil = glob.glob(raw_file)
 
     # Read
-    outStr = "Reading LRIS file: {:s}".format(fil)
+    outStr = "Reading LRIS file: {:s}".format(fil[0])
     print(outStr)
     hdu = fits.open(fil[0])
     data = hdu[0].data
