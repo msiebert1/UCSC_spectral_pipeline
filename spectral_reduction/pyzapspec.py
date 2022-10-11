@@ -328,7 +328,10 @@ def pyzapspec(infile,
 
         fixed = False
         if np.shape(zapimage)[0] < np.shape(zapimage)[1]:
-            trace_y = int(raw_input('Enter approximate row of trace [360]: ') or 360)
+            try:
+                trace_y = int(raw_input('Enter approximate row of trace [360]: ') or 360)
+            except:
+                trace_y = int(input('Enter approximate row of trace [360]: ') or 360)
             buff_y = 30
             while not fixed:
                 rect = patches.Rectangle((0, trace_y - int(buff_y)), len(zapimage[0]), 2*buff_y, linewidth=1, edgecolor='r', facecolor='none')
@@ -338,20 +341,29 @@ def pyzapspec(infile,
                 plt.gca().invert_yaxis()
                 plt.draw()
                 plt.show(block=False)
-                col_str = raw_input('Enter a new column mask region of trace [900 1100] (n for none): ') or '900 1100'
+                try:
+                    col_str = raw_input('Enter a new column mask region of trace [900 1100] (n for none): ') or '900 1100'
+                except:
+                    col_str = input('Enter a new column mask region of trace [900 1100] (n for none): ') or '900 1100'
                 if col_str == 'n':
                     fixed = True
                 else:
                     col_left = int(col_str.split()[0])
                     col_right = int(col_str.split()[1])
                     zapimage[trace_y-buff_y:trace_y+buff_y, col_left:col_right] = 0
-                    new_reg = raw_input('Enter another region [y]/n: ') or 'y'
+                    try:
+                        new_reg = raw_input('Enter another region [y]/n: ') or 'y'
+                    except:
+                        new_reg = input('Enter another region [y]/n: ') or 'y'
                     if new_reg != 'y':
                         fixed = True
                 plt.close()
             zapimage_ravel = zapimage.ravel()
         else:
-            trace_x = int(raw_input('Enter approximate column of trace [808]: ') or 808)
+            try:
+                trace_x = int(raw_input('Enter approximate column of trace [808]: ') or 808)
+            except:
+                trace_x = int(input('Enter approximate column of trace [808]: ') or 808)
             buff_x = 30
             while not fixed:
                 rect = patches.Rectangle((trace_x - int(buff_x), 0), 2*buff_x, np.shape(zapimage)[0], linewidth=1, edgecolor='r', facecolor='none')
@@ -361,14 +373,20 @@ def pyzapspec(infile,
                 plt.gca().invert_yaxis()
                 plt.draw()
                 plt.show(block=False)
-                col_str = raw_input('Enter a new row mask region of trace [1360 1600] (n for none): ') or '1360 1600'
+                try:
+                    col_str = raw_input('Enter a new row mask region of trace [1360 1600] (n for none): ') or '1360 1600'
+                except:
+                    col_str = input('Enter a new row mask region of trace [1360 1600] (n for none): ') or '1360 1600'                    
                 if col_str == 'n':
                     fixed = True
                 else:
                     col_left = int(col_str.split()[0])
                     col_right = int(col_str.split()[1])
                     zapimage[col_left:col_right, trace_x-buff_x:trace_x+buff_x] = 0
-                    new_reg = raw_input('Enter another region [y]/n: ') or 'y'
+                    try:
+                        new_reg = raw_input('Enter another region [y]/n: ') or 'y'
+                    except:
+                        new_reg = input('Enter another region [y]/n: ') or 'y'
                     if new_reg != 'y':
                         fixed = True
                 plt.close()
@@ -570,7 +588,10 @@ def main(*args,**kwargs):
 
     elif os.path.isfile(outfile):
         promptStr = 'Output file {} exists...overwrite? y/[n]: '.format(outfile)
-        usrAns = raw_input(promptStr)
+        try:
+            usrAns = raw_input(promptStr)
+        except:
+            usrAns = input(promptStr)
         if usrAns.strip().upper()[0] == 'Y':
             print('Overwritting...')
             # set clobber to true since we've cleared it with the user
