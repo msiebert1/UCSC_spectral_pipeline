@@ -665,14 +665,14 @@ def pre_reduction_dev(*args,**kwargs):
                                    response='pre_reduced/RESP_blue_amp1', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
-                                   low_rej=5,high_rej=5, order=90, niterat=20, 
+                                   low_rej=5,high_rej=5, order=70, niterat=20, 
                                    grow=0, graphic='stdgraph')
             iraf.specred.response(Flat_blue_amp2, 
                                    normaliz=Flat_blue_amp2, 
                                    response='pre_reduced/RESP_blue_amp2', 
                                    interac=inter, thresho='INDEF',
                                    sample='*', naverage=2, function='legendre', 
-                                   low_rej=5,high_rej=5, order=90, niterat=20, 
+                                   low_rej=5,high_rej=5, order=70, niterat=20, 
                                    grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
@@ -740,7 +740,7 @@ def pre_reduction_dev(*args,**kwargs):
                                   response='pre_reduced/RESP_red_amp1', 
                                   interac=inter, thresho='INDEF',
                                   sample='*', naverage=2, function='legendre', 
-                                  low_rej=5,high_rej=5, order=90, niterat=20, 
+                                  low_rej=5,high_rej=5, order=70, niterat=20, 
                                   grow=0, graphic='stdgraph')
             if not RED_AMP_BAD:
                 iraf.specred.response(Flat_red_amp2, 
@@ -748,7 +748,7 @@ def pre_reduction_dev(*args,**kwargs):
                                       response='pre_reduced/RESP_red_amp2', 
                                       interac=inter, thresho='INDEF',
                                       sample='*', naverage=2, function='legendre', 
-                                      low_rej=5,high_rej=5, order=90, niterat=20, 
+                                      low_rej=5,high_rej=5, order=70, niterat=20, 
                                       grow=0, graphic='stdgraph')
 
             # finally, inspect the flat and mask bad regions
