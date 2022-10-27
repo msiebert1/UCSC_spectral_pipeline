@@ -24,6 +24,8 @@ from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
 import matplotlib.colors as colors
 
+import pdb
+
 
 class fitFlatClass(object):
     '''
@@ -733,7 +735,7 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
     flat_comb_image = np.array([])
     median_image_stack = np.array([])
     nImages = 0
-    expTime = 0
+    total_expTime = 0
     nFlatLimit = 15
 
     # calculate the stack batch size
@@ -755,12 +757,13 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
         header = hdu[0].header
         nImages += 1
         if header.get('EXPTIME', None) == None: #new red chip hacking
-            expTime += header.get('TTIME')
+            expTime = header.get('TTIME')
         else:
-            expTime += header.get('EXPTIME')
+            expTime = header.get('EXPTIME')
 
         # scale to expTime
         data /= expTime
+        total_expTime += expTime
 
         if len(flat_comb_image) == 0:
             flat_comb_image = np.copy(data)
@@ -806,7 +809,7 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
         header.add_history('combine_flats: summed {} files'.format(nImages))
 
     # counts / sec * expTime
-    flat_comb_image *= expTime
+    flat_comb_image *= total_expTime
 
     if outFile:
         
@@ -817,7 +820,7 @@ def combine_flats(flat_list,MEDIAN_COMBINE=False,**kwargs):
         # write correct flat data
         hdu = fits.PrimaryHDU(flat_comb_image,header)
         hdu.writeto(outFile,output_verify='ignore')  
-
+    print(type(flat_comb_image))
     return (flat_comb_image,header,inst)
 
 def combine_flats_sig_clip(flat_list,sigma = 3,**kwargs):
@@ -833,7 +836,7 @@ def combine_flats_sig_clip(flat_list,sigma = 3,**kwargs):
     flat_comb_image = np.array([])
     median_image_stack = np.array([])
     nImages = 0
-    # expTime = 0
+    total_expTime = 0
 
     # loop over the flat files
     for file in flat_list:
@@ -850,16 +853,18 @@ def combine_flats_sig_clip(flat_list,sigma = 3,**kwargs):
 
         # scale to expTime
         data /= expTime
+        total_expTime += expTime
 
         if len(flat_comb_image) == 0:
             flat_comb_image = np.copy(data)
         else:
             flat_comb_image = np.dstack((flat_comb_image,data))
-    print(flat_comb_image.shape)
+    # print(flat_comb_image.shape)
 
     #Now that all files are open, compute sigma_clipped_stats
     print("Now sigma clip combine using sigma = {}".format(sigma))
     stacked_flat_comb_image, med, std = sigma_clipped_stats(flat_comb_image, axis = 2, sigma = sigma)
+    stacked_flat_comb_image = stacked_flat_comb_image.data #for python 2.7 backward compatibility
     header.add_history('combine_flats: sigma_clipped_mean {} files using sigma = {}'.format(nImages, sigma))
 
     # # if median combining, squash the stack of median
@@ -875,7 +880,7 @@ def combine_flats_sig_clip(flat_list,sigma = 3,**kwargs):
     #     header.add_history('combine_flats: summed {} files'.format(nImages))
 
     # counts / sec * expTime
-    stacked_flat_comb_image *= expTime
+    stacked_flat_comb_image *= total_expTime
 
     if outFile:
         
@@ -886,7 +891,7 @@ def combine_flats_sig_clip(flat_list,sigma = 3,**kwargs):
         # write correct flat data
         hdu = fits.PrimaryHDU(stacked_flat_comb_image,header)
         hdu.writeto(outFile,output_verify='ignore')  
-
+    print(type(stacked_flat_comb_image))
     return (stacked_flat_comb_image,header,inst)
 
 
