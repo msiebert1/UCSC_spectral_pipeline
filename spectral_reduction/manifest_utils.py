@@ -313,16 +313,19 @@ def determine_image_type(header,instrument,STANDARD_STAR_LIBRARY):
     # will require a by-hand fix, but that is rather unlikely.
     pointingCenterStr = '{} {}'.format(header.get('RA',nullHeaderEntry),
                                     header.get('DEC',nullHeaderEntry))
-    pointingCenter = SkyCoord(pointingCenterStr, 
-                              frame='icrs',
-                              unit=(u.hourangle, u.deg))
-    for i,standardKey in enumerate(STANDARD_STAR_LIBRARY):
-        standard = STANDARD_STAR_LIBRARY[standardKey]
-        sep = pointingCenter.separation(standard.coord)
-        if sep.arcsecond < pointingTolerance:
-            imageType = 'STD'
-            return imageType
-
+    if 'UNKNOWN' not in pointingCenterStr:
+        pointingCenter = SkyCoord(pointingCenterStr, 
+                                  frame='icrs',
+                                  unit=(u.hourangle, u.deg))
+        for i,standardKey in enumerate(STANDARD_STAR_LIBRARY):
+            standard = STANDARD_STAR_LIBRARY[standardKey]
+            sep = pointingCenter.separation(standard.coord)
+            if sep.arcsecond < pointingTolerance:
+                imageType = 'STD'
+                return imageType
+    else:
+        print("Warning: RA and/or DEC not available in this header. Default to 'SCI'")
+        imageType = 'SCI'
 
     # no lamps on, non zero exposure time, not near a standard:
     # it's probably a science frame

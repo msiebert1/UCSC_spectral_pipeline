@@ -414,6 +414,7 @@ def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
     # plt.show()
     # raise TypeError
     data_trim = np.flip(data_trim, axis=0)
+    data_trim = np.flip(data_trim, axis=1)
 
     return data_trim, binning1x1
 
