@@ -1,0 +1,84 @@
+from astropy.io import fits
+import numpy as np
+import matplotlib.pyplot as plt
+import copy
+import glob
+
+
+def undo_sky_rejects(masked_data, original_data):
+    num_nan_arr = []
+    for i, row in enumerate(masked_data):
+        num_nan = len(np.isnan(row)[np.isnan(row)==True])
+        num_nan_arr.append(num_nan)
+        if num_nan>100:
+            for j, pix in enumerate(row):
+                masked_data[i,j] = original_data[i,j]
+    return masked_data
+
+
+def expand_crs(masked_data):
+    nan_pixels = np.isnan(masked_data)
+    masked_data[:-1, :][nan_pixels[1:, :]] = np.nan
+    masked_data[1:, :][nan_pixels[:-1, :]] = np.nan
+    masked_data[:, :-1][nan_pixels[:, 1:]] = np.nan
+    masked_data[:, 1:][nan_pixels[:, :-1]] = np.nan
+    return masked_data
+
+
+def cr_reject(imglist, img_combined, lim=100):
+
+    exp1 = fits.open(imglist[0])
+
+    exp1_time = exp1['PRIMARY'].header['TTIME']
+
+
+    all_exp_cr_rej = []
+    all_exp_times = []
+    for i, img in enumerate(imglist[1:]):
+        exp = fits.open(img)
+
+        #scale, difference with first image, set likely crs to nan
+        exp_time = exp['PRIMARY'].header['TTIME']
+        scale = exp1_time/exp_time
+        diff = scale*exp['PRIMARY'].data - exp1['PRIMARY'].data
+
+        exp_masked_data = copy.deepcopy(exp['PRIMARY'].data)
+        exp_masked_data[diff>lim] = np.nan
+
+        if i == 0:
+            exp1_masked_data = copy.deepcopy(exp1['PRIMARY'].data)
+            exp1_masked_data[diff<-1*lim] = np.nan
+            exp1_masked_data = undo_sky_rejects(exp1_masked_data, exp1['PRIMARY'].data)
+            exp1_masked_data = expand_crs(exp1_masked_data)
+            masked_data1 = np.ma.masked_array(exp1_masked_data, np.isnan(exp1_masked_data))
+            all_exp_cr_rej.append(masked_data1)
+            all_exp_times.append(exp1_time)
+
+        #find rows with lots of rejections and undo (likely sky lines)
+        exp_masked_data = undo_sky_rejects(exp_masked_data, exp['PRIMARY'].data)
+
+        #expand nans to 1 pix around each rejected pixel
+        exp_masked_data = expand_crs(exp_masked_data)
+
+        #create np.ma arrau for average
+        masked_data = np.ma.masked_array(exp_masked_data, np.isnan(exp_masked_data))
+
+        all_exp_cr_rej.append(masked_data)
+        all_exp_times.append(exp_time)
+
+    final_data = np.ma.average(all_exp_cr_rej, axis=0, weights=all_exp_times)
+
+    # plt.figure(figsize=[20,20])
+    # plt.imshow(final_data,  vmin=0, vmax=100, interpolation='none', origin='lower')
+    # plt.show()
+
+    final_data=np.asarray(final_data)
+    imgHDU = fits.open(imglist[0])
+    imgHDU['PRIMARY'].data = final_data
+    imgHDU.writeto(img_combined, overwrite=True)
+
+
+    # exp1_masked_data = copy.deepcopy(exp1['PRIMARY'].data)
+    # exp1_masked_data[diff<-1*lim] = np.nan
+
+

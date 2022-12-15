@@ -264,7 +264,6 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = No
     useband = bandpts[fullMask]
 
 
-
     for i,_ in enumerate(useband):
         index=womget_element(wave,useband[i])
         useband[i]=index
@@ -306,6 +305,8 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = No
                 print ('Using saved spline wave locations')
                 masterx, mastery = np.genfromtxt(spl_f)
                 break
+        if bstarid:
+            masterx = []
         if len(masterx)>0:
             womconfig.nsplinepoints=len(masterx)
             # womconfig.tmpsplptsx=list(masterx)
@@ -323,6 +324,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = No
             womconfig.tmpsplptsy=[]
             for i,_ in enumerate(useband):
                 womconfig.tmpsplptsy.append(np.median(flux[useband[i]-2:useband[i]+3]))
+            # print (womconfig.tmpsplptsx,womconfig.tmpsplptsy)
             spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
     else:
         masterx, mastery = np.genfromtxt('../../master_files/' + cal + '_splpts_master.txt')
