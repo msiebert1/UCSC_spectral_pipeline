@@ -6,6 +6,10 @@ import glob
 import os
 import instruments
 
+try:
+    raw_input
+except:
+    raw_input = input
 
 #---------------------------------------------------------------------------
 # 
