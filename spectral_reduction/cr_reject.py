@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 import glob
-
+import scipy.stats as stats
 
 def undo_sky_rejects(masked_data, original_data, tol=100):
     num_nan_arr = []
@@ -48,6 +48,7 @@ def cr_reject(imglist, img_combined, inst, lim=0.145):
         else:
             exp_time = exp['PRIMARY'].header['EXPTIME']
         diff = exp['PRIMARY'].data/exp_time - exp1['PRIMARY'].data/exp1_time
+        lim = 20.0*stats.median_abs_deviation(diff.ravel())
 
         exp_masked_data = copy.deepcopy(exp['PRIMARY'].data/exp_time)
         exp_masked_data[diff>lim] = np.nan
