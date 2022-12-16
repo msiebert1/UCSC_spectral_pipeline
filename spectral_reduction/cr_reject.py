@@ -5,12 +5,12 @@ import copy
 import glob
 
 
-def undo_sky_rejects(masked_data, original_data):
+def undo_sky_rejects(masked_data, original_data, tol=100):
     num_nan_arr = []
     for i, row in enumerate(masked_data):
         num_nan = len(np.isnan(row)[np.isnan(row)==True])
         num_nan_arr.append(num_nan)
-        if num_nan>100:
+        if num_nan>tol:
             for j, pix in enumerate(row):
                 masked_data[i,j] = original_data[i,j]
     return masked_data
@@ -25,11 +25,16 @@ def expand_crs(masked_data):
     return masked_data
 
 
-def cr_reject(imglist, img_combined, lim=0.145):
+def cr_reject(imglist, img_combined, inst, lim=0.145):
 
     exp1 = fits.open(imglist[0])
 
-    exp1_time = exp1['PRIMARY'].header['TTIME']
+    if 'lris' in inst['name']:
+        exp1_time = exp1['PRIMARY'].header['TTIME']
+        skytol=100
+    else:
+        exp1_time = exp1['PRIMARY'].header['EXPTIME']
+        skytol=20
 
 
     all_exp_cr_rej = []
@@ -38,7 +43,10 @@ def cr_reject(imglist, img_combined, lim=0.145):
         exp = fits.open(img)
 
         #change to counts/s, difference with first image, set likely crs to nan
-        exp_time = exp['PRIMARY'].header['TTIME']
+        if 'lris' in inst['name']:
+            exp_time = exp['PRIMARY'].header['TTIME']
+        else:
+            exp_time = exp['PRIMARY'].header['EXPTIME']
         diff = exp['PRIMARY'].data/exp_time - exp1['PRIMARY'].data/exp1_time
 
         exp_masked_data = copy.deepcopy(exp['PRIMARY'].data/exp_time)
@@ -47,14 +55,14 @@ def cr_reject(imglist, img_combined, lim=0.145):
         if i == 0:
             exp1_masked_data = copy.deepcopy(exp1['PRIMARY'].data/exp1_time)
             exp1_masked_data[diff<-1*lim] = np.nan
-            exp1_masked_data = undo_sky_rejects(exp1_masked_data, exp1['PRIMARY'].data/exp1_time)
+            exp1_masked_data = undo_sky_rejects(exp1_masked_data, exp1['PRIMARY'].data/exp1_time, tol=skytol)
             exp1_masked_data = expand_crs(exp1_masked_data)
             masked_data1 = np.ma.masked_array(exp1_masked_data, np.isnan(exp1_masked_data))
             all_exp_cr_rej.append(masked_data1)
             all_exp_times.append(exp1_time)
 
         #find rows with lots of rejections and undo (likely sky lines)
-        exp_masked_data = undo_sky_rejects(exp_masked_data, exp['PRIMARY'].data/exp_time)
+        exp_masked_data = undo_sky_rejects(exp_masked_data, exp['PRIMARY'].data/exp_time, tol=skytol)
 
         #expand nans to 1 pix around each rejected pixel
         exp_masked_data = expand_crs(exp_masked_data)

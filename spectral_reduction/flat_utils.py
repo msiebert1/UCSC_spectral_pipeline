@@ -880,6 +880,7 @@ def combine_flats_sig_clip(flat_list,sigma = 3,**kwargs):
     #     header.add_history('combine_flats: summed {} files'.format(nImages))
 
     # counts / sec * expTime
+    stacked_flat_comb_image = np.array(stacked_flat_comb_image)
     stacked_flat_comb_image *= total_expTime
 
     if outFile:

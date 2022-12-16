@@ -163,7 +163,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                 k=1
 
                 if _crnew:
-                    cr.cr_reject(imgs, timg, lim=0.145)
+                    cr.cr_reject(imgs, timg, inst, lim=0.145)
                 else:
                     for i in imgs:
                         # util.create_bpmask([[],[]], br = 'red')
@@ -227,11 +227,13 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
 
                             img_str = img_str + i + ','
                         k+=1
+                    img_str = img_str[:-1]
                     print (img_str)
                     if _crmask:
                         iraf.imcombine(img_str, combine='average', weight='exposure', masktype='goodvalue', output=timg)
                         iraf.imcombine(img_str, combine='median', masktype='goodvalue', output=timg[0:-5]+'_med.fits')
                     else:
+
                         iraf.imcombine(img_str, combine='average', weight='exposure', output=timg)
             else:
                 i = imgs[0]
