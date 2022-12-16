@@ -163,7 +163,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                 k=1
 
                 if _crnew:
-                    cr.cr_reject(imgs, timg, lim=100)
+                    cr.cr_reject(imgs, timg, lim=0.145)
                 else:
                     for i in imgs:
                         # util.create_bpmask([[],[]], br = 'red')

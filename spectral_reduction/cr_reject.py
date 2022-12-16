@@ -25,7 +25,7 @@ def expand_crs(masked_data):
     return masked_data
 
 
-def cr_reject(imglist, img_combined, lim=100):
+def cr_reject(imglist, img_combined, lim=0.145):
 
     exp1 = fits.open(imglist[0])
 
@@ -37,25 +37,24 @@ def cr_reject(imglist, img_combined, lim=100):
     for i, img in enumerate(imglist[1:]):
         exp = fits.open(img)
 
-        #scale, difference with first image, set likely crs to nan
+        #change to counts/s, difference with first image, set likely crs to nan
         exp_time = exp['PRIMARY'].header['TTIME']
-        scale = exp1_time/exp_time
-        diff = scale*exp['PRIMARY'].data - exp1['PRIMARY'].data
+        diff = exp['PRIMARY'].data/exp_time - exp1['PRIMARY'].data/exp1_time
 
-        exp_masked_data = copy.deepcopy(exp['PRIMARY'].data)
+        exp_masked_data = copy.deepcopy(exp['PRIMARY'].data/exp_time)
         exp_masked_data[diff>lim] = np.nan
 
         if i == 0:
-            exp1_masked_data = copy.deepcopy(exp1['PRIMARY'].data)
+            exp1_masked_data = copy.deepcopy(exp1['PRIMARY'].data/exp1_time)
             exp1_masked_data[diff<-1*lim] = np.nan
-            exp1_masked_data = undo_sky_rejects(exp1_masked_data, exp1['PRIMARY'].data)
+            exp1_masked_data = undo_sky_rejects(exp1_masked_data, exp1['PRIMARY'].data/exp1_time)
             exp1_masked_data = expand_crs(exp1_masked_data)
             masked_data1 = np.ma.masked_array(exp1_masked_data, np.isnan(exp1_masked_data))
             all_exp_cr_rej.append(masked_data1)
             all_exp_times.append(exp1_time)
 
         #find rows with lots of rejections and undo (likely sky lines)
-        exp_masked_data = undo_sky_rejects(exp_masked_data, exp['PRIMARY'].data)
+        exp_masked_data = undo_sky_rejects(exp_masked_data, exp['PRIMARY'].data/exp_time)
 
         #expand nans to 1 pix around each rejected pixel
         exp_masked_data = expand_crs(exp_masked_data)
@@ -66,7 +65,7 @@ def cr_reject(imglist, img_combined, lim=100):
         all_exp_cr_rej.append(masked_data)
         all_exp_times.append(exp_time)
 
-    final_data = np.ma.average(all_exp_cr_rej, axis=0, weights=all_exp_times)
+    final_data = np.sum(all_exp_times)*np.ma.average(all_exp_cr_rej, axis=0, weights=all_exp_times)
 
     # plt.figure(figsize=[20,20])
     # plt.imshow(final_data,  vmin=0, vmax=100, interpolation='none', origin='lower')
