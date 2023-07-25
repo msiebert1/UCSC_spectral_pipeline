@@ -1,7 +1,10 @@
-def inputter(statement, datatype, defaultflag,*default):
+def inputter(statement, datatype, defaultflag,*defaulti,yes=False):
     done=False
     while (not done):
-        answer=input(statement)
+        if yes:
+            answer=''
+        else:
+            answer=input(statement)
         if (defaultflag) and (answer == ''):
             return default[0]
         elif (datatype == 'string'):

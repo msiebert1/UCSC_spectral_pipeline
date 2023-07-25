@@ -4,12 +4,13 @@ import getpass
 import logging
 import copy
 # need copy.deepcopy() for Spec class
+import argparse
 import os
-import pdb
 import sys
 import glob
 import datetime
 from astropy.io import fits
+#from .tmath import pydux as pydux
 import tmath.pydux as pydux
 from tmath.wombat.yesno import yesno
 from tmath.wombat.inputter import inputter
@@ -27,13 +28,22 @@ from matplotlib.widgets import Cursor
 
 import matplotlib.pyplot as plt
 
+
 CALVERSION = 0.1
 
+def parser():
+    parser = argparse.ArgumentParser(description='Calibration options.')
+    parser.add_argument('gratcode', type=str, default="both",
+                        help='Grating to process, "r" (red) or "b" (blue). Default is both.')
+    parser.add_argument('-y',  action='store_true',
+                        help='Say yes to all options and store diagnostic plot.')
+
+    return parser.parse_args()
 
 
 def main():
     import headerfix
-    
+    args = parser()
     secondord = False
     gratcode2 = ''
     # logging straight from docs.python.org cookbook page
@@ -78,10 +88,14 @@ def main():
     print('This will be used to keep track of the fluxstar and')
     print('bstar as in fluxstaropt.fits or bstarir2.fits\n')
     # gratcode = inputter('Enter the grating code (blue/red): ', 'string', False)
-    gratcode = input('Enter the grating code ([blue]/red): ') or 'blue'
-    print(' ')
-    if gratcode == 'r':
+    #gratcode = input('Enter the grating code ([blue]/red): ') or 'blue'
+    #print(' ')
+    if args.gratcode == 'r':
         gratcode = 'red'
+    if args.gratcode == 'b':
+        gratcode = 'blue'
+    else:
+        raise ValueError("Grating must be \'r\' or \'b\'. Example: \n $cal.py r")
     if (secondord):
         gratcode2 = inputter('Enter the second-order grating code: ', 'string', False)
     print(' ')
@@ -161,10 +175,14 @@ def main():
 
     # print('\nFinal calibration (atmos. removal, sky line wave. adjust, etc.)?')
     # answer = yesno('y')
-    answer = input('Final calibration (atmos. removal, sky line wave. adjust, etc.)? [y]/n: ') or 'y'
+    print(args.y)
+    if args.y:
+        answer='y'
+    else:
+        answer = input('Final calibration (atmos. removal, sky line wave. adjust, etc.)? [y]/n: ') or 'y'
     if (answer == 'y'):
         plt.close()
-        pydux.final(objectlist, gratcode, secondord, gratcode2, user)
+        pydux.final(objectlist, gratcode, secondord, gratcode2, user,yes=args.y)
 
     if (answer_flux == 'y'):
         # print('\nAre these master calibrations?\n')

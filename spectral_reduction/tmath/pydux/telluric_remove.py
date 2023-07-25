@@ -1,4 +1,4 @@
-def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance, spectrum, shift=None):
+def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance, spectrum, yes= False,shift=None):
     import numpy as np
     import pdb
     import matplotlib.pyplot as plt
@@ -74,7 +74,7 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
             axarr[1].plot(wave[indblue:indred+1], bstartmp[indblue:indred+1],drawstyle='steps-mid',color='k')
             axarr[1].plot(wave[indblue:indred+1]+lag[2]*wdelt, bstartmp[indblue:indred+1],drawstyle='steps-mid',color='g')
             plt.pause(0.01)
-            check=inputter('Check plot [enter when done]: ','string',False)
+            check=inputter('Check plot [enter when done]: ','string',False,yes=yes)
 
         if (sum(lagflag) > 0):
             avglag=np.sum(lag)/sum(lagflag)
@@ -111,7 +111,10 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
         if not shift: 
             # print('Is this OK?')
             # answer=yesno('y')
-            answer = input('Is this ok? [y]/n: ') or 'y'
+            if yes:
+                answer=yes
+            else:
+                answer = input('Is this ok? [y]/n: ') or 'y'
             if (answer == 'n'):
                 angshift=inputter('Enter B-star shift in Angstroms: ','float',False)
             else:
