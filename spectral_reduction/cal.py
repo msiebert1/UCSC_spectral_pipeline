@@ -92,7 +92,7 @@ def main():
     #print(' ')
     if args.gratcode == 'r':
         gratcode = 'red'
-    if args.gratcode == 'b':
+    elif args.gratcode == 'b':
         gratcode = 'blue'
     else:
         raise ValueError("Grating must be \'r\' or \'b\'. Example: \n $cal.py r")

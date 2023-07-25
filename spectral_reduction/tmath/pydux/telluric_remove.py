@@ -113,6 +113,7 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
             # answer=yesno('y')
             if yes:
                 answer=yes
+                plt.savefig("plots/shift.pdf")
             else:
                 answer = input('Is this ok? [y]/n: ') or 'y'
             if (answer == 'n'):

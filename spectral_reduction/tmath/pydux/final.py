@@ -245,6 +245,10 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
         bshift = None
         aps = []
         if yes:
+            current_directory = os.getcwd()
+            dir = current_directory+"/plots"
+            if not os.path.exists(dir):
+                os.mkdir(dir)
             user_aps=''
         else:
             user_aps = input('Apertures to extract (e.g., 1,2,3) [all]: ')
@@ -292,6 +296,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
             print('\nPlotting optimal as black, normal as red\n')
             if yes:
                 extract='o'
+                plt.savefig('plots/flux.pdf')
             else:
                 extract = input('Do you want to use (n)ormal or [o]ptimal extraction? ') or 'o'
             if (extract == 'o'):
@@ -379,6 +384,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                     # answer=yesno('y')
                     if yes:
                         answer='y'
+                        plt.savefig("plots/sky.pdf")
                     else:
                         answer = input('Is this ok? [y]/n: ') or 'y'
                     if (answer == 'n'):
@@ -438,7 +444,9 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                 deltsave = 0.0
 
             newdelt=wave[1]-wave[0]
-            if not yes:
+            if yes:
+                plt.savefig('plots/ends.pdf')
+            else:
                 newdelt = input('Angstroms per pixel ['+ str(np.round(newdelt, 3)) + ']: ') or newdelt
             newdelt = float(newdelt)
             if newdelt != wave[1]-wave[0]:
@@ -471,7 +479,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                     waver = float(waves.split()[1])
                 elif observat == 'lick' and 'blue' in inputfile:
                     if yes:
-                        waves = '3350 5620'
+                        waves = '3250 5620'
                     else:
                         waves = input('Enter the new wavelength range desired [3250 5620]: ') or '3250 5620'
                     waveb = float(waves.split()[0])
@@ -593,6 +601,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
             plt.title(objectname)
             plt.ylim(ymin,ymax)
             plt.savefig(objectname + '-' + gratcode + '_ap' + str(i+1) + suffixes['ap'+str(i+1)] +'.png')
+            if yes:
+                plt.savefig("plots/{}_{}.pdf".format(gratcode,objectname))
             plt.show()
 
             outputdone = False
