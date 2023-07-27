@@ -1,4 +1,4 @@
-def final(objectlist,gratcode,secondord,gratcode2,user):
+def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
     import matplotlib.pyplot as plt
     from matplotlib import gridspec
     import numpy as np
@@ -244,7 +244,14 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
         waver = None
         bshift = None
         aps = []
-        user_aps = input('Apertures to extract (e.g., 1,2,3) [all]: ')
+        if yes:
+            current_directory = os.getcwd()
+            dir = current_directory+"/plots"
+            if not os.path.exists(dir):
+                os.mkdir(dir)
+            user_aps=''
+        else:
+            user_aps = input('Apertures to extract (e.g., 1,2,3) [all]: ')
         if len(user_aps) > 0:
             aps_strings = user_aps.split(',')
             for ap in aps_strings:
@@ -287,7 +294,11 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             ax1.set_xlabel('Wavelength')
             plt.pause(0.01)
             print('\nPlotting optimal as black, normal as red\n')
-            extract = input('Do you want to use (n)ormal or [o]ptimal extraction? ') or 'o'
+            if yes:
+                extract='o'
+                plt.savefig('plots/flux.pdf')
+            else:
+                extract = input('Do you want to use (n)ormal or [o]ptimal extraction? ') or 'o'
             if (extract == 'o'):
                 object=multispec[0,i,:]
                 extractcode='optimal'
@@ -371,7 +382,11 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     print('Red spectrum   = object sky shifted to match master sky')
                     # print('Is this ok?')
                     # answer=yesno('y')
-                    answer = input('Is this ok? [y]/n: ') or 'y'
+                    if yes:
+                        answer='y'
+                        plt.savefig("plots/sky.pdf")
+                    else:
+                        answer = input('Is this ok? [y]/n: ') or 'y'
                     if (answer == 'n'):
                         wave=wave-angshift
                         angshift=inputter('Enter desired shift in Angstroms: ','float',False)
@@ -386,7 +401,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             # B star removal
             bstarpass=bstarstar
             bobj, bsig, bangshift=telluric_remove(bstarwave,bstarpass, bstarairmass, wave, \
-                                       object, airmass, sigma, object, shift=bshift)
+                                       object, airmass, sigma, object, shift=bshift,yes=yes)
             # bobj, bsig, bangshift=telluric_remove(bstarwave,bstarpass, bstarairmass, wave, \
             #                            test_sky, airmass, sigma, object)
             bshift=bangshift
@@ -429,7 +444,10 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 deltsave = 0.0
 
             newdelt=wave[1]-wave[0]
-            newdelt = input('Angstroms per pixel ['+ str(np.round(newdelt, 3)) + ']: ') or newdelt
+            if yes:
+                plt.savefig('plots/ends.pdf')
+            else:
+                newdelt = input('Angstroms per pixel ['+ str(np.round(newdelt, 3)) + ']: ') or newdelt
             newdelt = float(newdelt)
             if newdelt != wave[1]-wave[0]:
                 rebinned = True
@@ -446,23 +464,38 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             
             if wavesave0 == 0.0:
                 if observat == 'keck' and 'blue' in inputfile:
-                    waves = input('Enter the new wavelength range desired [3160 5620]: ') or '3160 5620'
+                    if yes:
+                        waves = '3160 5620'
+                    else:
+                        waves = input('Enter the new wavelength range desired [3160 5620]: ') or '3160 5620'
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
                 elif observat == 'keck' and 'red' in inputfile:
-                    waves = input('Enter the new wavelength range desired [5400 10150]: ') or '5400 10150'
+                    if yes:
+                        waves = '5400 10150'
+                    else:
+                        waves = input('Enter the new wavelength range desired [5400 10150]: ') or '5400 10150'
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
                 elif observat == 'lick' and 'blue' in inputfile:
-                    waves = input('Enter the new wavelength range desired [3250 5620]: ') or '3250 5620'
+                    if yes:
+                        waves = '3250 5620'
+                    else:
+                        waves = input('Enter the new wavelength range desired [3250 5620]: ') or '3250 5620'
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
                 elif observat == 'lick' and 'red' in inputfile:
-                    waves = input('Enter the new wavelength range desired [5450 10900]: ') or '5450 10900'
+                    if yes:
+                        waves = '5450 10900'
+                    else:
+                        waves = input('Enter the new wavelength range desired [5450 10900]: ') or '5450 10900'
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
                 else:
-                    waves = input('Enter the new wavelength range desired: ') or '3160 5620'
+                    if yes:
+                        waves = '3160 5620'
+                    else:
+                        waves = input('Enter the new wavelength range desired: ') or '3160 5620'
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
             else:
@@ -568,6 +601,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
             plt.title(objectname)
             plt.ylim(ymin,ymax)
             plt.savefig(objectname + '-' + gratcode + '_ap' + str(i+1) + suffixes['ap'+str(i+1)] +'.png')
+            if yes:
+                plt.savefig("plots/{}_{}.pdf".format(gratcode,objectname))
             plt.show()
 
             outputdone = False
@@ -587,7 +622,10 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                     print('{} already exists!!!!'.format(fname))
                     # print('Do you wish to overwrite it? ')
                     # answer=yesno('y')
-                    answer = input('Do you wish to overwrite it? [y]/n: ') or 'y'
+                    if yes:
+                        answer='y'
+                    else:
+                        answer = input('Do you wish to overwrite it? [y]/n: ') or 'y'
                     if (answer == 'y'):
                         outputdone = True
                 else:
@@ -694,7 +732,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                             if objname not in f and ('red' in f or 'blue' in f) and '_ap'+str(i+1)+'_' in f:
                                 print (f)
                                 inputfile = f
-                    inputfile=input('Name of fits file to be combined? [{}]: '.format(inputfile)) or inputfile
+                    if not yes:
+                        inputfile=input('Name of fits file to be combined? [{}]: '.format(inputfile)) or inputfile
                     print (inputfile)
                     inputfile=inputfile.strip()
                     if (inputfile == ''):
@@ -776,7 +815,10 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                         print('{} already exists!!!!'.format(fname))
                         # print('Do you wish to overwrite it? ')
                         # answer=yesno('y')
-                        answer = input('Do you wish to overwrite it? [y]/n: ') or 'y'
+                        if yes:
+                            answer='y'
+                        else:
+                            answer = input('Do you wish to overwrite it? [y]/n: ') or 'y'
                         if (answer == 'y'):
                             outputdone = True
                     else:
@@ -826,8 +868,12 @@ def final(objectlist,gratcode,secondord,gratcode2,user):
                 spectxt_comb = spectxt_comb.strip()
                 np.savetxt(spectxt_comb,np.transpose([nwave,finalobj.copy(),finalsig.copy()]), header=yse_txt_header)
               
-            is_final=input('Is this a final reduction? [y]/n: ') or 'y'
-            is_yse=input('Will this be uploaded to YSE? y/[n]: ') or 'n'      
+            if yes:
+                is_final='y'
+                is_yse = 'n'
+            else:
+                is_final=input('Is this a final reduction? [y]/n: ') or 'y'
+                is_yse=input('Will this be uploaded to YSE? y/[n]: ') or 'n'      
             if is_final == 'y':
                 if not os.path.isdir('../../final_reductions/'):
                     os.mkdir('../../final_reductions/')

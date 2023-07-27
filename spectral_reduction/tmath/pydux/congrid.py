@@ -33,7 +33,6 @@ def congrid(a, newdims, method='linear', centre=False, minusone=False):
     """
     if not a.dtype in [np.float64, np.float32]:
         a = np.cast[float](a)
-
     m1 = np.cast[int](minusone)
     ofs = np.cast[int](centre) * 0.5
     old = np.array( a.shape )
@@ -62,10 +61,11 @@ def congrid(a, newdims, method='linear', centre=False, minusone=False):
             dimlist.append( (old[i] - m1) / (newdims[i] - m1) \
                             * (base + ofs) - ofs )
         # specify old dims
-        olddims = [np.arange(i, dtype = np.float) for i in list( a.shape )]
+        olddims = [np.arange(i, dtype = float) for i in list( a.shape )]
 
         # first interpolation - for ndims = any
         mint = scipy.interpolate.interp1d( olddims[-1], a, kind=method )
+        dimlist = [np.round(dimlist[-1],7)]
         newa = mint( dimlist[-1] )
 
         trorder = [ndims - 1] + list(range( ndims - 1 ))
