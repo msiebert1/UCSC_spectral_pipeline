@@ -6,6 +6,9 @@ def getmswave(head,aperture):
     for i,hcard in enumerate(head.cards):
         if ('WAT2' in hcard[0]):
             if (specstr in hcard[1]):
+                print('here in the pipeline')
+                print(i,hcard)
+
                 watstring=hcard[1]
                 specloc=watstring.find(specstr)
                 watstringsub=watstring[specloc:]

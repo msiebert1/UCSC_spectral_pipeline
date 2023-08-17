@@ -38,7 +38,7 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
             lag[0]=xcor(object[indblue:indred+1],bstartmp[indblue:indred+1],xfactor,maxlag)
             lagflag[0]=True
             print('The shift at the 6250A band is {} angstroms'.format(lag[0]*wdelt))
-        if (wmin < 6800) and (wmax > 6500):
+        if (wmin < 6800) and (wmax > 7000):
             indblue=womget_element(wave,6800)
             indred=womget_element(wave,6950)
             scale = 1./np.max(object[indblue:indred+1])
@@ -57,7 +57,7 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
             axarr[0].plot(wave[indblue:indred+1], bstartmp[indblue:indred+1],drawstyle='steps-mid',color='k')
             axarr[0].plot(wave[indblue:indred+1]+lag[1]*wdelt, bstartmp[indblue:indred+1],drawstyle='steps-mid',color='g')
             props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-            axarr[0].text(0.05, 0.95, "Shift: {:.2} Å".format(lag[1]*wdelt),transform=axarr[0].transAxes, fontsize=14,verticalalignment='top', bbox=props)
+            axarr[0].text(0.05, 0.95, "Shift: {:.2} Å".format(lag[1]*wdelt),transform=axarr[0].transAxes, fontsize=14,verticalalignment='top', bbox=props,zorder=10)
             plt.pause(0.01)
 
         if (wmin < 7500) and (wmax > 8000):
@@ -76,7 +76,7 @@ def telluric_remove(bstarwave, bstar, bairmass, wave, object, airmass, variance,
             axarr[1].plot(wave[indblue:indred+1], bstartmp[indblue:indred+1],drawstyle='steps-mid',color='k')
             axarr[1].plot(wave[indblue:indred+1]+lag[2]*wdelt, bstartmp[indblue:indred+1],drawstyle='steps-mid',color='g')
             props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-            axarr[1].text(0.05, 0.95, "Shift: {:.2} Å".format(lag[2]*wdelt),transform=axarr[1].transAxes, fontsize=14,verticalalignment='top', bbox=props)
+            axarr[1].text(0.05, 0.95, "Shift: {:.2} Å".format(lag[2]*wdelt),transform=axarr[1].transAxes, fontsize=14,verticalalignment='top', bbox=props,zorder=10)
             plt.pause(0.01)
             check=inputter('Check plot [enter when done]: ','string',False,yes=yes)
 

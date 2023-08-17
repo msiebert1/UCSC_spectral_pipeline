@@ -34,7 +34,7 @@ CALVERSION = 0.1
 def parser():
     parser = argparse.ArgumentParser(description='Calibration options.')
     parser.add_argument('gratcode', type=str, default="both",
-                        help='Grating to process, "r" (red) or "b" (blue). Default is both.')
+                        help='Grating to process, "r" (red) or "b" (blue). Default is both. Or if ESI "e" (echelle) ')
     parser.add_argument('-y',  action='store_true',
                         help='Say yes to all options and store diagnostic plot.')
 
@@ -88,37 +88,62 @@ def main():
     print('This will be used to keep track of the fluxstar and')
     print('bstar as in fluxstaropt.fits or bstarir2.fits\n')
     # gratcode = inputter('Enter the grating code (blue/red): ', 'string', False)
-    #gratcode = input('Enter the grating code ([blue]/red): ') or 'blue'
-    #print(' ')
-    if args.gratcode == 'r':
-        gratcode = 'red'
-    elif args.gratcode == 'b':
-        gratcode = 'blue'
-    else:
-        raise ValueError("Grating must be \'r\' or \'b\'. Example: \n $cal.py r")
+    #import pdb;pdb.set_trace()
+    try:
+        if args.gratcode == 'e':
+         gratcode = input('Enter the order number ([1]): ') or '1'
+         gratcode='order_'+gratcode
+        if args.gratcode == 'r':
+            gratcode = 'red'
+        if args.gratcode == 'b':
+            gratcode = 'blue'
+    except ValueError:
+        print("Grating must be \'r\' or \'b\' or \'e\'(echelle). Example: \n $cal.py r")
     if (secondord):
         gratcode2 = inputter('Enter the second-order grating code: ', 'string', False)
-    print(' ')
+        print(' ')
+
+    
     # print('Enter the file containing the list of objects')
     # print('(should be dispersion-corrected)\n')
     done = False
     while (not done):
         # objectlist = inputter('Object list file: ', 'string', False)
+
         dfiles=glob.glob('d*.fits')
         for d in dfiles:
+         if not 'echelle' in d:
             if gratcode in d:
                 listfile= open(d.split('_ex.fits')[0],"w+")
                 listfile.write(d)
                 listfile.close()
                 objectlist = listfile.name
+                print(objectlist)
+
+         if 'echelle' in d:
+            if gratcode+'_ex' in d:
+                listfile= open(d.split('_ex.fits')[0],"w+")
+                listfile.write(d)
+                listfile.close()
+                objectlist = listfile.name
+                print(objectlist)
+
         if (os.path.isfile(objectlist)):
-            done = True
+         done = True
         else:
-            print('No such file')
+         print('No such file')
+         
     answer_flux = input('Do you want to fit a flux star? y/[n]: ') or 'n'
     if (answer_flux == 'y'):
         plt.close()
+        #print(gratcode)
         fluxfile = getfitsfile('flux star', '.fits', gratcode=gratcode)
+        #print(fluxfile,gratcode)
+        #fitsfile=fits.open(fluxfile)
+        #rawdata=fitsfile[0].data
+        #head=fitsfile[0].header
+        #print(rawdata.shape)
+        #sys.exit()
         idstar = pydux.mkfluxstar(fluxfile, gratcode)
         if (secondord):
             print(' ')
@@ -144,6 +169,7 @@ def main():
     # print('\nDo you want to apply the flux star(s) to the data?\n')
     # answer = yesno('y')
     # if (answer == 'y'):
+    #print(objectlist, gratcode, secondord, gratcode2,answer_flux)
     pydux.calibrate(objectlist, gratcode, secondord, gratcode2, answer_flux=answer_flux)
 
 

@@ -121,7 +121,13 @@ def mkbstar(bfile,gratcode, idstar=None):
     ax=fig.add_subplot(111)
     cursor = Cursor(ax, useblit=True, color='k', linewidth=1 )
     airlimit=1.5
-    splineresult=fitspl_dev(wave,np.log10(bstar),(airmass>airlimit),fig, cal='bstar{}'.format(gratcode), bstarid=idstar)
+
+    ##################
+    #try:
+    #    splineresult=fitspl_dev(wave,np.log10(bstar),(airmass>airlimit),fig, cal='bstar{}'.format(gratcode), bstarid=idstar)
+    #except TypeError:
+    splineresult=fitspl_dev(wave,np.log10(bstar),(airmass>airlimit),fig, cal='bstar{}'.format(gratcode), bstarid=None,featuremask='esi')# esi edit
+
     splineresult=10**(splineresult)
     plt.cla()
     plt.plot(wave,splineresult,drawstyle='steps-mid')

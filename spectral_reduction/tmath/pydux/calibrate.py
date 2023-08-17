@@ -1,7 +1,7 @@
 def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
     from astropy.io import fits
     import numpy as np
-    import os
+    import os,sys,glob
     import matplotlib.pyplot as plt
     import inspect
     from tmath.pydux.xcor import xcor
@@ -58,9 +58,18 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
         msfile=msfile.strip()
         if ('.fits' not in msfile):
             msfile=msfile+'.fits'
+
         multifits=fits.open(msfile)
         multispec=multifits[0].data
         mshead=multifits[0].header
+        try:
+            wavearr=np.zeros((multispec.shape[2],multispec.shape[1]))
+        except IndexError as e:
+            multispec=multispec[:,np.newaxis,:]  # esi we only do one aperture rn, so shape is 2d not 3d
+            #print(np.shape(multispec))
+            #wavearr=np.zeros((multispec.shape[2],multispec.shape[1]))
+            #num_apertures=multispec.shape[1]
+
         # objectname=mshead['OBJECT']
         objectname = mshead.get('OBJECT',None)
         if objectname == None:
@@ -76,6 +85,7 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             exptime=1.0
         num_apertures=multispec.shape[1]
         num_bands=multispec.shape[0]
+
         wavearr=np.zeros((multispec.shape[2],multispec.shape[1]))
         if (secondord):
             multispec2=multispec.copy()
@@ -96,6 +106,10 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             licksky=['lick','kpno','flwo','mmto','sso']
             if (observat in kecksky):
                 mskyfile=reduxdir+'kecksky.fits'
+                instrument = mshead.get('INSTRUME',None)
+                if 'ESI' in instrument:
+                    mskyfile=reduxdir+'esisky_'+gratcode+'.fits'
+
             elif (observat in licksky):
                 mskyfile=reduxdir+'licksky.fits'
             else:
@@ -105,8 +119,13 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             mskyfits=fits.open(mskyfile)
             mskydata=mskyfits[0].data
             mskyhead=mskyfits[0].header
+            #import pdb; pdb.set_trace()
+
             mskywavezero=float(mskyhead['CRVAL1'])
-            mskywavedelt=float(mskyhead['CDELT1'])
+            try:
+             mskywavedelt=float(mskyhead['CDELT1'])
+            except KeyError:
+             mskywavedelt=float(mskyhead['CD1_1'])
             mskywave=np.arange(len(mskydata))*mskywavedelt+mskywavezero
             if (np.abs(np.mean(mskydata)) < 1e-7):
                 mskydata=mskydata*1e15
@@ -137,6 +156,7 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             print ('Potential preliminary shift of {} angstroms'.format(angshift))
 
             print ('Obj wave without shift: ', wave[0])
+            #import pdb; pdb.set_trace()
 
 
             #The following code applies the calculated shift prior to fitting the flux star
@@ -280,16 +300,32 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
                     multispec2[j,i,:]=multispec2[j,i,:]/exptime         #adjust to time
                     multispec2[j,i,:]=multispec2[j,i,:]*10**(-19.44)    #AB->fnu
                     multispec2[j,i,:]=multispec2[j,i,:]*2.99792458e18/wave/wave #fnu->flm
-
+        #print(msfile,type(msfile))
+        
         msfile='c'+gratcode+msfile
+        #print(msfile,type(msfile))
+        #import pdb
+        #pdb.set_trace()
+        
         mshead.set('FLUX_Z',fluxairmass,'airmass of flux standard')
         mshead.set('FLUX_NUM',fluxnum,'obsnum of flux standard')
         mshead.set('FLUX_OBJ',fluxname,'id of flux standard')
         outhdu=fits.PrimaryHDU(multispec)
         hdul=fits.HDUList([outhdu])
         hdul[0].header=mshead.copy()
-        hdul.writeto(msfile,overwrite=True)
+        #print(np.shape(hdul))
+        #hdul.writeto(msfile,overwrite=True) 
+        #hdul.close()
+        try:
+         hdul.writeto(msfile,overwrite=True) 
+        except OSError as e: # catches weird astropy error
+         open(msfile, 'a').close()
+         hdul.writeto(msfile,overwrite=True) 
         hdul.close()
+ 
+
+        #print(glob.glob(msfile))
+
         if (secondord):
             msfile='c'+gratcode2+msfile
             mshead2.set('FLX2_Z',fluxairmass,'airmass of flux second ord. standard')
@@ -298,14 +334,15 @@ def calibrate(objectlist,gratcode,secondord,gratcode2, answer_flux='y'):
             outhdu=fits.PrimaryHDU(multispec2)
             hdul=fits.HDUList([outhdu])
             hdul[0].header=mshead2.copy()
+            f = fits.open(msfile2, mode='update')
             hdul.writeto(msfile2,overwrite=True)
             hdul.close()
+            f.close()
 
     infile.close()
     fluxfits.close()
     if (secondord):
         fluxfits2.close()
-    print('calibrate')
     print(objectlist,gratcode,secondord,gratcode2)
     return
 

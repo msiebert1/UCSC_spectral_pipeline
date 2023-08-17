@@ -892,7 +892,7 @@ def combine_flats_sig_clip(flat_list,sigma = 3,**kwargs):
         # write correct flat data
         hdu = fits.PrimaryHDU(stacked_flat_comb_image,header)
         hdu.writeto(outFile,output_verify='ignore')  
-    print(type(stacked_flat_comb_image))
+    #print(type(stacked_flat_comb_image))
     return (stacked_flat_comb_image,header,inst)
 
 

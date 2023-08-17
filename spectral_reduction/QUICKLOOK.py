@@ -4,10 +4,12 @@ from __future__ import print_function
 import sys
 from optparse import OptionParser
 import util
-import quick_reduc
+import quick_reduc,quick_reduc_esi
 import time
 import glob
 import matplotlib
+from astropy.io import fits
+
 matplotlib.use('TkAgg')
 
 description = "> Fast reduction of spectra "
@@ -49,6 +51,10 @@ if __name__ == "__main__":
                       action="store_true",help='combined, cr rejected files already exist. skip straight to flatfielding and extraction')
     parser.add_option("--rename", dest="rename",
                       action="store_true",help='rename the object with user input')
+    parser.add_option("-e", dest="esi",
+                      action="store_true",help='esi reductions required flag')
+    #parser.add_option("--fftrace", dest="fftrace",
+    #                  action="store_true",help='exact trace for flat fielding')
 
     option, args = parser.parse_args()
 
@@ -64,6 +70,8 @@ if __name__ == "__main__":
     _crnew= option.crnew
     _ex= option.extract
     _rename= option.rename
+    _esi= option.esi
+    #_fftrace= option.fftrace
 
     if len(args) > 1:
         files=[]
@@ -73,12 +81,23 @@ if __name__ == "__main__":
         files = util.readlist(args[0])
     else:
         listfile = glob.glob('t*.fits')
+        #import pdb; pdb.set_trace()
         files_science = []
         files_arc = []
+        files_sky = []
         files_flat = []
-        # prep_files = glob.glob('../*.fits')
-        files_arc.append('../ARC_blue.fits')
-        files_arc.append('../ARC_red.fits')
+        #try:
+        # if "ESI" in fits.open(listfile[0])[0].header['INSTRUME']:
+        #    _esi='True'
+        #except KeyError:
+        #    _esi='False'
+        if _esi:
+         files_arc.append('../ARC_blue.fits')
+         files_flat.append('../toFlat_blue.fits')
+        else:
+         files_arc.append('../ARC_blue.fits')
+         files_arc.append('../ARC_red.fits')
+
         #print 'checking your files ...'
         for img in listfile:
             _type = ''
@@ -92,6 +111,8 @@ if __name__ == "__main__":
                 files_flat.append(img)
             else:
                 files_science.append(img)
+            #print(files_arc,files_flat,files_science)
+
 
     _cosmic = option.cosmic
     if not _cosmic:
@@ -107,7 +128,18 @@ if __name__ == "__main__":
 
     if len(files_science) > 0:
         print('\n#######################################\n### start of reduction')
-        outputfile = quick_reduc.reduce(files_science, files_arc, files_flat, _cosmic, _interactive_extraction,_arc,_fast,_host,_nflat,_cedit,_crmask,_crnew,_ex,_rename)
+        #import pdb;pdb.set_trace()
+        if _esi:
+            print('\nFor ESI there are 10 orders, with different spatial scales')
+            print('\nWe extract one reference aperture, & scale the other 9 apertures to match the physical size of the reference')
+            print('To start, set aperture centres:')
+            print('> Set leftmost order to aperture 1')
+            print('> Set rightmost order to aperture 10 (and everthing inbetween)')
+            print('\nThen fit one aperture of your choice')
+            print('\n#######################################')
+            outputfile = quick_reduc_esi.reduce(files_science, files_arc, files_flat, _cosmic, _interactive_extraction,_arc,_fast,_host,_nflat,_cedit,_crmask,_crnew,_ex,_rename)
+        else:
+         outputfile = quick_reduc.reduce(files_science, files_arc, files_flat, _cosmic, _interactive_extraction,_arc,_fast,_host,_nflat,_cedit,_crmask,_crnew,_ex,_rename)
         stoptime = time.time()
         print('\n### wow, only ' + str(stoptime - starttime) + ' seconds')
         print('\n### end of reduction')

@@ -6,10 +6,15 @@ def getfitsfile(name,fitstype, gratcode=None):
         if gratcode:
             listfile = glob.glob('*.fits')
             for f in listfile:
-                if 'ex' in f and gratcode in f:
+                if 'ex' in f and gratcode+'_ex' in f and 'esi_echelle' in f:
                     inputfile = f
                     fitsdata=fits.open(inputfile)
                     break
+                elif 'ex' in f and gratcode in f and 'esi_echelle' not in f:
+                    inputfile = f
+                    fitsdata=fits.open(inputfile)
+                    break
+
             done=True
         else:
             inputfile=input('Name of fits file for the {}? ({} added if necessary) '.format(name,fitstype))
@@ -23,5 +28,6 @@ def getfitsfile(name,fitstype, gratcode=None):
         else:
             fitsdata.close()
             done=True
+    print('input file: ',inputfile)
     return inputfile
 

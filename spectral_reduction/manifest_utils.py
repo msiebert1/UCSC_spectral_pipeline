@@ -274,6 +274,12 @@ def determine_image_type(header,instrument,STANDARD_STAR_LIBRARY):
         FLAT_LAMP_KEYS = ['FLAMP1','FLAMP2']
         expTimeKey = 'TTIME'
 
+    elif instrument == 'ESI':
+        ARC_LAMP_KEYS = ['LAMPCU1','LAMPNE1','LAMPNE2','LAMPAR1']
+        FLAT_LAMP_KEYS = ['FLIMAGIN','FLSPECTR','FLAMP3','FLAMP4','FLAMP5','FLAMP6','LAMPQTZ1']
+        # LAMPQTZ1 is internal quartz lamp                                                          
+        expTimeKey = 'TTIME'
+
     else:
         raise ValueError('Instrument {} not supported'.format(instrument))
 
@@ -345,6 +351,8 @@ def construct_standard_star_library():
         'feige25': StandardStar(ra='02:38:37.79', dec='+05:28:11.3'),
         'feige34': StandardStar(ra='10:39:36.74', dec='+43:06:09.2'),
         'feige56': StandardStar(ra='12:06:47.24', dec='+11:40:12.7'),
+        'feige66': StandardStar(ra='12:37:23.55', dec='+25:04:00.3'),
+        'feige67': StandardStar(ra='12:41:51.83', dec='+17:31:20.5'),
         'feige92': StandardStar(ra='14:11:31.88', dec='+50:07:04.1'),
         'feige98': StandardStar(ra='14:38:15.75', dec='+27:29:32.9'),
         'feige110':StandardStar(ra='23:19:58.4', dec='-05:09:56.2'),

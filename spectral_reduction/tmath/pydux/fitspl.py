@@ -159,7 +159,7 @@ def fitspl(wave,flux,airlimit,fig, cal = None, idstar=None):
     return splineresult
 
 
-def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = None):
+def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = None, featuremask='default'):
     import numpy as np
     import matplotlib.pyplot as plt
     from scipy.interpolate import splrep,splev
@@ -171,6 +171,8 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = No
     from tmath.wombat.onkeypress import onkeypress
     import glob
     import os
+
+    print(wave)
     """fit spline to spectrum"""    
     # starting points for spline
     # bandpts = np.array([3000, 3050, 3090, 3200, 3430, 3450, 3500, 3550, 3600, \
@@ -181,7 +183,12 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = No
     #            6700, 6750, 6800, 7450, 7500, 7550, 8420, 8460, 8520, \
     #            8570, 8600, 8725, 8770, 9910, 10000, 10200, 10300, \
     #            10400, 10500, 10600, 10700])
-    binWidth = 200
+    
+    if featuremask=='esi':
+        binWidth = 100
+    else:
+        binWidth = 200
+
     bandpts = np.arange(3000,11000,binWidth)
     locsinrange=np.logical_and((bandpts > wave[10]),(bandpts < wave[-10]))
     #useband=bandpts[locsinrange]
@@ -190,41 +197,49 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = No
     # you can add mask features here, and the feature name can
     # be anything, they aren't used explicitly
     featureMask = {}
-
-    # empirical masks from Dimitriadis
-    featureMask['feature1'] = [3722.56-10.0/2.,3722.56+10.0/2.]
-    featureMask['feature2'] = [3736.90-15.0/2.,3736.90+15.0/2.]
-    featureMask['feature3'] = [3752.00-15.0/2.,3752.00+15.0/2.]
-    featureMask['feature4'] = [3772.00-17.0/2.,3772.00+17.0/2.]
-    featureMask['feature5'] = [3800.00-18.0/2.,3800.00+18.0/2.]
-    featureMask['feature6'] = [3835.38-20.0/2.,3835.38+20.0/2.]
-    featureMask['feature7'] = [3889.05-24.0/2.,3889.05+24.0/2.]
-    featureMask['feature8'] = [3933.66-16.0/2.,3933.66+16.0/2.]
-    featureMask['feature9'] = [3970.07-18.0/2.,3970.07+18.0/2.]
-    featureMask['feature10'] = [4101.74-28.0/2.,4101.74+28.0/2.]
-    featureMask['feature11'] = [4340.46-30.0/2.,4340.46+30.0/2.]
-    featureMask['feature12'] = [4471.48-20.0/2.,4471.48+20.0/2.]
-    featureMask['feature13'] = [4685.70-30.0/2.,4685.70+30.0/2.]
-    featureMask['feature14'] = [4861.36-35.0/2.,4861.36+35.0/2.]
-    featureMask['feature15'] = [5411.52-35.0/2.,5411.52+35.0/2.]
-    featureMask['feature16'] = [5889.95-32.0/2.,5889.95+32.0/2.]
-    featureMask['feature17'] = [6562.85-40.0/2.,6562.85+40.0/2.]
-    featureMask['feature18'] = [8498.02-25.0/2.,8498.02+25.0/2.]
-    featureMask['feature19'] = [8542.09-25.0/2.,8542.09+25.0/2.]
-    featureMask['feature20'] = [8662.14-25.0/2.,8662.14+25.0/2.]
-    featureMask['feature21'] = [8763.96-20.0/2.,8763.96+20.0/2.]
-    featureMask['feature22'] = [8865.75-25.0/2.,8865.75+25.0/2.]
-    featureMask['feature23'] = [9010.00-28.0/2.,9010.00+28.0/2.]
-    featureMask['feature24'] = [9213.90-30.0/2.,9213.90+30.0/2.]
-    featureMask['feature25'] = [9545.97-34.0/2.,9545.97+34.0/2.]
-    featureMask['telluric1'] = [3216.0-binWidth/2., 3420.0+binWidth/2.]
-    #featureMask['telluric2'] = [5600.0-binWidth/2., 6050.0+binWidth/2.]
-    featureMask['telluric3'] = [6250.0-binWidth/2., 6360.0+binWidth/2.]
-    featureMask['telluric4'] = [6450.0-binWidth/2., 6530.0+binWidth/2.]
-    featureMask['telluric5'] = [6840.0-binWidth/2., 7410.0+binWidth/2.]
-    featureMask['telluric6'] = [7560.0-binWidth/2., 8410.0+binWidth/2.]
-    featureMask['telluric7'] = [8925.0-binWidth/2., 9900.0+binWidth/2.]
-
+    
+    if featuremask=='default':
+        print('using default masks')
+        # empirical masks from Dimitriadis
+        featureMask['feature1'] = [3722.56-10.0/2.,3722.56+10.0/2.]
+        featureMask['feature2'] = [3736.90-15.0/2.,3736.90+15.0/2.]
+        featureMask['feature3'] = [3752.00-15.0/2.,3752.00+15.0/2.]
+        featureMask['feature4'] = [3772.00-17.0/2.,3772.00+17.0/2.]
+        featureMask['feature5'] = [3800.00-18.0/2.,3800.00+18.0/2.]
+        featureMask['feature6'] = [3835.38-20.0/2.,3835.38+20.0/2.]
+        featureMask['feature7'] = [3889.05-24.0/2.,3889.05+24.0/2.]
+        featureMask['feature8'] = [3933.66-16.0/2.,3933.66+16.0/2.]
+        featureMask['feature9'] = [3970.07-18.0/2.,3970.07+18.0/2.]
+        featureMask['feature10'] = [4101.74-28.0/2.,4101.74+28.0/2.]
+        featureMask['feature11'] = [4340.46-30.0/2.,4340.46+30.0/2.]
+        featureMask['feature12'] = [4471.48-20.0/2.,4471.48+20.0/2.]
+        featureMask['feature13'] = [4685.70-30.0/2.,4685.70+30.0/2.]
+        featureMask['feature14'] = [4861.36-35.0/2.,4861.36+35.0/2.]
+        featureMask['feature15'] = [5411.52-35.0/2.,5411.52+35.0/2.]
+        featureMask['feature16'] = [5889.95-32.0/2.,5889.95+32.0/2.]
+        featureMask['feature17'] = [6562.85-40.0/2.,6562.85+40.0/2.]
+        featureMask['feature18'] = [8498.02-25.0/2.,8498.02+25.0/2.]
+        featureMask['feature19'] = [8542.09-25.0/2.,8542.09+25.0/2.]
+        featureMask['feature20'] = [8662.14-25.0/2.,8662.14+25.0/2.]
+        featureMask['feature21'] = [8763.96-20.0/2.,8763.96+20.0/2.]
+        featureMask['feature22'] = [8865.75-25.0/2.,8865.75+25.0/2.]
+        featureMask['feature23'] = [9010.00-28.0/2.,9010.00+28.0/2.]
+        featureMask['feature24'] = [9213.90-30.0/2.,9213.90+30.0/2.]
+        featureMask['feature25'] = [9545.97-34.0/2.,9545.97+34.0/2.]
+        featureMask['telluric1'] = [3216.0-binWidth/2., 3420.0+binWidth/2.]
+        featureMask['telluric2'] = [5600.0-binWidth/2., 6050.0+binWidth/2.]
+        featureMask['telluric3'] = [6250.0-binWidth/2., 6360.0+binWidth/2.]
+        featureMask['telluric4'] = [6450.0-binWidth/2., 6530.0+binWidth/2.]
+        featureMask['telluric5'] = [6840.0-binWidth/2., 7410.0+binWidth/2.]
+        featureMask['telluric6'] = [7560.0-binWidth/2., 8410.0+binWidth/2.]
+        featureMask['telluric7'] = [8925.0-binWidth/2., 9900.0+binWidth/2.]
+    # should define a seperate one for esi
+    if featuremask=='esi':
+        print('not currently masking telluric points in flux cal for ESI')
+        binWidth = 100
+        bandpts = np.arange(3000,11000,binWidth)
+        locsinrange=np.logical_and((bandpts > wave[10]),(bandpts < wave[-10]))
+    #print(locsinrange)
     # inital testing masks from XIDL
     # featureMask['balmer1'] =   [3714.0-binWidth/2., 3723.0+binWidth/2.]
     # featureMask['balmer2'] =   [3650.0-binWidth/2., 3820.0+binWidth/2.]
@@ -291,7 +306,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = No
     plt.plot(wavetell,fluxtell,drawstyle='steps-mid',color='violet')
 
     if '../../master_files/' + cal + '_splpts_master.txt' not in glob.glob('../../master_files/*'):
-
+        splpt_files=[]
         path_to_trunk = os.path.expandvars('$UCSC_SPECPIPE/spectral_reduction/trunk/')
         if fluxstarid:
             splpt_files = glob.glob(path_to_trunk+'std_spline_pts/fluxstar*.txt')
@@ -324,7 +339,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = No
             womconfig.tmpsplptsy=[]
             for i,_ in enumerate(useband):
                 womconfig.tmpsplptsy.append(np.median(flux[useband[i]-2:useband[i]+3]))
-            # print (womconfig.tmpsplptsx,womconfig.tmpsplptsy)
+            print (womconfig.tmpsplptsx,womconfig.tmpsplptsy)
             spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
     else:
         masterx, mastery = np.genfromtxt('../../master_files/' + cal + '_splpts_master.txt')

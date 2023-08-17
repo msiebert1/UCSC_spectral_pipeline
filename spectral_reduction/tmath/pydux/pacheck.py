@@ -2,9 +2,15 @@ def pacheck(head):
     from tmath.wombat.getch import getch
     from astropy.io import fits
     observat=head['OBSERVAT'].strip().lower()
+
+    if(observat)=='keck':      # esi has different values than lris
+        if head['INSTRUME']:
+            observat='keck-esi'
+
     airmass=float(head['AIRMASS'])
     opt_pa=float(head['OPT_PA'])
     date=head['DATE-OBS'].strip()
+
     # modern date-obs is YYYY-MM-DD, old version used DD/MM/YY
     if (date[4] == '-'):
         year=int(date[0:4])
@@ -24,6 +30,7 @@ def pacheck(head):
     else:
         flwokey='POSANGLE'
     posangkey={'keck': ('ROTPOSN',90.),
+               'keck-esi': ('ROTPOSN',0.0),
                'lick': ('TUB', 0.0),
                'palomar': ('CASSPA', 0.0),
                'flwo': (flwokey, 0.0),

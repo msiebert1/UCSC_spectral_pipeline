@@ -28,7 +28,7 @@ def finalscaler(flux):
     # ymin=np.percentile(flux,.1)
     # ymax=np.percentile(flux,99.9)
 
-    ymin=np.percentile(flux,1.)
-    ymax=np.percentile(flux,99.)
+    ymin=np.nanpercentile(flux,1.)
+    ymax=np.nanpercentile(flux,99.)
 
     return ymin, ymax

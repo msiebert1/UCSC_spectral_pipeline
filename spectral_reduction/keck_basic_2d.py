@@ -418,6 +418,72 @@ def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
 
     return data_trim, binning1x1
 
+
+def read_esi(raw_file, det=None, TRIM=False):
+    """    
+    Read a raw ESI data frame (one or more detectors)
+    Subtract overscan region
+
+    Parameters
+    ----------
+    raw_file : str
+      Filename
+    det : int, optional
+      Detector number; Default = both
+    TRIM : bool, optional
+      Trim the image?
+
+    Returns
+    -------
+    array : ndarray
+      Combined image 
+    header : FITS header
+    sections : list
+      List of datasec, oscansec, ampsec sections
+    """
+
+    # Check for file; allow for extra .gz, etc. suffix
+    fil = glob.glob(raw_file)
+
+    # Read
+    outStr = "Reading ESI file: {:s}".format(fil[0])
+    print(outStr)
+
+    hdu = fits.open(fil[0])
+    data = hdu[0].data
+    data = np.asarray(data, dtype=float)
+    header = hdu[0].header
+    gain_array = np.zeros(np.shape(data))
+        
+    #sf_gain=100
+    gain_array[:,1:1048] = 1.29 #1.29 
+    gain_array[:,1049:2231] = 1.29 #trying to match gain
+
+    data_osub = subtract_overscan_esi(data,gain_image=gain_array)
+
+    trim_inds = []
+
+    if np.shape(data)[0] > 4000 and np.shape(data)[1] > 2000: #ESI is a 2x4 detector!
+        binning1x1 = True
+        #print('1x1 binning')
+    else:
+        binning1x1 = False
+        #print('2x1 binning')
+
+    if binning1x1:
+        for i in range(26,2077): #1X1 BINNING DON'T DELETE
+            trim_inds.append(i)
+    else:
+        for i in range(14,1035): #2X1 BINNING DON'T DELETE
+            trim_inds.append(i)
+
+    data_trim = data_osub[0:4096,trim_inds]
+
+
+    return data_trim, binning1x1
+
+
+
 def lris_read_amp(inp, ext, redchip=False, applygain=True):
     """
     Modified from pypeit.spectrographs.keck_lris.lris_read_amp -- Jon Brown
@@ -610,7 +676,7 @@ def subtract_overscan_new_red_chip(data, osec1loc = [2065,2117], osec2loc = [211
         ossub2 = np.polyval(c, np.arange(osfit2.size))
     elif method.lower() == 'savgol':
         ossub2 = signal.savgol_filter(osfit2, params[1], params[0])
-        data[:,osec2loc[0]:] -= ossub2[:,None]
+        data[:,osec2loc[0]:] -= ossub2[:,None] # 
     elif method.lower() == 'median':
         # Subtract scalar and continue
         data[:,osec2loc[0]:] -= osfit2
@@ -618,6 +684,79 @@ def subtract_overscan_new_red_chip(data, osec1loc = [2065,2117], osec2loc = [211
         raise ValueError('Unrecognized overscan subtraction method: {0}'.format(method))
 
     data *= gain_image
+    return data
+
+
+def subtract_overscan_esi(data, osec1loc = [2078,2150], osec2loc = [2156,2228],\
+    datasec1loc=[1,1048],datasec2loc=[1049,2231], gain_image=None,
+                                    method='savgol', params=[5, 65]):
+
+    # change overscan a little since scatterd light oversplling a little
+    # https://www2.keck.hawaii.edu/inst/esi/Bias.html
+
+    # The usual operating mode for ESI is dual-amp readout.
+    # Each amplifier has a (slightly) different baseline value and (slightly) different ``gain'' (e-/DN ratio).
+    # The baseline varies with row. In particular it drops in the same rows affected by the eight bad columns.
+    # The format in unbinned two-amp readout mode is: 
+    # 24 columns of ``prepix'' values (12 for each amplifier)
+    # 2048 columns of active area, and 160 columns (80 for each amplifier). 
+    # The appropriate overscan region must be used to correct each amplifier separately.
+
+    # PREPIX:   12 pixels of prescan columns per amplifier
+    # POSTPIX   80 pixels of postscan columns per amplifier
+    # NUMAMPS # of amps in use
+    # NAXIS1  total number of columns
+    # NAXIS2  total number of rows
+
+    #The bias regions are given by:
+    #start col 1 = SC + NAXIS1 + NUMAMPS*PREPIX
+    #start col 2 = start col 1 + POSTPIX
+
+    # 
+    # The difference in DC offset or bias level is removed by subtracting either bias frames
+    #  or the overscan region
+    # This leaves a difference in gain, 
+    # manifest by a different number of electronis per DN. 
+    # This is readily removed when the image is divided by a flat field
+    
+    osec1_data = data[:,osec1loc[0]:osec1loc[1]]
+    osec2_data = data[:,osec2loc[0]:osec2loc[1]]
+
+    osfit1 = np.median(osec1_data) if method.lower() == 'median' \
+                        else np.median(osec1_data, axis=1)
+    osfit2 = np.median(osec2_data) if method.lower() == 'median' \
+                        else np.median(osec2_data, axis=1)
+
+    #print(osfit1,osfit2)
+
+    if method.lower() == 'polynomial':
+        # TODO: Use np.polynomial.polynomial.polyfit instead?
+        c = np.polyfit(np.arange(osfit1.size), osfit1, params[0])
+        ossub1 = np.polyval(c, np.arange(osfit1.size))
+    elif method.lower() == 'savgol':
+        ossub1 = signal.savgol_filter(osfit1, params[1], params[0])
+        data[:,datasec1loc[0]:datasec1loc[1]] -= ossub1[:,None]
+    elif method.lower() == 'median':
+        # Subtract scalar and continue
+        data[:,datasec1loc[0]:datasec1loc[1]] -= osfit1
+    else:
+        raise ValueError('Unrecognized overscan subtraction method: {0}'.format(method))
+
+    if method.lower() == 'polynomial':
+        # TODO: Use np.polynomial.polynomial.polyfit instead?
+        c = np.polyfit(np.arange(osfit2.size), osfit2, params[0])
+        ossub2 = np.polyval(c, np.arange(osfit2.size))
+    elif method.lower() == 'savgol':
+        ossub2 = signal.savgol_filter(osfit2, params[1], params[0])
+        data[:,datasec2loc[0]:datasec2loc[1]] -= ossub2[:,None]
+    elif method.lower() == 'median':
+        # Subtract scalar and continue
+        data[:,datasec2loc[0]:datasec2loc[1]] -= osfit2
+    else:
+        raise ValueError('Unrecognized overscan subtraction method: {0}'.format(method))
+
+    data *= gain_image
+
     return data
 
     
@@ -1153,6 +1292,181 @@ def main_new_red_amp(rawFiles,*args,**kwargs):
             outStr = 'File exists: {}'.format(oScanFile)
             print(outStr)
    
+    return 0
+
+def main_esi(rawFiles,*args,**kwargs):
+    #print('Main ESI')
+    '''
+    Run basic 2D CCD reduction on Keck ESI data
+
+    Parameters
+    ----------
+    CLOBBER : bool, optional (default=False)
+        Overwrite the individual files in pre_reduced, but
+        do not wipe subdirectories
+    FULL_CLEAN : bool, optional (default=False)
+        Completely wipe pre_reduced and all subdirectories
+    BPM : bool, optional (default=False)
+        Mask bad pixels (not currently implemented)
+    PIXEL_FLOOR : bool, optional (default=False)
+        Removes negative pixel values
+    REORIENT : bool, optional (default=True)
+        Transposes to wavelength increasing rightward. LRIS images
+        are by default (spatial, spectral), and in general should
+        be transposed to (spectral, spatial).
+    TRIM : bool, optional (default=True)
+        Trim to some hard coded section of the detector
+    MASK_MIDDLE_BLUE : bool (default=False)
+        Mask the middle section of the blue images
+    MASK_MIDDLE_RED : bool (default=False)
+        Mask the middle section of the red images (useful if
+        there's wildly disparate values that make the iraf
+        windowing tedious)
+        
+    Returns
+    -------
+    int : 0, and writes files to disk
+    '''
+
+    # unpack supported kwargs
+    CLOBBER = kwargs.get('CLOBBER',False) # 
+    FULL_CLEAN = kwargs.get('FULL_CLEAN',False) # this will completely wipe pre_reduced.
+    BPM = kwargs.get('BPM',False) # no bad pixel mask available (at least for our binning)
+    PIXEL_FLOOR = kwargs.get('PIXEL_FLOOR',False) 
+    REORIENT = kwargs.get('REORIENT',True) 
+    TRIM = kwargs.get('TRIM',False) 
+    ISDFLAT = kwargs.get('ISDFLAT',False) 
+    RED_AMP_BAD = kwargs.get('RED_AMP_BAD',False) 
+    MASK_MIDDLE_BLUE = kwargs.get('MASK_MIDDLE_BLUE',False)
+    MASK_MIDDLE_RED = kwargs.get('MASK_MIDDLE_RED',False)
+
+    # pre_reduced does not exist, needs to be made
+    if not os.path.isdir('pre_reduced/'):
+        os.mkdir('pre_reduced/')
+        
+    # pre_reduced exists, but we want to clobber/do a clean reduction
+    elif FULL_CLEAN:
+        
+        promptStr = 'Do you really want to wipe pre_reduced? [y/n]: '
+        usrRespOrig = raw_input(promptStr)
+        if usrRespOrig and usrRespOrig[0].strip().upper() == 'Y':
+
+            # remove all pre_reduced files
+            shutil.rmtree('pre_reduced')
+            os.mkdir('pre_reduced/')
+      
+    # pre_reduced exists, need to document what is there
+    else:
+        
+        # get files
+        preRedFiles = glob.glob('pre_reduced/*.fits')
+    
+  
+    # get all raw files, sort them
+    # rawFiles = sorted(glob.glob('???????_????.fits'))
+
+    # loop over raw files, if the destination exists, do nothing
+    # otherwise, do the bias/reorient/trim/output
+    for i in range(len(rawFiles)):
+
+        rawFile = rawFiles[i]
+        oScanFile = 'pre_reduced/to{}'.format(rawFile)
+        oScanFile_amp1 = oScanFile.split('.')[0]+'_amp1.'+oScanFile.split('.')[1]
+        oScanFile_amp2 = oScanFile.split('.')[0]+'_amp2.'+oScanFile.split('.')[1]
+
+        if (not os.path.isfile(oScanFile) and not os.path.isfile(oScanFile_amp1) and not os.path.isfile(oScanFile_amp2)) or CLOBBER:
+
+            # ESIpixfix performed to mask the bad pixels for all frames before we start trimming etc.
+
+            #print(rawFile)
+            hdu=fits.open(rawFile)[0]
+            header,img = hdu.header,hdu.data
+
+            try:
+             header['PIXFIX'] 
+             #header.set('PIXFIX', 'ESIpixfix performed') 
+             #header['RANDOM'] # for now while testing!
+            except KeyError as e:
+             print('Performing ESI pixel masking') # mask some bad regions of detector and interpolate trace over 2nd bluest order
+             prepix = int(header.get('PREPIX'))
+             numamps = int(header.get('NUMAMPS'))
+             binx = int(header.get('BINNING').strip().split(",")[0])
+             biny = int(header.get('BINNING').strip().split(",")[1].strip())
+             
+             blank = np.nanmedian(img[int(3922/biny):int(3970/biny),int((44-24+prepix*numamps*binx)/binx):int((80-24+prepix*numamps*binx)/binx)])
+             boxl = int((67-24+prepix*numamps*binx)/binx)
+             boxr = int((152-24+prepix*numamps*binx)/binx)
+             boxlo = int(3856/biny)
+             boxhi = int(3932/biny)
+             img[boxlo:boxhi,boxl:boxr] = blank # this is the blob (lung shaped) that appears on upper left of CCD
+            
+             bot = int(2648/biny)                        # this is the bottom pixel of bad column, it's 2648 in y 
+             bc_top=int(3120/biny)
+             #bc_bottom=int(2970/biny)
+             #bc_bottom=int(2930/biny) # might need to change this depending on trace.. had to move it down
+             bc_bottom=int(2800/biny) # might need to change this depending on trace.. had to move it down
+
+
+             lf = int((444-24+prepix*numamps*binx)/binx) # this is some x pixels 444 starting pixel
+             nel = int(20/binx)                          # this is the width of the bad columns, it's 20 for normal 1x1 binning
+             right = np.nanmedian(img[bot:,lf+nel+1:lf+nel+int(2/binx)])
+             left = np.nanmedian(img[bot:,lf-2:lf])
+            
+             for i in range(1,nel+1):
+                 if i<10: 
+                     img[bot:,lf+i] = (right - left)*i/(nel+1.0) + left # this fixes bad columns
+                 if i>12:
+                     img[bot:,lf+i] = (right - left)*i/(nel+1.0) + left # this fixes bad columns
+                 
+                 img[bc_top:,lf+i] = (right - left)*i/(nel+1.0) + left # this fixes bad columns at top
+                 img[bot:bc_bottom,lf+i] = (right - left)*i/(nel+1.0) + left # this fixes bad columns at top
+             
+             x1,x2=int(444/binx),int(444/binx)+int(11/binx)
+             x1_2,x2_2=int(455/binx),int(455/binx)+int(11/binx)
+             
+             cutout=img[bc_bottom:bc_top:,x1:x2]
+             cutout2=img[bc_bottom:bc_top:,x1_2:x2_2]
+             
+             cutout_interp=np.linspace(cutout[:,0],cutout[:,-1],num=x2-x1,axis=-1)
+             cutout_interp2=np.linspace(cutout2[:,0],cutout2[:,-1],num=x2_2-x1_2,axis=-1)
+             
+             img[bc_bottom:bc_top:,x1:x2]=cutout_interp
+             img[bc_bottom:bc_top:,x1_2:x2_2]=cutout_interp2
+
+             boxl = int((390-24+prepix*numamps*binx)/binx)
+             boxr = int((566-24+prepix*numamps*binx)/binx)
+             boxlo = int(2656/biny)
+             boxhi = int(2668/biny)
+             #img[boxlo:boxhi,boxl:boxr] = blank # seems to have a row along bottom of bad column (not sure what this is for!)
+
+             #print('box',boxlo,boxhi,boxl,boxr)
+
+             header.set('PIXFIX', 'ESIpixfix performed') 
+             hdu.header = header
+             hdu.data = img
+             #print('saved image with pixel mask!')
+             hdu.writeto('pre_reduced/to{}'.format(rawFile),output_verify='silentfix',overwrite=True)
+             
+            #
+            #print('overscan subtraction for ',rawFile)
+            hdu = fits.open('pre_reduced/to{}'.format(rawFile))
+            header = hdu[0].header
+            data_trim, binning1x1 = read_esi('pre_reduced/to{}'.format(rawFile)) # performs overscan subtraction
+            header.set('OSCORR', 'overscan correction performed')
+            trim_inds = []
+            if binning1x1:
+                    for i in range(0,2046): #1X1 BINNING DON'T DELETE
+                        trim_inds.append(i)
+            else:
+                    for i in range(0,1023): #2X1 BINNING DON'T DELETE
+                        trim_inds.append(i)
+            header.set('TRIMMING', 'trimming performed')
+            outImg = data_trim[:,trim_inds]
+            hdu = fits.PrimaryHDU(outImg,header)
+            if os.path.isfile(oScanFile):
+                os.remove(oScanFile)
+            hdu.writeto(oScanFile,output_verify='ignore')
+
     return 0
   
 if __name__=='__main__':

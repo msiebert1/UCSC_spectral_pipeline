@@ -248,7 +248,6 @@ def basic_2d_proc(rawFile,imgType=None,CLOBBER=False):
 
 def reorg_files(configDict,CLOBBER=False):
     ''' Move files into their appropriate subdirectories '''
-    
     for imgType,typeDict in configDict.items():
         if imgType in ['STD','SCI']:
             for chan,objDict in typeDict.items():
@@ -312,10 +311,78 @@ def pre_reduction_dev(*args,**kwargs):
     iraf.noao.mode = 'h'
     iraf.ccdred.instrument = "ccddb$kpno/camera.dat"
 
+    STANDARD_STAR_LIBRARY = mu.construct_standard_star_library()
+    observations = sorted(glob.glob('*.fits'))
+
+    arm, inst_dict = instruments.blue_or_red(observations[0])
+
+    if 'lris' in inst_dict.get('name'):
+            inst_name = 'LRIS'
+    elif 'kast' in inst_dict.get('name'):
+            inst_name = 'KAST'
+    elif 'goodman' in inst_dict.get('name'):
+            inst_name = 'GOODMAN'
+    elif 'esi' in inst_dict.get('name'):
+            inst_name = 'ESI'
+
     # set up config
     if CONFIG_FILE:
         with open(CONFIG_FILE,'r') as fin:
             configDict = json.load(fin)
+
+    elif inst_name == 'ESI':
+        configDict = {
+        'SCI': {'BLUE': {}, 
+                },
+        'STD': {'BLUE': {}, 
+                },
+        'CAL_ARC': {'BLUE': {'CALIBRATION_ARC':[]}, 
+                },
+        'CAL_FLAT': {'BLUE': {'CALIBRATION_FLAT':[]}, 
+                },
+        # this last key is a garbage collector; not used
+        'CAL': {'BLUE': {}, 
+                }
+        }
+
+
+        for obsfile in observations:
+
+          # now continue with making the config file!
+          header = fits.open(obsfile)[0].header
+
+          if int(header['NAXIS2'])!=512 and 'MIRA' not in header['OBJECT'] : # MIRA is a different shape (604x512), exclude it 
+           imageType = mu.determine_image_type(header, inst_name, STANDARD_STAR_LIBRARY)
+           channel, inst_dict = instruments.blue_or_red(obsfile)
+           print (imageType,obsfile,header.get('SYNOPSIS'))
+
+   
+           if header.get('OBJECT', None):
+               obj = header.get('OBJECT').strip()
+           else:
+               obj = header.get('TARGNAME').strip()
+               
+           if imageType == 'SCI' or imageType == 'STD':
+               if obj in configDict[imageType][channel.upper()].keys():
+                   configDict[imageType][channel.upper()][obj].append(obsfile)
+               else:
+                   configDict[imageType][channel.upper()][obj] = [obsfile]
+           if imageType == 'CAL_ARC' and 'foc' not in obsfile:
+               configDict[imageType][channel.upper()]['CALIBRATION_ARC'].append(obsfile)
+           if imageType == 'CAL_FLAT':
+               configDict[imageType][channel.upper()]['CALIBRATION_FLAT'].append(obsfile)
+        
+        with open('custom_config.json','w') as fout:
+            fout.write(json.dumps(configDict,indent=4))
+
+        outStr = '\n\nOk, not config supplied, so I wrote a first pass custom_config.json\n'
+        outStr += 'Use at your own risk! Manually edit if needed and run again with -c custom_config.json\n'
+        outStr += 'You can manually add files to the appropriate lists and rerun.\n'
+        outStr += 'WARNING: make sure you rename your config file, or it could get overwritten!\n\n'
+        print(outStr)
+
+        sys.exit(1)
+
     else:
         #TODO: Make a better first pass at config file, std have exptime < 250s(?)
         configDict = {
@@ -337,21 +404,10 @@ def pre_reduction_dev(*args,**kwargs):
                 }
         }
 
-
-        STANDARD_STAR_LIBRARY = mu.construct_standard_star_library()
-        observations = sorted(glob.glob('*.fits'))
-        arm, inst_dict = instruments.blue_or_red(observations[0])
-        if 'lris' in inst_dict.get('name'):
-            inst_name = 'LRIS'
-        elif 'kast' in inst_dict.get('name'):
-            inst_name = 'KAST'
-        elif 'goodman' in inst_dict.get('name'):
-            inst_name = 'GOODMAN'
-
         for obsfile in observations:
             header = fits.open(obsfile)[0].header
             imageType = mu.determine_image_type(header, inst_name, STANDARD_STAR_LIBRARY)
-            # print (obsfile)
+            #print (imageType,obsfile)
             channel, inst_dict = instruments.blue_or_red(obsfile)
 
             if header.get('OBJECT', None):
@@ -452,8 +508,7 @@ def pre_reduction_dev(*args,**kwargs):
 
 
     # pre_reduced does not exist, needs to be made
-    if not os.path.isdir('pre_reduced/'):
-        os.mkdir('pre_reduced/')
+    os.makedirs('pre_reduced/',exist_ok=True)
 
     if QUICK:
         file =glob.glob('*.fits')[0]
@@ -467,6 +522,10 @@ def pre_reduction_dev(*args,**kwargs):
         if 'goodman' in inst['name']:
             b_inst = instruments.goodman_blue
             r_inst = instruments.goodman_red
+        if 'esi' in inst['name']:
+            print('cant use ESI old cals yet.')
+            sys.exit()
+
         if not os.path.isdir('pre_reduced/master_files/'):
             os.mkdir('pre_reduced/master_files/')
 
@@ -513,7 +572,6 @@ def pre_reduction_dev(*args,**kwargs):
     for imgType,typeDict in configDict.items():
         for chan,objDict in typeDict.items():
             for obj,fileList in objDict.items():
-
                 inst = instruments.blue_or_red(fileList[0])[1]
                 if 'lris' in inst['name']:
                     hdul = fits.open(fileList[0])
@@ -529,6 +587,7 @@ def pre_reduction_dev(*args,**kwargs):
                     new_chip=False
 
                 for rawFile in fileList:
+                    #print(rawFile,imgType)
                     # try:
                     #     res = basic_2d_proc(rawFile,CLOBBER=CLOBBER)
                     #     if res != 0:
@@ -538,6 +597,14 @@ def pre_reduction_dev(*args,**kwargs):
 
                     if not FAKE_BASIC_2D:
                         inst = instruments.blue_or_red(rawFile)[1]
+                        #print(inst['name'])
+                        if inst['name'] == 'esi_echelle':
+                            if imgType != 'CAL_FLAT':
+                                #print (imgType)
+                                res = keck_basic_2d.main_esi([rawFile], TRIM=True, ISDFLAT = False, RED_AMP_BAD=False, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
+                            if imgType == 'CAL_FLAT':
+                                res = keck_basic_2d.main_esi([rawFile], TRIM=True, ISDFLAT = True, RED_AMP_BAD=False, MASK_MIDDLE_RED=MASK_MIDDLE_RED, OLD_LRIS=OLD_LRIS)
+
                         if inst['name'] == 'lris_blue' or inst['name'] == 'lris_red' or inst['name'] == 'lris_red_new':
                             # res = keck_basic_2d.main([rawFile])
                             if imgType != 'CAL_FLAT':
@@ -573,6 +640,8 @@ def pre_reduction_dev(*args,**kwargs):
     ### some blocks of code from the original pre_reduction ###
     # combine the arcs
     if MAKE_ARCS:
+      if 'esi' not in inst['name']:
+
         list_arc_b = configDict['CAL_ARC']['BLUE']['CALIBRATION_ARC']
         list_arc_r = configDict['CAL_ARC']['RED']['CALIBRATION_ARC']
         
@@ -605,6 +674,24 @@ def pre_reduction_dev(*args,**kwargs):
                 if os.path.isfile('pre_reduced/ARC_red.fits'):
                     os.remove('pre_reduced/ARC_red.fits')
                 iraf.imcombine(arc_str, output='pre_reduced/ARC_red.fits')
+
+      if 'esi' in inst['name']: # ESI ARCS
+        list_arc_b = configDict['CAL_ARC']['BLUE']['CALIBRATION_ARC']
+        
+        # esi arcs
+        if len(list_arc_b) > 0:
+            if len(list_arc_b) == 1:
+                arc_blue = list_arc_b[0]
+                originFile = 'pre_reduced/to{}'.format(arc_blue)
+                destFile = 'pre_reduced/ARC_blue.fits'
+                shutil.copy(originFile,destFile)
+            else:
+                arc_str = ''
+                for arc in list_arc_b:
+                    arc_str += 'pre_reduced/to{},'.format(arc)
+                if os.path.isfile('pre_reduced/ARC_blue.fits'):
+                    os.remove('pre_reduced/ARC_blue.fits')
+                iraf.imcombine(arc_str, output='pre_reduced/ARC_blue.fits')
 
 
     # combine the flats
@@ -795,6 +882,69 @@ def pre_reduction_dev(*args,**kwargs):
                 os.remove('pre_reduced/RESP_red_amp2.fits')
             else:
                 os.remove('pre_reduced/RESP_red_amp1.fits')
+
+
+    if MAKE_FLATS and 'esi' in inst['name']: # ESI FLATS
+
+        #print('Right now, I have not adapted the pipeline to flat field ESI data. Run without it for now:')
+        #print('     QUICKLOOK.py -i --no-flat --esi')
+
+        list_flat_b = configDict['CAL_FLAT']['BLUE']['CALIBRATION_FLAT']
+        
+        # 'blue' esi flats
+        if len(list_flat_b) > 0:
+
+            br, inst = instruments.blue_or_red('pre_reduced/to{}'.format(list_flat_b[0]))
+            dispaxis = inst.get('dispaxis')
+            iraf.specred.dispaxi = dispaxis
+            Flat_blue = 'pre_reduced/toFlat_blue.fits'
+            Flat_blue_norm = 'pre_reduced/toFlat_blue_norm.fits'
+
+            flat_list = []
+            norm_list = []
+            for flat in list_flat_b:
+                flat_list.append('pre_reduced/to'+ flat)
+                norm_list.append('pre_reduced/to'+ flat.split('.')[0]+'_norm.fits')
+
+            if os.path.isfile(Flat_blue):
+                os.remove(Flat_blue)
+
+            # first, combine all the flat files into a master flat
+            res = combine_flats_sig_clip(flat_list,OUTFILE=Flat_blue,sigma = 3)
+
+            # apnormalize flat flatres ref=besi0084 # Normalize 2D apertures by 1D functions
+
+            #iraf.specred.apnormalize(Flat_blue,Flat_blue_norm,inter = 'yes',line=2500) # Normalize 2D apertures by 1D functions
+            # ref=besi0084,
+
+            # references =
+            # List of reference images to be used to define apertures for the input images. 
+            # When a reference image is given it supersedes apertures previously defined for the input image. 
+            # The list may be null, "", or any number of images less than or equal to the list of input images. There are three special words which may be used in place of an image name. The word "last" refers to the last set of apertures written to the database. The word "OLD" requires that an entry exist and the word "NEW" requires that the entry not exist for each input image.
+
+            #iraf.specred.response(Flat_blue,                              
+            #                       normaliz='pre_reduced/dummy_blue.fits', 
+            #                       response='pre_reduced/RESP_blue', 
+            #                       interac=inter, thresho='INDEF',
+            #                       sample='*', naverage=2, function='legendre', 
+            #                       low_rej=5,high_rej=5, order=90, niterat=20, 
+            #                       grow=0, graphic='stdgraph')
+
+
+            # combine all the flat files for norm region
+            #if os.path.isfile('pre_reduced/dummy_blue.fits'):
+            #    os.remove('pre_reduced/dummy_blue.fits')
+            # res = combine_flats_sig_clip(norm_list,OUTFILE='pre_reduced/dummy_blue.fits',MEDIAN_COMBINE=True)
+            #res = combine_flats_sig_clip(norm_list,OUTFILE='pre_reduced/dummy_blue.fits',sigma = 3)
+        
+
+        # ec> apnormalize flat flatres ref=besi0084
+        # ec> ccdproc @obs output=f//@obs flatcor+ flat=flatres
+        # besi* are bias subtracted, trimmed, and gain adjusted
+        # that specific one is a standard star, which you can use for a trace on the flats
+        # with apnormalize, you adjust the aperture size to match the slit width (make sure not to go over the edges)
+        # once you do that, it is very similar to response
+
 
     elif MAKE_FLATS:
 
@@ -1317,7 +1467,6 @@ def main(*args,**kwargs):
 
     if kwargs.get('ORIGINAL'):
         res = pre_reduction_orig()
-
     else:
         res = pre_reduction_dev(**kwargs)
 

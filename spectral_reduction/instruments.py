@@ -28,15 +28,17 @@ kast_blue = {'name': 'kast_blue',
              # 'flatsec': '[80:1650,20:300]', #4-2-17 
              # 'trimsec': '[80:1850,20:300]', #3-21-21
              # 'flatsec': '[80:1850,20:300]', #3-21-21
-             # 'trimsec': '[80:1850,30:300]', #Kirsty 5-30-22
-             # 'flatsec': '[80:1850,30:300]', #Kirsty 5-30-22
-
+             # 'trimsec': '[75:340,70:2296]', #Kirsty 5-30-22
+             # 'flatsec': '[75:365,70:2296]', #Kirsty 5-30-22
              'trimsec': '[80:1850,45:290]', #Matt 5-26-20
              'flatsec': '[80:1850,45:290]', #Matt 5-26-20
-             # 'trimsec': '[80:1850,20:300]', #Matt 5-26-20
-             # 'flatsec': '[80:1850,20:300]', #Matt 5-26-20
-             # 'trimsec': '[80:1850,45:325]', #ToO 11-18-22
-             # 'flatsec': '[80:1850,45:325]', #ToO 11-18-22
+
+             # 'trimsec': '[1:2040,43:340]', #ToO 5-30-22
+             # 'flatsec': '[1:2040,43:340]', #ToO 5-30-22
+             # 'trimsec': '[80:1850,45:290]', #Matt 5-26-20
+             # 'flatsec': '[80:1850,45:290]', #Matt 5-26-20
+             #'trimsec': '[80:1850,20:290]', #Matt 5-26-20
+             #'flatsec': '[80:1850,20:290]', #Matt 5-26-20
              # 'trimsec': '[80:1850,30:320]', #Matt 4-19-17
              # 'flatsec': '[80:1850,30:320]', #Matt 4-19-17
 
@@ -78,7 +80,12 @@ kast_red = { 'name': 'kast_red',
              'filter': 'temp',
              'slit': 'temp',
              'dispaxis': 2, 
-             'biassec': '[360:405,1:2725]',
+             'biassec': '[75:365,70:2296]',
+             #'trimsec': '[50:353,80:2296]', # Kirsty 2018-08-04
+             #'flatsec': '[50:353,80:2296]',
+             #'trimsec': '[136:400,80:2296]', # Kirsty 2018-07-05 high-resoltion
+             #'flatsec': '[136:400,80:2296]',
+
              # 'biassec': '[380:400,70:2296]',#3-31-21 ToO
              # 'trimsec': '[66:346,80:2296]',
              # 'flatsec': '[110:346,80:2296]',
@@ -94,19 +101,18 @@ kast_red = { 'name': 'kast_red',
              # 'flatsec': '[75:340,350:2296]', #4-2-17
              # 'trimsec': '[30:320,80:2120]', #12-04-20
              # 'flatsec': '[110:330,80:2120]', #12-04-20
-             # 'trimsec': '[60:350,70:2296]', #2-7-18
-             # 'flatsec': '[60:350,70:2296]', #2-7-18
+             #'trimsec': '[60:350,70:2296]', #2-7-18
+             #'flatsec': '[60:350,70:2296]', #2-7-18
 
-             # 'trimsec': '[35:300,10:2110]', #Tom 11-17-22
-             # 'flatsec': '[35:300,10:2110]', #Tom 11-17-22
-
-             # 'trimsec': '[110:380,10:2110]', #ToO 11-18-22
-             # 'flatsec': '[110:380,10:2110]', #ToO 11-18-22
-             
-             # 'trimsec': '[75:365,70:2296]', #Kirsty 5-30-22
-             # 'flatsec': '[75:365,70:2296]', #Kirsty 5-30-22
-             'trimsec': '[75:340,130:2296]', 
+             #'trimsec': '[75:365,70:2296]', #Kirsty 5-30-22
+             #'flatsec': '[75:365,70:2296]', #Kirsty 5-30-22
+            'trimsec': '[75:340,130:2296]', 
              'flatsec': '[75:340,130:2296]', 
+             # 'trimsec': '[75:340,130:2296]', 
+             # 'flatsec': '[75:340,130:2296]', 
+             # 'biassec': '[450:500,1:2725]', # Kirsty 2018-08-14
+             # 'trimsec': '[145:440,130:2296]', 
+             # 'flatsec': '[145:440,130:2296]', 
 
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
@@ -308,6 +314,50 @@ goodman_m2={ 'name': 'goodman_red',
              'spatial_binning': 1.
              }
 
+esi = {'name': 'esi_echelle',
+             'arm': 'blue',
+             'read_noise': 2.5, # 2.5 is for normal, but also has slow and fast modes, - seems fast is standard 2.7 ?
+             'gain': 1.29, # assuming gain is low (recommended)
+             'grism': 'temp',
+             'filter': 'temp',
+             'slit': 'temp',
+             'dispaxis': 2,
+             # [1:2048,1:4096]
+             #'biassec': '[2075:2220,300:3000]', 
+             'biassec':'[1:2047,1:4096]',
+             #28:2066,10:4080
+             'trimsec': '[26:2072,1:4096]', # 
+             'archive_flat_file': path_to_trunk + 'ESI_cals/toFlat_blue*.fits',
+             'archive_sens': path_to_trunk + 'ESI_cals/fluxstarorder_*.fits',
+             'archive_bstar': path_to_trunk + 'ESI_cals/bstarorder_*.fits',
+             'archive_arc': path_to_trunk + 'ESI_cals/ARC_blue.fits',
+             'archive_arc_extracted': path_to_trunk + 'ESI_cals/ARC_blue_order_*.ms.fits',
+             'archive_arc_extracted_id': path_to_trunk + 'ESI_cals/idARC_blue_order_*.ms',
+             #'archive_arc_aperture': path_to_trunk + 'ESI_cals/apLRIS_Blue_Arc_Ref',
+             'line_list': path_to_trunk+'ESI_cals/lines.dat', #this nearly hits pathname length limits
+             'extinction_file': path_to_trunk + 'ESI_cals/lick_extinction.dat', # JB: need to fix
+             'observatory': 'keck',
+             'sky_file': path_to_trunk + 'ESI_cals/kecksky.fits',
+             'section': 'middle line',
+             'approx_extract_column':1766,
+             #'approx_extract_column':1640, blue order often too faint 1st order fall off
+             #'approx_extract_column':2343, # 10th order falls off even for standard at 2000
+             'pyzap_boxsize': 5,
+             'pyzap_nsigma': 16,
+             'pyzap_subsigma': 8,
+             'pyzap_boxsize_mask': 21,
+             'pyzap_nsigma_mask': 5,
+             'pyzap_subsigma_mask': 2,
+             'approx_extract_line': 200,
+             'pixel_scale': .1542, #arcsec/pix
+             'spatial_binning': 1.,
+             'flat_regions': [[0,1700]],
+             'flat_good_region': [2500, 2700], 
+             'flat_match_region': [2000,2200]
+             }
+
+
+
 def is_new_chip(red_img):
     hdr = fits.open(red_img)[0].header
     if 'T' in hdr.get('DATE-OBS'):
@@ -344,6 +394,11 @@ def blue_or_red(img):
             return 'red', lris_red_new
         else:
             return 'red', lris_red
+    # esi
+    elif util.readkey3(hdr, 'INSTRUME') == 'ESI':
+        return 'blue', esi
+    elif util.readkey3(hdr, 'INSTRUME') == 'ESI: Echellette Spectrograph and Imager':
+        return 'blue', esi
     else:
         print (img)
         print(util.readkey3(hdr, 'VERSION') + 'not in database')
@@ -364,6 +419,8 @@ def lookup(inst_name):
         return goodman_m1
     elif inst_name == 'goodman_red':
         return goodman_m2
+    elif inst_name == 'esi_echelle':
+        return esi
     else:
         print ('No instrument named:', inst_name)
 
@@ -378,4 +435,3 @@ def lookup(inst_name):
 
 
 
-        

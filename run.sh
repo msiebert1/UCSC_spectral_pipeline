@@ -1,3 +1,4 @@
+
 xhost localhost
 source env/env
 cd docker

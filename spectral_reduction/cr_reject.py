@@ -32,6 +32,9 @@ def cr_reject(imglist, img_combined, inst, lim=0.145):
     if 'lris' in inst['name']:
         exp1_time = exp1['PRIMARY'].header['TTIME']
         skytol=100
+    if 'esi_echelle' in inst['name']:
+        exp1_time = exp1['PRIMARY'].header['TTIME']
+        skytol=100
     else:
         exp1_time = exp1['PRIMARY'].header['EXPTIME']
         skytol=20
@@ -44,6 +47,8 @@ def cr_reject(imglist, img_combined, inst, lim=0.145):
 
         #change to counts/s, difference with first image, set likely crs to nan
         if 'lris' in inst['name']:
+            exp_time = exp['PRIMARY'].header['TTIME']
+        if 'esi_echelle' in inst['name']:
             exp_time = exp['PRIMARY'].header['TTIME']
         else:
             exp_time = exp['PRIMARY'].header['EXPTIME']

@@ -1,7 +1,7 @@
 def mkfluxstar(fluxfile,gratcode):
     import pdb
     import numpy as np
-    import os
+    import os,sys
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Cursor
     from astropy.io import fits
@@ -49,8 +49,16 @@ def mkfluxstar(fluxfile,gratcode):
     rawdata=fitsfile[0].data
     head=fitsfile[0].header
     num_apertures=rawdata.shape[1]
-        
-    wavearr=np.zeros((rawdata.shape[2],rawdata.shape[1]))
+    
+    try:   
+     wavearr=np.zeros((rawdata.shape[2],rawdata.shape[1]))
+    except IndexError as e:
+     rawdata=rawdata[:,np.newaxis,:]  # esi we only do one aperture rn, so shape is 2d not 3d
+     wavearr=np.zeros((rawdata.shape[2],rawdata.shape[1]))
+     num_apertures=rawdata.shape[1]
+
+    #print(np.shape(rawdata))
+
     objectname = head.get('OBJECT',None)
     if objectname == None:
         objectname = os.getcwd().split('/')[-2]
@@ -64,7 +72,9 @@ def mkfluxstar(fluxfile,gratcode):
         exptime=1.
     observat=head['OBSERVAT'].strip().lower()
     sitefactor=obs_extinction(observat)
+
     for i in range(0,num_apertures):
+        print(i)
         wavearr[:,i]=getmswave(head,i)
     if (wavearr[-1,0] < 3000):
         print('************************************************')
@@ -72,7 +82,6 @@ def mkfluxstar(fluxfile,gratcode):
         print('************************************************')
         sys.exit(1)
     ap_choice=-1
-    
     
 
     if (num_apertures != 1):
@@ -124,8 +133,19 @@ def mkfluxstar(fluxfile,gratcode):
     ax=fig.add_subplot(111)
     cursor = Cursor(ax, useblit=True, color='k', linewidth=1 )
     airlimit=1.5
-
-    splineresult=fitspl_dev(wave,np.log10(fstar),(airmass>airlimit),fig, cal='fluxstar{}'.format(gratcode), fluxstarid = idstar)
+    
+    print(wave,'fluxstar{}'.format(gratcode),np.log10(fstar))
+    ##################
+    # esi edit
+    #try:
+    #    splineresult=fitspl_dev(wave,np.log10(fstar),(airmass>airlimit),fig, cal='fluxstar{}'.format(gratcode), fluxstarid = idstar)
+    #except TypeError:
+    print('fitting flux star')
+    if 'order' in gratcode:
+     splineresult=fitspl_dev(wave,np.log10(fstar),(airmass>airlimit),fig, cal='fluxstar{}'.format(gratcode), fluxstarid = None,featuremask='esi')# esi edit
+    else:
+     splineresult=fitspl_dev(wave,np.log10(fstar),(airmass>airlimit),fig, cal='fluxstar{}'.format(gratcode), fluxstarid = None,featuremask=None)# esi edit
+        
     splineresult=10**(splineresult)
     plt.cla()
     plt.plot(wave,fstar,drawstyle='steps-mid', color='r')

@@ -4,7 +4,6 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
     import numpy as np
     import os
     from datetime import datetime
-    import os, pdb
     import inspect
     import glob
     import math
@@ -34,6 +33,8 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
     from tmath.pydux.waveparse import waveparse
     from tmath.pydux.parsehourangle import parsehourangle
     from tmath.pydux import RADEG
+
+
     plt.ion()
 
     screen_width, screen_height=get_screen_size()
@@ -91,9 +92,14 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
     kecksky=['keck','gemini-north','gemini-n','gemini-south','gemini-s', \
              'soar','ctio','vlt','lco','lco-imacs','lapalma']
     licksky=['lick','kpno','flwo','mmto','sso']
+    echelle=False
     if (observat in kecksky):
         # mskyfile=reduxdir+'kecksky.fits'
         mskyfile=reduxdir+'licksky.fits'
+        instrument = bstarhead.get('INSTRUME',None)
+        if 'ESI' in instrument:
+            mskyfile=reduxdir+'esisky_'+gratcode+'.fits'
+            echelle=True
     elif (observat in licksky):
         mskyfile=reduxdir+'licksky.fits'
     else:
@@ -104,7 +110,10 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
     mskydata=mskyfits[0].data
     mskyhead=mskyfits[0].header
     mskywavezero=float(mskyhead['CRVAL1'])
-    mskywavedelt=float(mskyhead['CDELT1'])
+    try:
+        mskywavedelt=float(mskyhead['CDELT1'])
+    except KeyError:
+        mskywavedelt=float(mskyhead['CD1_1'])    
     mskywave=np.arange(len(mskydata))*mskywavedelt+mskywavezero
     if (np.abs(np.mean(mskydata)) < 1e-7):
         mskydata=mskydata*1e15
@@ -138,6 +147,9 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
         multifits=fits.open('c'+gratcode+inputfile)
         multispec=multifits[0].data
         mshead=multifits[0].header
+
+
+
         num_apertures=multispec.shape[1]
         num_bands=multispec.shape[0]
         wavearr=np.zeros((multispec.shape[2],multispec.shape[1]))
@@ -152,13 +164,19 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
             objectname = os.getcwd().split('/')[-2]
         print('The object is: {}'.format(objectname))
         # observat=mshead['OBSERVAT'].strip().lower()
+        #import pdb;pdb.set_trace()
         observat=mshead.get('TELESCOP',None)
         if observat != None:
             observat = observat.split()[0].lower()
         else:
             observat=mshead.get('VERSION',None)
-            if 'kast' in observat:
-                observat='lick'
+            try:
+             if 'kast' in observat:
+                 observat='lick'
+            except TypeError:
+                observat='keck'
+
+
         airmass=float(mshead['AIRMASS'])
         if (airmass < 1):
             airmass=1.0
@@ -172,6 +190,15 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
             coords=SkyCoord(stringra,stringdec,unit=(u.hourangle,u.deg))
             ra=coords.ra.deg
             dec=coords.dec.deg
+
+        if 'keck' in observat: # do this for wavelength steps in the esi part
+            if 'esi' in bstarhead['INSTRUME'].strip().lower():
+                echelle=True
+            else:
+                echelle=False
+
+
+
         ra=ra/RADEG
         dec=dec/RADEG
         haheader=mshead['HA']
@@ -412,19 +439,73 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
             print('\nRemoving redshift due to motion of Earth...')
             z=-1*v/2.99792458e5
             wave=wave/(1+z)
+
+            # blotch second order ESI over bad column
+            #import pdb; pdb.set_trace()
+            if gratcode=='order_2':
+             blotch_locs = np.where((wave>4493) & (wave<4535))
+
+             #y=[bobj[blotch_locs][0],bobj[blotch_locs][-1]]
+             #y_new = np.interp(wave[blotch_locs], wave[blotch_locs], y)
+             #y_interp = scipy.interpolate.interp1d(x, y)
+             y_interp=np.linspace(bobj[blotch_locs][0],bobj[blotch_locs][-1],num=len(wave[blotch_locs]))
+
+             print('\nBlotching the second order bad columns')
+             fig, ax = plt.subplots()
+             ax.set_xlim((4390,4650))
+             ymin,ymax=finalscaler(bobj[blotch_locs])
+             ax.plot(wave,bobj,drawstyle='steps-mid')
+             ax.plot(wave[blotch_locs],bobj[blotch_locs],drawstyle='steps-mid',color='r', label='bad columns region')
+             ax.plot(wave[blotch_locs],y_interp,drawstyle='steps-mid',color='black',lw=2,label='interpolation')
+
+             ax.set_xlabel('Wavelength')
+             ax.set_ylabel('Flux')
+             #ax.legend(loc=3)
+
+             if (secondtime):
+                ax.plot([wavesave0,wavesave0],[ymin,ymax],color='r')
+             try:
+                ax.set_ylim((ymin,ymax))
+
+             except ValueError:
+                bobj_median = np.nanmedian(bobj)
+                ax.set_ylim((bobj_median/10.,bobj_median*10.))
+             if (secondtime):
+                ax.plot([wavesaven,wavesaven],[ymin,ymax],color='r')
+
+                newdelt=0.0
+             plt.pause(0.01)  
+
+             waves_blotch = input('Enter interpolation region wavelengths [4493 4535]: ') or '4493 4535'
+             waves_blotchb = float(waves_blotch.split()[0])
+             waves_blotchr = float(waves_blotch.split()[1])
+             blotch_locs = np.where((wave>waves_blotchb) & (wave<waves_blotchr))
+             blotch_interp=np.linspace(bobj[blotch_locs][0],bobj[blotch_locs][-1],num=len(wave[blotch_locs]))
+             
+             bobj[blotch_locs]=blotch_interp
+             bsig[blotch_locs]=np.nan
+
+             ax.plot(wave,bobj,drawstyle='steps-mid',lw=1.5,color='C0')
+             plt.pause(0.01)  
+
+            if echelle!=True:
+                plot_range=100
+            if echelle==True:
+                plot_range=700
+
             # rebin
             fig=plt.figure()
             axarr=fig.subplots(1,2)
-            ymin,ymax=finalscaler(bobj[0:100])
-            axarr[0].plot(wave[0:100],bobj[0:100],drawstyle='steps-mid')
+            ymin,ymax=finalscaler(bobj[0:plot_range])
+            axarr[0].plot(wave[0:plot_range],bobj[0:plot_range],drawstyle='steps-mid')
             axarr[0].set_xlabel('Wavelength')
             axarr[0].set_ylabel('Flux')
             #axarr[0].set_ylim((ymin,ymax))
             if (secondtime):
                 axarr[0].plot([wavesave0,wavesave0],[ymin,ymax],color='r')
             plt.pause(0.01)
-            ymin,ymax=finalscaler(bobj[-100:])
-            axarr[1].plot(wave[-100:],bobj[-100:],drawstyle='steps-mid')
+            ymin,ymax=finalscaler(bobj[-plot_range:])
+            axarr[1].plot(wave[-plot_range:],bobj[-plot_range:],drawstyle='steps-mid')
             axarr[1].set_xlabel('Wavelength')
             axarr[1].set_ylabel('Flux')
             try:
@@ -437,6 +518,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
 
                 newdelt=0.0
             plt.pause(0.01)
+
             print('\nCurrent A/pix is {}'.format(wave[1]-wave[0]))
             if (secondtime):
                 print('\nPrevious resolution choice: {}'.format(deltsave))
@@ -463,20 +545,37 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                 # print('Enter the new wavelength range desired: ')
             
             if wavesave0 == 0.0:
-                if observat == 'keck' and 'blue' in inputfile:
+                if observat == 'keck' and 'blue' in inputfile and echelle==False:
                     if yes:
                         waves = '3160 5620'
                     else:
                         waves = input('Enter the new wavelength range desired [3160 5620]: ') or '3160 5620'
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
-                elif observat == 'keck' and 'red' in inputfile:
+                elif observat == 'keck' and 'red' in inputfile and echelle==False:
                     if yes:
                         waves = '5400 10150'
                     else:
                         waves = input('Enter the new wavelength range desired [5400 10150]: ') or '5400 10150'
                     waveb = float(waves.split()[0])
                     waver = float(waves.split()[1])
+
+                elif observat == 'keck' and  echelle==True:
+                    #print('\nCurrent range: {} {}'.format(wave[0],wave[-1]))
+                    rounded_waveb=str(int(wave[0])+5)
+                    rounded_waver=str(int(wave[-1])-5)
+                    rounded_wave=rounded_waveb+' '+rounded_waver
+                    waves = input('Enter the new wavelength range desired [%s %s] '%(rounded_waveb,rounded_waver)) or rounded_wave
+                    #or str(int(wave[0])+1)+' 'str(int(wave[-1])-1)
+                    waveb = float(waves.split()[0])
+                    waver = float(waves.split()[1])
+
+                #elif observat == 'keck' and 'red' in inputfile and echelle==False:
+                #    waves = input('Enter the new wavelength range desired [5400 10150]: ') or '5400 10150'
+                #    waveb = float(waves.split()[0])
+                #    waver = float(waves.split()[1])
+
+
                 elif observat == 'lick' and 'blue' in inputfile:
                     if yes:
                         waves = '3250 5620'
@@ -682,9 +781,14 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
             dec_deg=coords.dec.deg
 
             yse_date=mshead['DATE-OBS'].strip().replace('T', ' ')
+            if echelle==True:
+                yse_date=mshead['DATE-OBS'].strip().replace('T', ' ')+' '+mshead['UT'].strip().replace('T', ' ')
 
             if observat == 'keck':
                 yse_inst = 'LRIS'
+                if echelle==True:
+                    yse_inst = 'ESI'
+
             else:
                 yse_inst = 'KAST'
 
@@ -693,7 +797,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                 yse_name = yse_name[2:]
 
             yse_txt_header = 'wavelength flux fluxerr\n'
-            yse_txt_header = yse_txt_header + 'GROUPS UCSC,YSE\n'
+            yse_txt_header = yse_txt_header + 'GROUPS UCSC,YSE,KITS\n'
             yse_txt_header = yse_txt_header + 'SNID {name}\n'.format(name=yse_name)
             yse_txt_header = yse_txt_header + 'OBS_GROUP UCSC\n'
             yse_txt_header = yse_txt_header + 'RA {ra}\n'.format(ra=ra_deg)
@@ -714,14 +818,15 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
 
             # print('Do you wish to combine with another spectrum? ')
             # answer=yesno('y')
+
             answer = input('Do you wish to combine with another spectrum? y/[n]: ') or 'n'
+
             fname_comb = None
             if (answer == 'y'):
                 plt.close()
                 done=False
                 while (not done):
                     files = glob.glob(objname.split('-')[0]+'*.fits')
-                    # print (files)
                     for f in files:
                         file_secs = f.split('_')
                         if 'ap' in file_secs[-1]: # this is messy but whatever
@@ -732,8 +837,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                             if objname not in f and ('red' in f or 'blue' in f) and '_ap'+str(i+1)+'_' in f:
                                 print (f)
                                 inputfile = f
+                        if echelle==True and '_ap'+str(i+1) in f and gratcode not in f:
+                            print(f,gratcode)
+                            inputfile = f
+
                     if not yes:
                         inputfile=input('Name of fits file to be combined? [{}]: '.format(inputfile)) or inputfile
+
                     print (inputfile)
                     inputfile=inputfile.strip()
                     if (inputfile == ''):
@@ -746,7 +856,6 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                         print('File {} cannot be opened.'.format(inputfile))
                     else:
                         done=True
-
                 crval1=fitsdata[0].header['CRVAL1']
                 try:
                     wdelt=fitsdata[0].header['CDELT1']
@@ -764,7 +873,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                 data_new=fitsdata[0].data
                 # wave_new=np.arange(0,len(data_new)+1)*wdelt+crval1
                 npix=float(fitsdata[0].header['NAXIS2'])
+                #print('npix,naxis1,naxis2,',npix,fitsdata[0].header['NAXIS1'],fitsdata[0].header['NAXIS2'])
+                #if echelle==True:
+                #    npix=float(fitsdata[0].header['NAXIS1']) # NAXIS2 is 4
                 wave_new=np.arange(npix)*wdelt + crval1
+
+                #print('data new shape,',data_new.shape,len(data_new.shape))
+
                 if (len(data_new.shape) == 2):
                     var_new=data_new[:,1]
                     var_new=var_new.astype(float)
@@ -785,6 +900,13 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                     nwave = wavecomb
                     finalobj = fluxcomb
                     finalsig = np.sqrt(varcomb)
+                elif echelle==True and 'order' in inputfile:
+                    print('inputfile: ',inputfile)
+                    wavecomb, fluxcomb, varcomb = womcatfinal([wave_new, flux_new, var_new],[nwave, finalobj, finalvar])
+                    nwave = wavecomb
+                    finalobj = fluxcomb
+                    finalsig = np.sqrt(varcomb)
+
                 else:
                     print ("Please include 'blue' or 'red' in filename of spectrum to combine")
 
@@ -796,8 +918,14 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                 plt.title(objectname)
                 ymin,ymax=finalscaler(finalobj)
                 plt.ylim(ymin,ymax)
-                plt.savefig(objectname + '_combined_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'.png')
+
+                if echelle==True:
+                    order_num=gratcode.split("order_")[-1]
+                    previous_order=inputfile.split("order_")[-1].split("-")[0]
+
+                plt.savefig(objectname + '_combined_'+'order_'+str(previous_order)+str(order_num)+'_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'.png')
                 
+
                 outputdone = False
                 while (not outputdone):
                     print('\nThe file is: {}'.format(inputfile))
@@ -807,18 +935,27 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                     print('The previous name was: {}'.format(objname))
                     print('\nEnter the object name for the final fits file: ')
                     # objname=inputter('(UT date and .fits will be added): ','string',False)
-                    objname = objectname + '-combined'
+                    #import pdb
+                    #pdb.set_trace()
+                
+                    if echelle!=True:
+                        objname = objectname + '-combined'
+                    if echelle==True:
+                        objname = objectname + '-combined-order_'+str(previous_order)+str(order_num)
+
+                    #echellename=objectname + '-combined-'+gratcode
                     fname_comb=objname+'-'+printdate+'_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'.fits'
                     sname_comb=objname+'-'+printdate+'_ap'+str(i+1) + suffixes['ap'+str(i+1)] +'-sigma.fits'
+
                     outputdone=True
                     if (os.path.isfile(fname)):
                         print('{} already exists!!!!'.format(fname))
-                        # print('Do you wish to overwrite it? ')
-                        # answer=yesno('y')
+
                         if yes:
                             answer='y'
                         else:
                             answer = input('Do you wish to overwrite it? [y]/n: ') or 'y'
+
                         if (answer == 'y'):
                             outputdone = True
                     else:
@@ -862,6 +999,7 @@ def final(objectlist,gratcode,secondord,gratcode2,user,yes=False):
                 hdul=fits.HDUList([outhdu])
                 mshead_combined.set('NAXIS2',2)
                 hdul[0].header=mshead_combined.copy()
+
                 hdul.writeto(fname_comb,overwrite=True)
                 hdul.close()
                 spectxt_comb = objname+'-'+printdate+'_ap'+ str(i+1) + suffixes['ap'+str(i+1)] +'.flm'

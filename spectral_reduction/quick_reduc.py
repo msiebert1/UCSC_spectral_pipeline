@@ -65,6 +65,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
     list_arc_b = []
     list_arc_r = []
     for arcs in files_arc:
+
+
         hdr = util.readhdr(arcs)
         # br, inst = instruments.blue_or_red(arcs)
         if 'blue' in arcs:
@@ -88,10 +90,12 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
     print('\n### images to reduce :',imglist)
     #raise TypeError
     for img in imglist:
+        #print(instruments.blue_or_red(img)[0])
         if instruments.blue_or_red(img)[0] == 'blue':
             newlist[0].append(img)
         elif instruments.blue_or_red(img)[0] == 'red':
             newlist[1].append(img)
+
 
     if len(newlist[1]) < 1:
         newlist = newlist[:-1]
@@ -109,7 +113,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
             newlist = newlist[1:]
 
     for imgs in newlist:
-        print (imgs)
+        #print (imgs)
         hdr = util.readhdr(imgs[0])
         br, inst = instruments.blue_or_red(imgs[0])
         if br == 'blue':
@@ -404,6 +408,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                     arcfile = 'ARC_red.fits' #THIS IS A HACK
                     wave_sol_file = 'idARC_red.ms'
                     wave_sol_img = 'ARC_red.ms.fits'
+              
+
 
                 masters = [os.path.basename(x) for x in glob.glob('../master_files/*')]
                 if wave_sol_file in masters:
@@ -420,16 +426,19 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                             for im in glob.glob('*.fits'):
                                 if 'blue' in im and '_ex' not in im and 'zap' not in im:
                                     ref_img = im
+                                elif 'echelle' in im and '_ex' not in im and 'zap' not in im:
+                                    ref_img = im
                         elif br == 'red':
                             for im in glob.glob('*.fits') :
                                 if 'red' in im and '_ex' not in im and 'zap' not in im:
                                     ref_img = im
-
-
+                        print('no sure')
                         try:
                             ref_img= raw_input("Reference image [{}]: ".format(ref_img)) or ref_img
                         except:
                             ref_img= input("Reference image [{}]: ".format(ref_img)) or ref_img
+
+
                         os.system('cp ' + '../' + arcfile + ' .')
                         arc_ex=re.sub('.fits', '.ms.fits', arcfile)
                         print('\n### arcfile : ',arcfile)
@@ -454,6 +463,7 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                             trace='no',
                                             back='no',
                                             recen='no')
+                        
                         iraf.longslit.identify(images=arc_ex,
                                                 # section='line {}'.format(inst.get('approx_extract_line')),
                                                 coordli=line_list,
@@ -480,6 +490,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                         for im in glob.glob('*.fits'):
                             if 'blue' in im and '_ex' not in im and 'zap' not in im:
                                 ref_img = im
+                            elif 'echelle' in im and '_ex' not in im and 'zap' not in im:
+                                    ref_img = im
                     elif br == 'red':
                         for im in glob.glob('*.fits'):
                             if 'red' in im and '_ex' not in im and 'zap' not in im:
@@ -488,14 +500,22 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                         ref_img= raw_input("Reference image [{}]: ".format(ref_img)) or ref_img
                     except:
                         ref_img= input("Reference image [{}]: ".format(ref_img)) or ref_img
+
+                    print('cp ' + '../' + arcfile + ' .')
+                    print('.fits', '.ms.fits', arcfile)
                     os.system('cp ' + '../' + arcfile + ' .')
                     arc_ex=re.sub('.fits', '.ms.fits', arcfile)
                     print('\n### arcfile : ',arcfile)
                     print('\n### arcfile extraction : ',arc_ex)
                     print(inst.get('line_list'))
                     # remove the file from the extract destination
-                    if os.path.isfile(arc_ex):
+                    try:
+                     if os.path.isfile(arc_ex):
                         os.remove(arc_ex)
+                    except OSError as e:
+                        print('no existing arc found')
+
+                    print(arcfile,ref_img,wave_sol_file)    
 
                     iraf.specred.apall(arcfile,
                                         output=arc_ex,
@@ -517,6 +537,8 @@ def reduce(imglist, files_arc, files_flat, _cosmic, _interactive_extraction, _ar
                                             mode='h')
                     os.system('cp ' + 'database/' + wave_sol_file + ' ../master_files/')
                     os.system('cp ' + wave_sol_img + ' ../master_files/')
+
+
             util.delete(line_list)
 
             with open('database/ap' + img[0:-5]) as apfile:

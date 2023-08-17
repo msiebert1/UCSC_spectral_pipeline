@@ -61,7 +61,7 @@ try:
         if 'kast' in observat:
             observat='lick'
 
-except KeyError:
+except (KeyError, TypeError):
     print('OBSERVAT keyword not present in header')
     observat=input('Please enter observatory: ')
     observat=observat.strip().lower()
@@ -77,7 +77,18 @@ while (observat not in obsdict):
     obsflag=False
     if (observat == 'q'):
         sys.exit()
-    
+
+#import pdb;pdb.set_trace()
+
+#try:
+#    rast=recon[0].header.get('RA',None)
+#    decst=recon[0].header.get('DEC',None)
+#    hainput=recon[0].header.get('HA',None)
+#except KeyError:
+#    print('{} are not in fits headers'.format('RA,DEC,HA'))
+#    position=input('Please enter RA, DEC, HA ')
+#
+
 
 for f in files:
     fitsfile=fits.open(f)
