@@ -252,7 +252,7 @@ def read_lris(raw_file, det=None, TRIM=False):
 
     # Update PRECOL and POSTPIX
     precol = precol // xbin
-    postpix = postpix // xbin
+    postpix = postpix // xbin 
 
     # Deal with detectors
     if det in [1,2]:
@@ -386,16 +386,41 @@ def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
     header = hdu[0].header
     gain_array = np.zeros(np.shape(data))
     # print (np.shape(data))
-    gain_array[:,1:2057] = 1.022 #https://www2.keck.hawaii.edu/inst/lris/lris-red-upgrade-notes.html#dewar1
-    gain_array[:,2171:4227] = 0.916 #https://www2.keck.hawaii.edu/inst/lris/lris-red-upgrade-notes.html#dewar1
+    #gain_array[:,1:2057] = 1.022 #https://www2.keck.hawaii.edu/inst/lris/lris-red-upgrade-notes.html#dewar1
+    #gain_array[:,2171:4227] = 0.916 #https://www2.keck.hawaii.edu/inst/lris/lris-red-upgrade-notes.html#dewar1
 
-    data_osub = subtract_overscan_new_red_chip(data,gain_image=gain_array)
 
     trim_inds = []
     if np.shape(data)[0] > 4000 and np.shape(data)[1] > 4000:
         binning1x1 = True
     else:
         binning1x1 = False
+    print('what is binning1x1?', binning1x1)
+
+
+    if binning1x1 == True:#this is for 4amp 1x1 mode
+        #print('check1')
+        #gain_array[:2063,:2063] = 1.61#amp3/U1
+        #gain_array[2184:,:2063] = 1.67#amp4/U2
+        #gain_array[:2063,2170:] = 1.71#amp1/L1
+        #gain_array[2184:,2170:] = 1.64#amp2/L2
+
+        gain_array[:2124,1:2057] = 1.61#amp3/U1 1.61
+        gain_array[2124:,1:2057] = 1.643#amp4/U2 1.67
+
+        gain_array[:2124,2170:4225] = 1.71#amp1/L1 1.71
+        gain_array[2124:,2170:4225] = 1.677#gain value tested by Kyle to match response, website amp2/L2 1.64
+        #print(np.min(gain_array))
+
+    
+    elif binning1x1==False:
+        #print('check2')
+
+         gain_array[:,1:2057] = 1.022 #https://www2.keck.hawaii.edu/inst/lris/lris-red-upgrade-notes.html#dewar1
+         gain_array[:,2171:4227] = 0.916 #https://www2.keck.hawaii.edu/inst/lris/lris-red-upgrade-notes.html#dewar1
+
+    data_osub = subtract_overscan_new_red_chip(data,gain_image=gain_array)
+
 
     if binning1x1:
         for i in range(1400,2057): #1X1 BINNING DON'T DELETE
@@ -409,7 +434,11 @@ def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
             trim_inds.append(i)
 
     # data_trim = data_osub[5:4120,trim_inds]
-    data_trim = data_osub[5:4120,trim_inds]
+    data_trim = data_osub[:,trim_inds]
+    #data_trim = data_osub[5:4120,trim_inds]
+    data_trim = np.delete(data_trim, np.arange(2064,2183+1,step=1), axis=0) #TEST remove chip gap on wavelength axis
+    data_trim = data_trim[5:4000,:]
+
     # plt.imshow(data_trim, vmin=0,vmax=500)
     # plt.show()
     # raise TypeError
@@ -906,10 +935,12 @@ def main(rawFiles,*args,**kwargs):
             
             # trim
             if TRIM:
-                if rawFile[0] == 'b':
+                if rawFile[0] == 'b': #this is stupid, change this to read the header
                     if ISDFLAT:
                         outImg_amp1 = outImg[2260//xbin:2800//xbin,:]
                         outImg_amp2 = outImg[1800//xbin:2260//xbin,:]
+                        #outImg_amp1 = outImg[2260//xbin:2800//xbin,660:2100]
+                        #outImg_amp2 = outImg[1800//xbin:2260//xbin,660:2100]
                     else:
                         outImg = outImg[1800//xbin:2800//xbin,:]
                         # outImg = outImg[1800//xbin:2800//xbin,660:2100] # ToO 07052021

@@ -105,8 +105,8 @@ kast_red = { 'name': 'kast_red',
              
              # 'trimsec': '[75:365,70:2296]', #Kirsty 5-30-22
              # 'flatsec': '[75:365,70:2296]', #Kirsty 5-30-22
-             'trimsec': '[75:340,130:2296]', 
-             'flatsec': '[75:340,130:2296]', 
+             'trimsec': '[75:340,70:2296]', 
+             'flatsec': '[75:340,70:2296]', 
 
              'archive_zero_file': path_to_trunk + 'KAST_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'KAST_cals/RESP_red.fits',
@@ -254,9 +254,9 @@ goodman_m1={ 'name': 'goodman_blue',
              'filter': 'temp',
              'slit': 'temp',
              'dispaxis': 1, 
-             'biassec': '[1:25,100:800]', # RED CAMERA
+             #'biassec': '[1:25,100:800]', # RED CAMERA
              # 'trimsec': '[400:2068,84:900]', # RED CAMERA
-             # 'biassec': '[2060:2070,100:800]', # BLUE CAMERA
+             'biassec': '[2060:2070,100:800]', # BLUE CAMERA
              # 'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
              'trimsec': '[400:2025,65:775]', # BLUE CAMERA (cuts out flat field artifact)
              # 'trimsec': '[400:2068,84:900]',
@@ -286,10 +286,10 @@ goodman_m2={ 'name': 'goodman_red',
              'filter': 'temp',
              'slit': 'temp',
              'dispaxis': 1, 
-             #'biassec': '[1:25,100:800]', # RED CAMERA
-             #'trimsec': '[400:2068,84:900]', # RED CAMERA
-             'biassec': '[2060:2070,100:800]', # BLUE CAMERA
-             'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
+             'biassec': '[1:25,100:800]', # RED CAMERA
+             'trimsec': '[400:2068,84:900]', # RED CAMERA
+             #'biassec': '[2060:2070,100:800]', # BLUE CAMERA
+             #'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
              'archive_zero_file': path_to_trunk + 'SOAR_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'SOAR_cals/RESP_red.fits',
              'archive_sens': path_to_trunk + 'SOAR_cals/fluxstarred.fits',

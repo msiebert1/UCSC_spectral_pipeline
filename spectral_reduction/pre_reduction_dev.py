@@ -684,7 +684,19 @@ def pre_reduction_dev(*args,**kwargs):
             amp1_flatten = np.asarray(hdu_amp1[0].data).flatten()
             amp2_flatten = np.asarray(hdu_amp2[0].data).flatten()
             concat_amps = np.concatenate([amp2_flatten, amp1_flatten])
-            resp_blue_data = np.reshape(concat_amps, (1000,4096))
+            
+                   
+            hdul = fits.open(list_flat_b[0])
+            print(list_flat_b[0])                                                 
+            binning = hdul[0].header.get('BINNING')
+            #print(binning)
+            if '1,2' in binning:
+                resp_blue_data = np.reshape(concat_amps, (1000,2048))
+
+            else:
+                resp_blue_data = np.reshape(concat_amps, (1000,4096))
+                    #1x1 binning
+
 
             header = hdu_amp1[0].header
             if os.path.isfile('pre_reduced/RESP_blue.fits'):
@@ -778,11 +790,15 @@ def pre_reduction_dev(*args,**kwargs):
                 else:
                     # resp_red_data = np.reshape(concat_amps, (631, 4126))
                     if binning1x1:
-                        resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
+                        resp_red_data = np.reshape(concat_amps, (1263, 3995))#1x1 BINNING AND CHIP GAP DONT DELTE
+
+                        #resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
                     else:
                         resp_red_data = np.reshape(concat_amps, (616, 4115))
                     # resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
                     resp_red_data = np.transpose(resp_red_data)
+                    print(np.shape(resp_red_data))
+
 
                 header = hdu_amp1[0].header
                 if os.path.isfile('pre_reduced/RESP_red.fits'):
