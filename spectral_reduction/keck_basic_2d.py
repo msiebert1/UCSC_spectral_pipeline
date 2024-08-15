@@ -437,7 +437,7 @@ def read_lris_new_red_amp(raw_file, det=None, TRIM=False):
     data_trim = data_osub[:,trim_inds]
     #data_trim = data_osub[5:4120,trim_inds]
     data_trim = np.delete(data_trim, np.arange(2064,2183+1,step=1), axis=0) #TEST remove chip gap on wavelength axis
-    data_trim = data_trim[5:4000,:]
+    #data_trim = data_trim[5:4000,:]
 
     # plt.imshow(data_trim, vmin=0,vmax=500)
     # plt.show()

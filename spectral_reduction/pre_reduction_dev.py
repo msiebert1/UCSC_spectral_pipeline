@@ -790,7 +790,7 @@ def pre_reduction_dev(*args,**kwargs):
                 else:
                     # resp_red_data = np.reshape(concat_amps, (631, 4126))
                     if binning1x1:
-                        resp_red_data = np.reshape(concat_amps, (1263, 3995))#1x1 BINNING AND CHIP GAP DONT DELTE
+                        resp_red_data = np.reshape(concat_amps, (1263, 4128))#1x1 BINNING AND CHIP GAP DONT DELTE
 
                         #resp_red_data = np.reshape(concat_amps, (1263, 4115))#1x1 BINNING DONT DELTE
                     else:
