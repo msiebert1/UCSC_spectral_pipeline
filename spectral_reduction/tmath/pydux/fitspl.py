@@ -1,4 +1,4 @@
-
+ƒ
 
 def fitspl(wave,flux,airlimit,fig, cal = None, idstar=None):
     """fit spline to spectrum"""
@@ -221,10 +221,9 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = No
     #featureMask['telluric2'] = [5600.0-binWidth/2., 6050.0+binWidth/2.]
     featureMask['telluric3'] = [6250.0-binWidth/2., 6360.0+binWidth/2.]
     featureMask['telluric4'] = [6450.0-binWidth/2., 6530.0+binWidth/2.]
-    featureMask['telluric5'] = [6650.0-binWidth/2., 6730.0+binWidth/2.]
-    featureMask['telluric6'] = [6840.0-binWidth/2., 7410.0+binWidth/2.]
-    featureMask['telluric7'] = [7560.0-binWidth/2., 8410.0+binWidth/2.]
-    featureMask['telluric8'] = [8925.0-binWidth/2., 9900.0+binWidth/2.]
+    featureMask['telluric5'] = [6840.0-binWidth/2., 7410.0+binWidth/2.]
+    featureMask['telluric6'] = [7560.0-binWidth/2., 8410.0+binWidth/2.]
+    featureMask['telluric7'] = [8925.0-binWidth/2., 9900.0+binWidth/2.]
 
     # inital testing masks from XIDL
     # featureMask['balmer1'] =   [3714.0-binWidth/2., 3723.0+binWidth/2.]
@@ -326,7 +325,7 @@ def fitspl_dev(wave,flux,airlimit,fig, cal=None, fluxstarid = None, bstarid = No
             for i,_ in enumerate(useband):
                 womconfig.tmpsplptsy.append(np.median(flux[useband[i]-2:useband[i]+3]))
             # print (womconfig.tmpsplptsx,womconfig.tmpsplptsy)
-            print(womconfig.tmpsplptsx)
+            #print(womconfig.tmpsplptsx)
             spline=splrep(womconfig.tmpsplptsx,womconfig.tmpsplptsy,k=3)
     else:
         masterx, mastery = np.genfromtxt('../../master_files/' + cal + '_splpts_master.txt')
