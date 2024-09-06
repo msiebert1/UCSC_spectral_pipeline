@@ -13,6 +13,8 @@ def make_manifest(dataDir,instrument):
         res = make_lris_manifest(dataDir)
     elif instrument == 'KAST':
         res = make_kast_manifest(dataDir)
+    elif instrument == 'GOODMAN':
+        res = make_goodman_manifest(dataDir)
     else:
         raise ValueError('Instrument {} not supported'.format(instrument))
     return res
@@ -253,6 +255,129 @@ def make_kast_manifest(dataDir):
 
     return manifest_text
 
+def make_goodman_manifest(dataDir):
+    ''' Make a manifest following the Goodman format '''
+
+    manifest_header = '# Object                  Type Chan '
+    manifest_header += 'RA             Dec            '
+    manifest_header += 'PA      Exp     UTCDate/Time                  '
+    manifest_header += 'SecZ    SlitMask       Dich      Gris/Grat      '
+    manifest_header += 'Filter         Filename'
+
+    manifest_text = '{}'.format(manifest_header)
+
+    nullHeaderEntry = 'UNKNOWN'
+
+    # glob all the files in the directory
+    allFiles = glob.glob('{}/*.fits'.format(dataDir))
+    #allFiles.sort(key=lambda x: int(x.split('/')[-1].split('.')[0].replace('r','').replace('b','')))
+
+    bFiles = []
+    rFiles = []
+    allSortedFiles = []
+    for i,obsFile in enumerate(allFiles):
+        hdu = fits.open(obsFile)
+        header = hdu[0].header
+
+
+        if obsVersion.strip().lower() == 'Blue':
+            bFiles.append(obsFile)
+        elif obsVersion.strip().lower() == 'Red':
+            rFiles.append(obsFile)
+
+    allSortedFiles = bFiles + rFiles
+
+    STANDARD_STAR_LIBRARY = construct_standard_star_library() # dict of std star objects
+
+    #loop over the sorted list
+    for i,obsFile in enumerate(allSortedFiles):
+
+        print('Working on {}'.format(obsFile))
+
+        # open the header
+        hdu = fits.open(obsFile)
+        header = hdu[0].header
+
+
+        # get the image type
+        try:
+            obsImgType = determine_image_type(header,'GOODMAN',STANDARD_STAR_LIBRARY)
+
+        # catch all general exceptions; assign to CAL
+        except Exception as e:
+            obsImgType = 'CAL'
+
+
+        # get blue or red channel
+        obsVersion = header.get('INSTCONF',nullHeaderEntry)
+        if obsVersion.strip().lower() == 'Blue':
+            obsChannel = 'BLUE'
+        elif obsVersion.strip().lower() == 'Red':
+            obsChannel = 'RED'
+        else:
+            obsChannel = nullHeaderEntry
+
+        
+        obsFilter = header.get('FILTER',nullHeaderEntry).strip().replace(' ','_')
+        #get blue or red filter
+        #if obsChannel == 'BLUE':
+        #    obsFilter = header.get('BLFILT_N',nullHeaderEntry).strip().replace(' ','_')
+        #elif obsChannel == 'RED':
+        #    obsFilter = header.get('RDFILT_N',nullHeaderEntry).strip().replace(' ','_')
+        #else:
+        #    obsFilter = nullHeaderEntry
+
+        # get the explicitly named/non-degenerate parameters
+        obsDate = header.get('DATE-OBS',nullHeaderEntry)
+        obsObject = header.get('OBJECT',nullHeaderEntry).strip().replace(' ','_')
+        obsRA = header.get('RA',nullHeaderEntry)
+        obsDec = header.get('DEC',nullHeaderEntry)
+        obsPositionAngle = header.get('POSANGLE',nullHeaderEntry) # wow
+        obsAirmass = header.get('AIRMASS',nullHeaderEntry)
+        obsExptime = header.get('EXPTIME',nullHeaderEntry)
+        obsGrating = header.get('GRATNG',nullHeaderEntry).strip().replace(' ','_')
+        obsSlitmask = header.get('SLIT',nullHeaderEntry).strip().replace(' ','_')
+        #obsDichroic = header.get('BSPLIT_N',nullHeaderEntry).strip().replace(' ','_')
+
+        #formatting tweaks to values
+        if obsDec[0] != '-':
+            obsDec = '+{}'.format(obsDec)
+        if len(obsDec.split(':')[0]) < 3:
+            obsDecDD = obsDec.split(':')[0]
+            obsDecMM = obsDec.split(':')[1]
+            obsDecSS = obsDec.split(':')[2]
+            obsDecDD = '{}0{}'.format(obsDecDD[0],obsDecDD[1])
+            obsDec = '{}:{}:{}'.format(obsDecDD,obsDecMM,obsDecSS)
+
+        # prevent empty object names from getting thru
+        if obsObject == '':
+            obsObject = nullHeaderEntry
+
+        # construct the string
+        manifest_text += '\n{:<25} '.format(obsObject)
+        manifest_text += '{:<10}'.format(obsImgType)
+        manifest_text += '{:<5}'.format(obsChannel)
+        manifest_text += '{:<15}{:<15}'.format(obsRA,obsDec)
+        if obsPositionAngle != nullHeaderEntry:
+            manifest_text += '{:<8.1f}'.format(obsPositionAngle)
+        else:
+            manifest_text += '{:<8}'.format(nullHeaderEntry)
+        if obsExptime != nullHeaderEntry:
+            manifest_text += '{:<8.1f}'.format(obsExptime)
+        else:
+            manifest_text += '{:<8}'.format(obsExptime)
+        manifest_text += '{:<30}'.format(obsDate)
+        if obsAirmass != nullHeaderEntry:
+            manifest_text += '{:<8.2f}'.format(obsAirmass)
+        else:
+            manifest_text += '{:<8}'.format(nullHeaderEntry)
+        manifest_text += '{:<15}'.format(obsSlitmask)
+        manifest_text += '{:<10}'.format(obsDichroic)
+        #manifest_text += '{:<15}'.format(obsGrating)
+        manifest_text += '{:<15}'.format(obsFilter)
+        manifest_text += '{:<20}'.format(obsFile.split('/')[-1])
+
+    return manifest_text
 
 def determine_image_type(header,instrument,STANDARD_STAR_LIBRARY):
 
@@ -273,6 +398,11 @@ def determine_image_type(header,instrument,STANDARD_STAR_LIBRARY):
                          'FEARGON','DEUTERI']
         FLAT_LAMP_KEYS = ['FLAMP1','FLAMP2']
         expTimeKey = 'TTIME'
+
+    elif instrument == 'GOODMAN':
+        ARC_LAMP_KEYS = ['LAMP_HGA','LAMP_NE','LAMP_AR','LAMP_FE']
+        FLAT_LAMP_KEYS = ['LAMP_DOM']
+        expTimeKey = 'EXPTIME'
 
     else:
         raise ValueError('Instrument {} not supported'.format(instrument))
@@ -298,6 +428,12 @@ def determine_image_type(header,instrument,STANDARD_STAR_LIBRARY):
 
     # suppose the lamps were left off or something, but we're not taking
     # on sky exposures, default to general CAL type
+    if instrument =="GOODMAN":
+        if header.get('ADCSTAT',nullHeaderEntry).strip().lower() == 'PARK':
+            imageType = 'CAL'
+            return imageType
+
+
     if header.get('ROTMODE',nullHeaderEntry).strip().lower() == 'stationary':
         imageType = 'CAL'
         return imageType

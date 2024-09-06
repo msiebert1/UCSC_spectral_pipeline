@@ -254,11 +254,11 @@ goodman_m1={ 'name': 'goodman_blue',
              'filter': 'temp',
              'slit': 'temp',
              'dispaxis': 1, 
-             #'biassec': '[1:25,100:800]', # RED CAMERA
-             # 'trimsec': '[400:2068,84:900]', # RED CAMERA
-             'biassec': '[2060:2070,100:800]', # BLUE CAMERA
+             'biassec': '[1:25,100:800]', # RED CAMERA 1/26/2022
+             'trimsec': '[340:2068,84:900]', # RED CAMERA 1/26/2022
+             #'biassec': '[2060:2070,100:800]', # BLUE CAMERA
              # 'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
-             'trimsec': '[400:2025,65:775]', # BLUE CAMERA (cuts out flat field artifact)
+             #'trimsec': '[400:2025,65:775]', # BLUE CAMERA (cuts out flat field artifact)
              # 'trimsec': '[400:2068,84:900]',
              'archive_zero_file': path_to_trunk + 'SOAR_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'SOAR_cals/RESP_blue.fits',
@@ -273,8 +273,9 @@ goodman_m1={ 'name': 'goodman_blue',
              'observatory': 'soar',
              'sky_file': path_to_trunk + 'licksky.fits', # JB: need to fix
              'section': 'middle column',
-             'pyzap_boxsize': 5,
-             'pixel_scale': .15, #arcsec/pix
+             'pyzap_boxsize': 5,#21
+             'pyzap_nsigma': 16,#5
+             'pyzap_subsigma': 8,#2             'pixel_scale': .15, #arcsec/pix
              'spatial_binning': 1.
              }
              
@@ -287,7 +288,7 @@ goodman_m2={ 'name': 'goodman_red',
              'slit': 'temp',
              'dispaxis': 1, 
              'biassec': '[1:25,100:800]', # RED CAMERA
-             'trimsec': '[400:2068,84:900]', # RED CAMERA
+             'trimsec': '[30:2068,84:900]', # RED CAMERA
              #'biassec': '[2060:2070,100:800]', # BLUE CAMERA
              #'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
              'archive_zero_file': path_to_trunk + 'SOAR_cals/Zero_red_20180206.fits',
@@ -303,7 +304,9 @@ goodman_m2={ 'name': 'goodman_red',
              'observatory': 'soar',
              'sky_file': path_to_trunk + 'SOAR_cals/licksky.fits', # JB: need to fix
              'section': 'middle column',
-             'pyzap_boxsize': 5,
+             'pyzap_boxsize': 5,#21
+             'pyzap_nsigma': 16,#5
+             'pyzap_subsigma': 8,#2
              'pixel_scale': .15, #arcsec/pix
              'spatial_binning': 1.
              }
