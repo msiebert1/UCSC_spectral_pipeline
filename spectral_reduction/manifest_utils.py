@@ -403,7 +403,6 @@ def determine_image_type(header,instrument,STANDARD_STAR_LIBRARY):
         ARC_LAMP_KEYS = ['LAMP_HGA','LAMP_NE','LAMP_AR','LAMP_FE']
         FLAT_LAMP_KEYS = ['LAMP_DOM']
         expTimeKey = 'EXPTIME'
-
     else:
         raise ValueError('Instrument {} not supported'.format(instrument))
 
@@ -414,15 +413,17 @@ def determine_image_type(header,instrument,STANDARD_STAR_LIBRARY):
     # even if they're errantly left on we don't want that labeled SCI
     foc = header.get('OBJECT',nullHeaderEntry).strip().lower()
 
+
     for i,key in enumerate(ARC_LAMP_KEYS):
-        if header.get(key,nullHeaderEntry).strip().lower() == 'on' and foc != 'focus loop':
+        if (header.get(key,nullHeaderEntry).strip().lower() == 'on' or header.get(key,nullHeaderEntry).strip().lower() == 'true') and foc != 'focus loop':
             imageType = 'CAL_ARC'
+            print('arc detected')
             return imageType
-        elif header.get(key,nullHeaderEntry).strip().lower() == 'on' and foc == 'focus loop':
+        elif (header.get(key,nullHeaderEntry).strip().lower() == 'on' or header.get(key,nullHeaderEntry).strip().lower() == 'true') and foc == 'focus loop':
             imageType = 'CAL'
             return imageType
     for i,key in enumerate(FLAT_LAMP_KEYS):
-        if header.get(key,nullHeaderEntry).strip().lower() == 'on':
+        if (header.get(key,nullHeaderEntry).strip().lower() == 'on' or header.get(key,nullHeaderEntry).strip().lower() == 'true'):
             imageType = 'CAL_FLAT'
             return imageType
 

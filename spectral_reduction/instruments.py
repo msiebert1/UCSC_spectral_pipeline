@@ -256,9 +256,11 @@ goodman_m1={ 'name': 'goodman_blue',
              'dispaxis': 1, 
              'biassec': '[1:25,100:800]', # RED CAMERA 1/26/2022
              'trimsec': '[340:2068,84:900]', # RED CAMERA 1/26/2022
+             'flatsec': '[340:2068,84:900]', # RED CAMERA 1/26/2022
              #'biassec': '[2060:2070,100:800]', # BLUE CAMERA
              # 'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
              #'trimsec': '[400:2025,65:775]', # BLUE CAMERA (cuts out flat field artifact)
+             #'flatsec': '[400:2025,65:775]', # BLUE CAMERA (cuts out flat field artifact)
              # 'trimsec': '[400:2068,84:900]',
              'archive_zero_file': path_to_trunk + 'SOAR_cals/Zero_red_20180206.fits',
              'archive_flat_file': path_to_trunk + 'SOAR_cals/RESP_blue.fits',
@@ -289,6 +291,7 @@ goodman_m2={ 'name': 'goodman_red',
              'dispaxis': 1, 
              'biassec': '[1:25,100:800]', # RED CAMERA
              'trimsec': '[30:2068,84:900]', # RED CAMERA
+             'flatsec': '[30:2068,84:900]', # RED CAMERA
              #'biassec': '[2060:2070,100:800]', # BLUE CAMERA
              #'trimsec': '[80:2025,65:775]', # BLUE CAMERA 
              'archive_zero_file': path_to_trunk + 'SOAR_cals/Zero_red_20180206.fits',
@@ -335,7 +338,7 @@ def blue_or_red(img):
     elif util.readkey3(hdr, 'VERSION') == 'kastr':
         return 'red', kast_red
     # soar
-    elif util.readkey3(hdr, 'WAVMODE') == '400_M1' or util.readkey3(hdr, 'WAVMODE') == '400 m1':
+    elif util.readkey3(hdr, 'WAVMODE') == '400_M1' or util.readkey3(hdr, 'WAVMODE') == '400 m1' or util.readkey3(hdr, 'WAVMODE') == '600_BLUE':
         return 'blue', goodman_m1
     elif util.readkey3(hdr, 'WAVMODE') == '400_M2' or util.readkey3(hdr, 'WAVMODE') == '400 m2':
         return 'red', goodman_m2

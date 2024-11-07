@@ -216,9 +216,9 @@ def basic_2d_proc(rawFile,imgType=None,CLOBBER=False):
             # do general (IRAF is in such a sorry state I'm not even sure if this works)
             else:
                 iraf.ccdproc(rawFile, output=oScanFile, 
-                             overscan='yes', trim='yes', 
+                             overscan='yes', trim='no', 
                              zerocor="no", flatcor="no",readaxi='line',
-                             trimsec=str(_trimsec0), biassec=str(_biassec0), 
+                             biassec=str(_biassec0), 
                              Stdout=1)
 
             # trim (same trimming operation for all telescopes)
@@ -227,7 +227,7 @@ def basic_2d_proc(rawFile,imgType=None,CLOBBER=False):
                         readaxi='line',trimsec=str(_trimsec0), Stdout=1)
 
             #create trimmed flats for norm region
-            if imgType == 'CAL_FLAT' and 'kast' in inst.get('name'):
+            if imgType == 'CAL_FLAT' and 'lris' not in inst.get('name'):
                 iraf.ccdproc(oScanFile, output=toScanFlat, 
                         overscan='no', trim='yes', zerocor="no", flatcor="no", 
                         readaxi='line',trimsec=str(_flatsec0), Stdout=1)
@@ -240,7 +240,8 @@ def basic_2d_proc(rawFile,imgType=None,CLOBBER=False):
             #     thead=tfits[0].header
             #     thead.set('DATASEC', '[80:2296, 66:346]')
             #     tfits.flush()
-            os.remove(oScanFile)
+            if os.path.isfile(oScanFile):
+                os.remove(oScanFile)
 
     return 0
 
@@ -253,7 +254,6 @@ def reorg_files(configDict,CLOBBER=False):
         if imgType in ['STD','SCI']:
             for chan,objDict in typeDict.items():
                 for obj,fileList in objDict.items():
-
                     destDir = 'pre_reduced/{}'.format(obj)
                     if not os.path.isdir(destDir):
                         os.mkdir(destDir)
@@ -513,7 +513,6 @@ def pre_reduction_dev(*args,**kwargs):
     for imgType,typeDict in configDict.items():
         for chan,objDict in typeDict.items():
             for obj,fileList in objDict.items():
-
                 inst = instruments.blue_or_red(fileList[0])[1]
                 if 'lris' in inst['name']:
                     hdul = fits.open(fileList[0])
@@ -687,7 +686,6 @@ def pre_reduction_dev(*args,**kwargs):
             
                    
             hdul = fits.open(list_flat_b[0])
-            print(list_flat_b[0])                                                 
             binning = hdul[0].header.get('BINNING')
             #print(binning)
             if '1,2' in binning:
@@ -850,6 +848,7 @@ def pre_reduction_dev(*args,**kwargs):
             if os.path.isfile('pre_reduced/dummy_blue.fits'):
                 os.remove('pre_reduced/dummy_blue.fits')
             # res = combine_flats_sig_clip(norm_list,OUTFILE='pre_reduced/dummy_blue.fits',MEDIAN_COMBINE=True)
+            
             res = combine_flats_sig_clip(norm_list,OUTFILE='pre_reduced/dummy_blue.fits',sigma = 3)
         
             #can't get this to work:
