@@ -730,7 +730,10 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
             aps = glob.glob('database/ap*')
             for ap in aps:
                 print (ap.split('/')[-1])
-            ap_select = raw_input('Choose aperture for the match: ')
+            try:
+                ap_select = raw_input('Choose aperture for the match: ')
+            except:
+                ap_select = input('Choose aperture for the match: ')
             
             #this is just to make things automatic for now
             if 'blue' in ap_select and 'lris' in inst.get('name'):
@@ -770,7 +773,10 @@ def extractspectrum(img, dv, inst, _interactive, _type, automaticex=False, host_
                 elif instruments.blue_or_red(img)[0] == 'red' and 'red' in ap:
                     if img.split('_')[0] in ap:
                         ap_r = ap.split('/')[-1]
-            center_ap = raw_input('Choose master aperture for center [{}]: '.format(ap_r)) or ap_r
+            try:
+                center_ap = raw_input('Choose master aperture for center [{}]: '.format(ap_r)) or ap_r
+            except:
+                center_ap = raw_input('Choose master aperture for center [{}]: '.format(ap_r)) or ap_r
 
             #get center of main reference aperture (should be a std)
             with open('../master_files/'+center_ap) as c_ap:
