@@ -1,4 +1,3 @@
-ƒ
 
 def fitspl(wave,flux,airlimit,fig, cal = None, idstar=None):
     """fit spline to spectrum"""
